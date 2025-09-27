@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Séries de Ensaio - Harmony Maestro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar-item:hover .sidebar-icon {
+            transform: translateX(3px);
+        }
+        .wave-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+        }
+        .rehearsal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .status-badge {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Wave Background -->
+    <div id="wave-bg" class="wave-bg"></div>
+
+    <!-- Main Layout -->
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="hidden md:flex md:flex-shrink-0">
+            <div class="flex flex-col w-64 border-r border-gray-200 bg-white">
+                <div class="flex items-center justify-center h-16 px-4 border-b border-gray-200">
+                    <div class="flex items-center">
+                        <i data-feather="music" class="text-teal-600 w-6 h-6"></i>
+                        <span class="ml-2 text-xl font-bold text-gray-800">Harmony Maestro</span>
+                    </div>
+                </div>
+                <div class="flex flex-col flex-grow px-4 py-4 overflow-y-auto">
+                    <nav class="flex-1 space-y-2">
+                        <a href="index.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="home" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Dashboard
+                        </a>
+                        <a href="calendar.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="calendar" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Calendário
+                        </a>
+                        <a href="biblioteca.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="file-text" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Biblioteca
+                        </a>
+                        <a href="series.html" class="flex items-center px-4 py-3 text-sm font-medium text-white rounded-lg bg-teal-600">
+                            <i data-feather="layers" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Séries de Ensaio
+                        </a>
+                        <a href="membros.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="users" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Membros
+                        </a>
+                        <a href="notificacoes.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="bell" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Notificações
+                        </a>
+                        <a href="configuracoes.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="settings" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Configurações
+                        </a>
+                    </nav>
+                    <div class="mt-auto">
+                        <div class="p-4 mt-4 bg-gray-100 rounded-lg">
+                            <div class="flex items-center">
+                                <img class="w-10 h-10 rounded-full" src="http://static.photos/people/200x200/1" alt="Carlos">
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">Carlos (Admin)</p>
+                                    <p class="text-xs text-gray-500">carlos@example.com</p>
+                                </div>
+                            </div>
+                            <button class="w-full mt-3 px-3 py-2 text-xs font-medium text-center text-white bg-teal-600 rounded-lg hover:bg-teal-700">
+                                Sair
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Mobile Header -->
+            <div class="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+                <div class="flex items-center">
+                    <button class="text-gray-500 focus:outline-none">
+                        <i data-feather="menu" class="w-6 h-6"></i>
+                    </button>
+                    <span class="ml-2 text-lg font-bold text-gray-800">Harmony Maestro</span>
+                </div>
+                <div class="flex items-center">
+                    <button class="text-gray-500 focus:outline-none">
+                        <i data-feather="bell" class="w-5 h-5"></i>
+                    </button>
+                    <img class="w-8 h-8 ml-4 rounded-full" src="http://static.photos/people/200x200/1" alt="Carlos">
+                </div>
+            </div>
+
+            <!-- Desktop Header -->
+            <div class="hidden md:flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white">
+                <div class="flex items-center">
+                    <div class="relative">
+                        <input type="text" placeholder="Pesquisar série..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                        <i data-feather="search" class="absolute left-3 top-2.5 text-gray-400 w-4 h-4"></i>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative text-gray-500 focus:outline-none">
+                        <i data-feather="bell" class="w-5 h-5"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full"></span>
+                    </button>
+                    <div class="flex items-center">
+                        <img class="w-8 h-8 rounded-full" src="http://static.photos/people/200x200/1" alt="Carlos">
+                        <span class="ml-2 text-sm font-medium text-gray-700">Carlos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-auto p-4 md:p-6">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">Séries de Ensaio</h1>
+                        <p class="text-gray-600">Gerencie suas séries de ensaios programados</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="autoAssignBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                            <i data-feather="zap" class="w-4 h-4 mr-2"></i>
+                            Auto-assign
+                        </button>
+                        <button class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center">
+                            <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+                            Nova Série
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Rehearsal Series List -->
+                <div class="space-y-4 mb-8">
+                    <!-- Series Card 1 -->
+                    <div class="rehearsal-card bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Concerto de Dezembro 2025</h3>
+                            <span class="status-badge bg-green-400"></span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Data Início</p>
+                                <p class="text-gray-800">01/12/2025</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Data Fim</p>
+                                <p class="text-gray-800">15/12/2025</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Ensaio</p>
+                                <p class="text-gray-800">Segundas e Quartas, 19h</p>
+                            </div>
+                        </div>
+
+                        <!-- Dates List -->
+                        <div class="border-t border-gray-200 pt-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3">Datas dos Ensaios</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded text-center">01/12</span>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded text-center">03/12</span>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded text-center">08/12</span>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded text-center">10/12</span>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded text-center">15/12</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded text-center">+2</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm text-gray-600">12 membros escalados</span>
+                                <span class="text-sm text-gray-600">5 músicas</span>
+                            </div>
+                            <button class="text-teal-600 hover:text-teal-700 flex items-center">
+                                <i data-feather="edit" class="w-4 h-4 mr-1"></i>
+                                Editar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Series Card 2 -->
+                    <div class="rehearsal-card bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Festival de Verão 2026</h3>
+                            <span class="status-badge bg-yellow-400"></span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Data Início</p>
+                                <p class="text-gray-800">15/01/2026</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Data Fim</p>
+                                <p class="text-gray-800">30/01/2026</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Ensaio</p>
+                                <p class="text-gray-800">Terças e Quintas, 20h</p>
+                            </div>
+                        </div>
+
+                        <!-- Dates List -->
+                        <div class="border-t border-gray-200 pt-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3">Datas dos Ensaios</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded text-center">15/01</span>
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded text-center">17/01</span>
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded text-center">22/01</span>
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded text-center">24/01</span>
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded text-center">29/01</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded text-center">+3</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm text-gray-600">10 membros escalados</span>
+                                <span class="text-sm text-gray-600">8 músicas</span>
+                            </div>
+                            <button class="text-teal-600 hover:text-teal-700 flex items-center">
+                                <i data-feather="edit" class="w-4 h-4 mr-1"></i>
+                                Editar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Auto-assign Modal -->
+                <div id="autoAssignModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Auto-assign de Membros</h3>
+                        </div>
+                        <div class="p-6 space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Selecionar Série</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                    <option>Concerto de Dezembro 2025</option>
+                                    <option>Festival de Verão 2026</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Regra de Descanso</label>
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <p class="text-sm text-gray-600">Membros terão pelo menos 1 dia de descanso entre ensaios consecutivos. A escala priorizará membros com menor número de ensaios recentes.</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pré-visualização</label>
+                                <div class="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium">01/12 - Ensaio 1</span>
+                                            <span class="text-sm text-gray-600">8 membros escalados</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium">03/12 - Ensaio 2</span>
+                                            <span class="text-sm text-gray-600">8 membros escalados</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium">08/12 - Ensaio 3</span>
+                                            <span class="text-sm text-gray-600">8 membros escalados</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium">10/12 - Ensaio 4</span>
+                                            <span class="text-sm text-gray-600">8 membros escalados
+                                                                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium">15/12 - Ensaio 5</span>
+                                            <span class="text-sm text-gray-600">8 membros escalados</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200">
+                            <button id="cancelAutoAssign" class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700">
+                                Cancelar
+                            </button>
+                            <button class="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white">
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="border-t border-gray-200 bg-white py-4 text-center text-sm text-gray-500">
+                &copy; 2025 Harmony Maestro. Todos os direitos reservados.
+            </footer>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        feather.replace();
+
+        // Vanta.js background
+        VANTA.WAVES({
+            el: "#wave-bg",
+            mouseControls: false,
+            touchControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x0d9488
+        });
+
+        // Auto-assign modal controls
+        const autoAssignBtn = document.getElementById("autoAssignBtn");
+        const autoAssignModal = document.getElementById("autoAssignModal");
+        const cancelAutoAssign = document.getElementById("cancelAutoAssign");
+
+        autoAssignBtn.addEventListener("click", () => {
+            autoAssignModal.classList.remove("hidden");
+        });
+
+        cancelAutoAssign.addEventListener("click", () => {
+            autoAssignModal.classList.add("hidden");
+        });
+
+        // Fecha modal com ESC
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                autoAssignModal.classList.add("hidden");
+            }
+        });
+    </script>
+</body>
+</html>

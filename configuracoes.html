@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações - Harmony Maestro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .wave-bg { position:absolute; top:0; left:0; width:100%; height:100%; z-index:-1; opacity:0.15; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="wave-bg" class="wave-bg"></div>
+
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div class="hidden md:flex md:flex-shrink-0">
+      <div class="flex flex-col w-64 border-r bg-white">
+        <div class="flex items-center justify-center h-16 border-b">
+          <i data-feather="music" class="text-teal-600 w-6 h-6"></i>
+          <span class="ml-2 text-xl font-bold text-gray-800">Harmony Maestro</span>
+        </div>
+        <div class="flex flex-col flex-grow px-4 py-4 overflow-y-auto">
+          <nav class="flex-1 space-y-2">
+            <a href="index.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">
+              <i data-feather="home" class="w-4 h-4 mr-3"></i> Dashboard
+            </a>
+            <a href="calendar.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">
+              <i data-feather="calendar" class="w-4 h-4 mr-3"></i> Calendário
+            </a>
+            <a href="biblioteca.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">
+              <i data-feather="file-text" class="w-4 h-4 mr-3"></i> Biblioteca
+            </a>
+            <a href="series.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">
+              <i data-feather="layers" class="w-4 h-4 mr-3"></i> Séries de Ensaio
+            </a>
+            <a href="membros.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">
+              <i data-feather="users" class="w-4 h-4 mr-3"></i> Membros
+            </a>
+            <a href="notificacoes.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">
+              <i data-feather="bell" class="w-4 h-4 mr-3"></i> Notificações
+            </a>
+            <a href="configuracoes.html" class="flex items-center px-4 py-3 text-sm font-medium text-white rounded-lg bg-teal-600">
+              <i data-feather="settings" class="w-4 h-4 mr-3"></i> Configurações
+            </a>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-col flex-1 overflow-hidden">
+      <div class="hidden md:flex items-center justify-between px-6 py-3 border-b bg-white">
+        <h1 class="text-xl font-bold text-gray-800">Configurações</h1>
+      </div>
+
+      <div class="flex-1 overflow-auto p-6">
+        <div class="bg-white p-6 rounded-lg shadow-sm border max-w-2xl">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">Preferências do Usuário</h2>
+          <form class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Nome</label>
+              <input type="text" class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500" value="Carlos">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Email</label>
+              <input type="email" class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500" value="carlos@example.com">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Senha</label>
+              <input type="password" class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500">
+            </div>
+            <div class="flex items-center">
+              <input type="checkbox" id="notifEmail" class="h-4 w-4 text-teal-600 border-gray-300 rounded">
+              <label for="notifEmail" class="ml-2 text-sm text-gray-700">Receber notificações por e-mail</label>
+            </div>
+            <div class="flex items-center">
+              <input type="checkbox" id="notifWhats" class="h-4 w-4 text-teal-600 border-gray-300 rounded">
+              <label for="notifWhats" class="ml-2 text-sm text-gray-700">Receber notificações por WhatsApp</label>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Tema</label>
+              <select class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500">
+                <option>Claro</option>
+                <option>Escuro</option>
+              </select>
+            </div>
+            <button type="submit" class="w-full py-2 px-4 bg-teal-600 text-white rounded-lg hover:bg-teal-700">Salvar Alterações</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    VANTA.WAVES({ el:"#wave-bg", mouseControls:true, touchControls:true, minHeight:200, minWidth:200, scale:1, color:0x3b82f6 });
+    feather.replace();
+  </script>
+</body>
+</html>

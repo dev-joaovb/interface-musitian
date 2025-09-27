@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Membros - Harmony Maestro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar-item:hover .sidebar-icon {
+            transform: translateX(3px);
+        }
+        .wave-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+        }
+        .member-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .availability-badge {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Wave Background -->
+    <div id="wave-bg" class="wave-bg"></div>
+
+    <!-- Main Layout -->
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="hidden md:flex md:flex-shrink-0">
+            <div class="flex flex-col w-64 border-r border-gray-200 bg-white">
+                <div class="flex items-center justify-center h-16 px-4 border-b border-gray-200">
+                    <div class="flex items-center">
+                        <i data-feather="music" class="text-teal-600 w-6 h-6"></i>
+                        <span class="ml-2 text-xl font-bold text-gray-800">Harmony Maestro</span>
+                    </div>
+                </div>
+                <div class="flex flex-col flex-grow px-4 py-4 overflow-y-auto">
+                    <nav class="flex-1 space-y-2">
+                        <a href="index.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="home" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Dashboard
+                        </a>
+                        <a href="calendar.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="calendar" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Calendário
+                        </a>
+                        <a href="biblioteca.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="file-text" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Biblioteca
+                        </a>
+                        <a href="series.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="layers" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Séries de Ensaio
+                        </a>
+                        <a href="membros.html" class="flex items-center px-4 py-3 text-sm font-medium text-white rounded-lg bg-teal-600">
+                            <i data-feather="users" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Membros
+                        </a>
+                        <a href="notificacoes.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="bell" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Notificações
+                        </a>
+                        <a href="configuracoes.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i data-feather="settings" class="sidebar-icon w-4 h-4 mr-3 transition-transform"></i>
+                            Configurações
+                        </a>
+                    </nav>
+                    <div class="mt-auto">
+                        <div class="p-4 mt-4 bg-gray-100 rounded-lg">
+                            <div class="flex items-center">
+                                <img class="w-10 h-10 rounded-full" src="http://static.photos/people/200x200/1" alt="Carlos">
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">Carlos (Admin)</p>
+                                    <p class="text-xs text-gray-500">carlos@example.com</p>
+                                </div>
+                            </div>
+                            <button class="w-full mt-3 px-3 py-2 text-xs font-medium text-center text-white bg-teal-600 rounded-lg hover:bg-teal-700">
+                                Sair
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Mobile Header -->
+            <div class="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+                <div class="flex items-center">
+                    <button class="text-gray-500 focus:outline-none">
+                        <i data-feather="menu" class="w-6 h-6"></i>
+                    </button>
+                    <span class="ml-2 text-lg font-bold text-gray-800">Harmony Maestro</span>
+                </div>
+                <div class="flex items-center">
+                    <button class="text-gray-500 focus:outline-none">
+                        <i data-feather="bell" class="w-5 h-5"></i>
+                    </button>
+                    <img class="w-8 h-8 ml-4 rounded-full" src="http://static.photos/people/200x200/1" alt="Carlos">
+                </div>
+            </div>
+
+            <!-- Desktop Header -->
+            <div class="hidden md:flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white">
+                <div class="flex items-center">
+                    <div class="relative">
+                        <input type="text" placeholder="Pesquisar membro..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                        <i data-feather="search" class="absolute left-3 top-2.5 text-gray-400 w-4 h-4"></i>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative text-gray-500 focus:outline-none">
+                        <i data-feather="bell" class="w-5 h-5"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full"></span>
+                    </button>
+                    <div class="flex items-center">
+                        <img class="w-8 h-8 rounded-full" src="http://static.photos/people/200x200/1" alt="Carlos">
+                        <span class="ml-2 text-sm font-medium text-gray-700">Carlos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-auto p-4 md:p-6">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">Membros</h1>
+                        <p class="text-gray-600">Gerencie os membros do seu grupo musical</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="autoAssignBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                            <i data-feather="zap" class="w-4 h-4 mr-2"></i>
+                            Auto-assign
+                        </button>
+                        <button class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center">
+                            <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+                            Adicionar Membro
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Members Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                    <!-- Member Card 1 -->
+                    <div class="member-card bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300">
+                        <div class="flex items-center justify-between mb-4">
+                            <img class="w-16 h-16 rounded-full" src="http://static.photos/people/200x200/2" alt="João">
+                            <span class="availability-badge bg-green-400"></span>
+                        </div>
+                        <h3 class="font-semibold text-gray-800">João Alves</h3>
+                        <p class="text-sm text-gray-500 mb-2">Guitarra</p>
+                        <p class="text-xs text-gray-400 mb-4">joao@example.com</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Disponibilidade: 80%</span>
+                            <button class="text-teal-600 hover:text-teal-700">
+                                <i data-feather="edit" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Member Card 2 -->
+                    <div class="member-card bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300">
+                        <div class="flex items-center justify-between mb-4">
+                            <img class="w-16 h-16 rounded-full" src="http://static.photos/people/200x200/3" alt="Maria">
+                            <span class="availability-badge bg-yellow-400"></span>
+                        </div>
+                        <h3 class="font-semibold text-gray-800">Maria Santos</h3>
+                        <p class="text-sm text-gray-500 mb-2">Voz</p>
+                        <p class="text-xs text-gray-400 mb-4">maria@example.com</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Disponibilidade: 60%</span>
+                            <button class="text-teal-600 hover:text-teal-700">
+                                <i data-feather="edit" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Member Card 3 -->
+                    <div class="member-card bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300">
+                        <div class="flex items-center justify-between mb-4">
+                            <img class="w-16 h-16 rounded-full" src="http://static.photos/people/200x200/4" alt="Pedro">
+                            <span class="availability-badge bg-red-400"></span>
+                        </div>
+                        <h3 class="font-semibold text-gray-800">Pedro Costa</h3>
+                        <p class="text-sm text-gray-500 mb-2">Bateria</p>
+                        <p class="text-xs text-gray-400 mb-4">pedro@example.com</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Disponibilidade: 40%</span>
+                            <button class="text-teal-600 hover:text-teal-700">
+                                <i data-feather="edit" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Member Card 4 -->
+                    <div class="member-card bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300">
+                        <div class="flex items-center justify-between mb-4">
+                            <img class="w-16 h-16 rounded-full" src="http://static.photos/people/200x200/5" alt="Ana">
+                            <span class="availability-badge bg-green-400"></span>
+                        </div>
+                        <h3 class="font-semibold text-gray-800">Ana Lima</h3>
+                        <p class="text-sm text-gray-500 mb-2">Teclado</p>
+                        <p class="text-xs text-gray-400 mb-4">ana@example.com</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Disponibilidade: 90%</

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notificações - Harmony Maestro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .sidebar-item:hover .sidebar-icon { transform: translateX(3px); }
+    .wave-bg { position: absolute; top:0; left:0; width:100%; height:100%; z-index:-1; opacity:0.15; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Wave Background -->
+  <div id="wave-bg" class="wave-bg"></div>
+
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div class="hidden md:flex md:flex-shrink-0">
+      <div class="flex flex-col w-64 border-r border-gray-200 bg-white">
+        <div class="flex items-center justify-center h-16 px-4 border-b border-gray-200">
+          <i data-feather="music" class="text-teal-600 w-6 h-6"></i>
+          <span class="ml-2 text-xl font-bold text-gray-800">Harmony Maestro</span>
+        </div>
+        <div class="flex flex-col flex-grow px-4 py-4 overflow-y-auto">
+          <nav class="flex-1 space-y-2">
+            <a href="index.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+              <i data-feather="home" class="sidebar-icon w-4 h-4 mr-3"></i> Dashboard
+            </a>
+            <a href="calendar.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+              <i data-feather="calendar" class="sidebar-icon w-4 h-4 mr-3"></i> Calendário
+            </a>
+            <a href="biblioteca.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+              <i data-feather="file-text" class="sidebar-icon w-4 h-4 mr-3"></i> Biblioteca
+            </a>
+            <a href="series.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+              <i data-feather="layers" class="sidebar-icon w-4 h-4 mr-3"></i> Séries de Ensaio
+            </a>
+            <a href="membros.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+              <i data-feather="users" class="sidebar-icon w-4 h-4 mr-3"></i> Membros
+            </a>
+            <a href="notificacoes.html" class="flex items-center px-4 py-3 text-sm font-medium text-white rounded-lg bg-teal-600">
+              <i data-feather="bell" class="sidebar-icon w-4 h-4 mr-3"></i> Notificações
+            </a>
+            <a href="configuracoes.html" class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+              <i data-feather="settings" class="sidebar-icon w-4 h-4 mr-3"></i> Configurações
+            </a>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-col flex-1 overflow-hidden">
+      <div class="hidden md:flex items-center justify-between px-6 py-3 border-b bg-white">
+        <h1 class="text-xl font-bold text-gray-800">Notificações</h1>
+      </div>
+
+      <div class="flex-1 overflow-auto p-6">
+        <div class="space-y-4">
+          <div class="p-4 bg-white border rounded-lg shadow-sm hover:bg-gray-50">
+            <div class="flex items-start">
+              <i data-feather="bell" class="text-teal-600 w-5 h-5 mr-3"></i>
+              <div>
+                <p class="font-medium text-gray-800">Novo ensaio marcado</p>
+                <p class="text-sm text-gray-500">07/10/2025 - 19h | Sala A</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-4 bg-white border rounded-lg shadow-sm hover:bg-gray-50">
+            <div class="flex items-start">
+              <i data-feather="music" class="text-purple-600 w-5 h-5 mr-3"></i>
+              <div>
+                <p class="font-medium text-gray-800">Nova música adicionada: "Aurora"</p>
+                <p class="text-sm text-gray-500">05/10/2025</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-4 bg-white border rounded-lg shadow-sm hover:bg-gray-50">
+            <div class="flex items-start">
+              <i data-feather="users" class="text-blue-600 w-5 h-5 mr-3"></i>
+              <div>
+                <p class="font-medium text-gray-800">Você foi escalado para o próximo ensaio</p>
+                <p class="text-sm text-gray-500">14/10/2025</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    VANTA.WAVES({ el:"#wave-bg", mouseControls:true, touchControls:true, minHeight:200, minWidth:200, scale:1, color:0x3b82f6 });
+    feather.replace();
+  </script>
+</body>
+</html>
