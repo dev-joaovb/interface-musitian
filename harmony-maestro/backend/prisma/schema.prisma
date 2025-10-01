@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  name     String
+  email    String   @unique
+  password String
+  role     String   // admin, member
+  events   Event[]
+}
+
+model Song {
+  id        Int      @id @default(autoincrement())
+  title     String
+  artist    String?
+  fileUrl   String?
+  createdAt DateTime @default(now())
+  series   Series[] // relação com séries
+}
+
+model Series {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String?
+  songs       Song[]  // relação com músicas
+}
+
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  date        DateTime
+  location    String?
+  createdAt   DateTime @default(now())
+  users       User[]
+  notifications Notification[]
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  date      DateTime @default(now())
+  event     Event?   @relation(fields: [eventId], references: [id])
+  eventId   Int?
+}

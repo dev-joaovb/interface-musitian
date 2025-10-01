@@ -1,16 +1,20 @@
-const { Pool } = require("pg");
-require("dotenv").config();
+// src/db.js
+const { Pool } = require('pg');
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  console.warn('⚠️  DATABASE_URL não configurado. Utilizando fallback em memória (DB desativado).');
+  // stub simples que tem .query (retorna rows[])
+  module.exports = {
+    query: async (/* text, params */) => ({ rows: [] }),
+    end: async () => {},
+  };
+}
 
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
+  connectionString,
+  // ssl: { rejectUnauthorized: false }, // ajustar para production
 });
-
-pool.connect()
-  .then(() => console.log("📌 Conectado ao PostgreSQL"))
-  .catch(err => console.error("❌ Erro ao conectar ao PostgreSQL", err));
 
 module.exports = pool;

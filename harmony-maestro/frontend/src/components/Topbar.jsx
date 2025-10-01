@@ -1,5 +1,6 @@
 import React from "react";
 import { FiSearch, FiBell, FiMenu } from "react-icons/fi";
+import { Link } from "react-router-dom";
 
 export default function Topbar({ onMenuClick }) {
   return (
@@ -29,10 +30,13 @@ export default function Topbar({ onMenuClick }) {
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <button className="relative text-gray-500 focus:outline-none">
-            <FiBell className="w-5 h-5" />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full"></span>
-          </button>
+            <Link
+              to="/notificacoes"
+              className="relative text-gray-500 focus:outline-none"
+            >
+                <FiBell className="w-5 h-5" />
+                <span className="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full"></span>
+            </Link> 
           <div className="flex items-center">
             <img className="w-8 h-8 rounded-full" src="http://static.photos/people/200x200/1" alt="Carlos" />
             <span className="ml-2 text-sm font-medium text-gray-700">Carlos</span>

@@ -1,20 +1,13 @@
-const express = require("express");
+// src/routes/index.js
+const express = require('express');
 const router = express.Router();
-//const pool = require("../db");  Depois  configurar o banco
 
-// Teste de rota
-router.get("/", (req, res) => {
-  res.json({ message: "API do Harmony Maestro funcionando 🎵" });
-});
+router.use('/ping', (req, res) => res.json({ pong: true }));
 
-// // Teste de banco
-// router.get("/users", async (req, res) => {
-//   try {
-//     const result = await pool.query("SELECT NOW()");
-//     res.json({ db_time: result.rows[0] });
-//   } catch (err) {
-//     res.status(500).json({ error: "Erro no banco", details: err });
-//   }
-// });
+router.use('/members', require('./members'));
+router.use('/songs', require('./songs'));
+router.use('/series', require('./series'));
+router.use('/events', require('./events'));
+router.use('/notifications', require('./notifications'));
 
 module.exports = router;
