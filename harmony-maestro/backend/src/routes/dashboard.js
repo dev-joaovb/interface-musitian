@@ -5,7 +5,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // GET /api/dashboard
-router.get("/", async (req, res) => {
+router.get("/dashboard", async (req, res) => {
   try {
     // 📌 Estatísticas
     const nextEvent = await prisma.event.findFirst({

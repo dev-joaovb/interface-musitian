@@ -1,29 +1,41 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import {
   FiCalendar,
   FiUsers,
   FiFileText,
   FiChevronRight,
+  FiPlus,
+  FiUpload,
+  FiLayers,
+  FiUserPlus,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
 
-  useEffect(() => {
-    axios.get("http://localhost:4000/api/dashboard").then((res) => {
-      setData(res.data);
-    });
-  }, []);
+  // 🔹 Carregar dados do backend
+useEffect(() => {
+  fetch("http://localhost:4000/api/dashboard")
+    .then((res) => {
+      if (!res.ok) throw new Error("Erro ao carregar dashboard");
+      return res.json();
+    })
+    .then((json) => setData(json))
+    .catch((err) => console.error("Erro no fetch do Dashboard:", err));
+}, []);
+
 
   if (!data) return <p>Carregando...</p>;
 
   return (
     <div>
+      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-600">Visão geral dos seus ensaios e atividades</p>
+        <p className="text-gray-600">
+          Visão geral dos seus ensaios e atividades
+        </p>
       </div>
 
       {/* Stats */}
@@ -37,7 +49,9 @@ export default function Dashboard() {
               <p className="text-sm font-medium text-gray-500">Próximo Ensaio</p>
               <p className="text-xl font-semibold text-gray-800">
                 {data.stats.nextEvent
-                  ? new Date(data.stats.nextEvent.date).toLocaleDateString("pt-BR")
+                  ? new Date(data.stats.nextEvent.date).toLocaleDateString(
+                      "pt-BR"
+                    )
                   : "Nenhum agendado"}
               </p>
             </div>
@@ -78,11 +92,16 @@ export default function Dashboard() {
       {/* Próximos Ensaios */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-6">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">Próximos Ensaios</h2>
+          <h2 className="text-lg font-semibold text-gray-800">
+            Próximos Ensaios
+          </h2>
         </div>
         <div className="divide-y divide-gray-200">
           {data.upcomingEvents.map((event) => (
-            <div key={event.id} className="p-6 hover:bg-gray-50 transition-colors">
+            <div
+              key={event.id}
+              className="p-6 hover:bg-gray-50 transition-colors"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium text-gray-800">{event.title}</h3>
@@ -108,16 +127,15 @@ export default function Dashboard() {
           ))}
         </div>
 
-            <div className="px-6 py-3 border-t border-gray-200 text-center">
-                <Link
-                    to="/series"
-                    className="text-sm font-medium text-teal-600 hover:text-teal-700"
-                    >
-                    Ver todos os ensaios
-                </Link>
-            </div>
+        <div className="px-6 py-3 border-t border-gray-200 text-center">
+          <Link
+            to="/series"
+            className="text-sm font-medium text-teal-600 hover:text-teal-700"
+          >
+            Ver todos os ensaios
+          </Link>
         </div>
-      
+      </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -154,11 +172,12 @@ export default function Dashboard() {
         </Link>
       </div>
 
-
       {/* Atividades Recentes */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">Atividade Recente</h2>
+          <h2 className="text-lg font-semibold text-gray-800">
+            Atividade Recente
+          </h2>
         </div>
         <div className="divide-y divide-gray-200">
           {data.recentActivities.map((a) => (
@@ -170,7 +189,9 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-800">{a.message}</p>
+                  <p className="text-sm font-medium text-gray-800">
+                    {a.message}
+                  </p>
                   <p className="text-sm text-gray-500">
                     {new Date(a.createdAt).toLocaleDateString("pt-BR")}
                   </p>
