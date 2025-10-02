@@ -8,12 +8,34 @@ datasource db {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  role     String   // admin, member
-  events   Event[]
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  activityLogs ActivityLog[]
+}
+
+model Member {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  date        DateTime
+  location    String?
+  description String?
+  color       String?   @default("#3b82f6")
+  status      String    @default("pendente") // escalado, pendente, cancelado
+  seriesId    Int?
+  series      Series?   @relation(fields: [seriesId], references: [id])
+  createdAt   DateTime  @default(now())
 }
 
 model Song {
@@ -22,31 +44,31 @@ model Song {
   artist    String?
   fileUrl   String?
   createdAt DateTime @default(now())
-  series   Series[] // relação com séries
 }
 
 model Series {
-  id          Int     @id @default(autoincrement())
-  title       String
-  description String?
-  songs       Song[]  // relação com músicas
-}
-
-
-model Event {
-  id          Int      @id @default(autoincrement())
-  title       String
-  date        DateTime
-  location    String?
-  createdAt   DateTime @default(now())
-  users       User[]
-  notifications Notification[]
+  id        Int      @id @default(autoincrement())
+  title     String
+  startDate DateTime
+  endDate   DateTime
+  events    Event[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Notification {
   id        Int      @id @default(autoincrement())
+  title     String
   message   String
   date      DateTime @default(now())
-  event     Event?   @relation(fields: [eventId], references: [id])
-  eventId   Int?
+  createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id        Int      @id @default(autoincrement())
+  type      String   // "song_added", "member_joined", "event_created", etc
+  message   String
+  createdAt DateTime @default(now())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
 }

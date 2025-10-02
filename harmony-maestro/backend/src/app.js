@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 // rota saúde
-app.get('/', (req, res) => res.json({ ok: true, name: 'harmony-maestro-backend', env: process.env.NODE_ENV || 'dev' }));
+app.get('/', (req, res) => res.json({ ok: true, name: 'backend', env: process.env.NODE_ENV || 'dev' }));
 
 // montar API
 app.use('/api', apiRouter);
@@ -21,7 +21,7 @@ app.use('/api', apiRouter);
 // tratamento simples de erro
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ error: 'Internal Server Error' });
+  res.status(500).json({ error: 'Internal Server Error' }); 
 });
 
 module.exports = app;

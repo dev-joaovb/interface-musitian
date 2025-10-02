@@ -4,6 +4,9 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 
+import calendarRoutes from "./routes/calendar.js";
+import dashboardRoutes from "./routes/dashboard.js";
+
 dotenv.config();
 
 const app = express();
@@ -24,7 +27,14 @@ app.get("/users", async (req, res) => {
   res.json(users);
 });
 
+// Rotas
+app.use("/api", calendarRoutes);
+
+app.use("/api", dashboardRoutes);
+
+
+// Iniciar servidor
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Servidor backend rodando na porta ${PORT}`);
-});
+}); 
