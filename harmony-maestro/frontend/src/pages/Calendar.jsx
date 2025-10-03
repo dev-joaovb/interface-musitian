@@ -74,58 +74,86 @@ export default function Calendar() {
     setIsModalOpen(true);
   };
 
-  // Salvar evento
-  const saveEvent = async () => {
+    // Salvar evento
+    const saveEvent = async () => {
     if (!form.title || !form.start) {
-      alert("Preencha título e data/hora.");
-      return;
+        alert("Preencha título e data/hora.");
+        return;
     }
 
     const payload = {
-      title: form.title,
-      date: form.start,
-      location: form.location,
-      description: form.description,
-      color: form.color,
+        title: form.title,
+        date: form.start,
+        location: form.location,
+        description: form.description,
+        color: form.color,
     };
 
     try {
-      if (currentEventId) {
+        if (currentEventId) {
+        // Atualizar evento existente
         const res = await axios.put(
-          `http://localhost:4000/api/calendar/${currentEventId}`,
-          payload
+            `http://localhost:4000/api/calendar/${currentEventId}`,
+            payload
         );
-        setEvents((prev) =>
-          prev.map((e) => (e.id === currentEventId ? res.data : e))
-        );
-      } else {
-        const res = await axios.post(
-          "http://localhost:4000/api/calendar",
-          payload
-        );
-        setEvents((prev) => [...prev, res.data]);
-      }
-      setIsModalOpen(false);
-    } catch (err) {
-      console.error("Erro ao salvar evento:", err);
-    }
-  };
 
-  // Excluir evento
-  const deleteEvent = async () => {
+        setEvents((prev) =>
+            prev.map((e) => (e.id === currentEventId ? res.data : e))
+        );
+        } else {
+        // Criar novo evento
+        const res = await axios.post(
+            "http://localhost:4000/api/calendar",
+            payload
+        );
+
+        setEvents((prev) => [...prev, res.data]);
+        }
+
+        // Resetar formulário e fechar modal
+        setForm({
+        title: "",
+        start: "",
+        location: "",
+        description: "",
+        color: "#3b82f6",
+        });
+        setCurrentEventId(null);
+        setIsModalOpen(false);
+        window.location.reload();
+    } catch (err) {
+        console.error("Erro ao salvar evento:", err);
+    }
+    };
+
+    // Excluir evento
+    const deleteEvent = async () => {
     if (!currentEventId) return;
     if (!window.confirm("Excluir este evento?")) return;
 
     try {
-      await axios.delete(
+        await axios.delete(
         `http://localhost:4000/api/calendar/${currentEventId}`
-      );
-      setEvents((prev) => prev.filter((e) => e.id !== currentEventId));
-      setIsModalOpen(false);
+        );
+
+        setEvents((prev) => prev.filter((e) => e.id !== currentEventId));
+
+        // Resetar form e fechar modal
+        setForm({
+        title: "",
+        start: "",
+        location: "",
+        description: "",
+        color: "#3b82f6",
+        });
+        setCurrentEventId(null);
+        setIsModalOpen(false);
+        window.location.reload();
     } catch (err) {
-      console.error("Erro ao excluir evento:", err);
+        console.error("Erro ao excluir evento:", err);
     }
-  };
+    };
+
 
   // Handlers
   const handleDateClick = (arg) => openModal("new", arg.date);

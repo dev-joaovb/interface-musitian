@@ -3,14 +3,24 @@ import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import calendarRoutes from "./routes/calendar.js";
 import dashboardRoutes from "./routes/dashboard.js";
+import bibliotecaRoutes from "./routes/biblioteca.js";
 
 dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
+
+// Config para servir uploads
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Expor pasta uploads
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use(cors());
 app.use(express.json());
@@ -31,6 +41,8 @@ app.get("/users", async (req, res) => {
 app.use("/api", calendarRoutes);
 
 app.use("/api", dashboardRoutes);
+
+app.use("/api", bibliotecaRoutes);
 
 
 // Iniciar servidor
