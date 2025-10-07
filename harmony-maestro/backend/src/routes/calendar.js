@@ -56,23 +56,63 @@ router.put("/calendar/:id", async (req, res) => {
   }
 });
 
-// Deletar evento
+// 🗓️ Deletar evento + deletar todas as séries órfãs após a remoção do evento
 router.delete("/calendar/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const eventId = Number(id);
 
-    await prisma.event.delete({
-      where: { id: Number(id) },
+    // 1) Verifica se o evento existe
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
     });
 
-    res.json({ message: "Evento deletado com sucesso" });
+    if (!event) {
+      return res.status(404).json({ error: "Evento não encontrado" });
+    }
+
+    // 2) Deleta o evento
+    await prisma.event.delete({
+      where: { id: eventId },
+    });
+
+    // 3) Busca todas as séries que NÃO possuem nenhum evento (órfãs)
+    const orphanSeries = await prisma.series.findMany({
+      where: {
+        events: {
+          none: {}, // nenhuma relação em events
+        },
+      },
+      select: { id: true },
+    });
+
+    const orphanIds = orphanSeries.map((s) => s.id);
+
+    // 4) Deleta todas as séries órfãs (se houver)
+    let deletedSeriesCount = 0;
+    if (orphanIds.length > 0) {
+      const result = await prisma.series.deleteMany({
+        where: { id: { in: orphanIds } },
+      });
+      deletedSeriesCount = result.count ?? 0;
+    }
+
+    return res.json({
+      message:
+        "Evento deletado com sucesso. Séries órfãs (sem eventos) também foram removidas.",
+      deletedEventId: eventId,
+      deletedSeriesIds: orphanIds,
+      deletedSeriesCount,
+    });
   } catch (err) {
-    console.error("Erro ao deletar evento:", err);
+    console.error("Erro ao deletar evento e séries relacionadas:", err);
     if (err.code === "P2025") {
       return res.status(404).json({ error: "Evento não encontrado" });
     }
-    res.status(500).json({ error: "Erro ao deletar evento" });
+    return res.status(500).json({ error: "Erro ao deletar evento e séries" });
   }
 });
+
+
 
 export default router;

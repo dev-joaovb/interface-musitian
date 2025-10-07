@@ -34,7 +34,7 @@ model Event {
   color       String?   @default("#3b82f6")
   status      String    @default("pendente") // escalado, pendente, cancelado
   seriesId    Int?
-  series      Series?   @relation(fields: [seriesId], references: [id])
+  series      Series?   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
 }
 
@@ -48,9 +48,9 @@ model Song {
 
 model Series {
   id        Int      @id @default(autoincrement())
-  title     String
+  title     String?
   startDate DateTime
-  endDate   DateTime
+  hour      String?
   events    Event[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

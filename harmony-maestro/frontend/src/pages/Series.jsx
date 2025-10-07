@@ -1,212 +1,284 @@
-// src/pages/Series.jsx
-import React, { useState, useEffect } from "react";
-import { Calendar, Clock, Users, Music, Edit, Zap, Plus } from "lucide-react";
+import React, { useEffect, useState } from "react";
 
-const Series = ({ upcomingEvents = [] }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const Series = () => {
+  const [events, setEvents] = useState([]);
+  const [startDate, setStartDate] = useState("");
+  const [hour, setHour] = useState("");
+  const [message, setMessage] = useState("");
+  const [seriesList, setSeriesList] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [editingStartDate, setEditingStartDate] = useState("");
+  const [editingHour, setEditingHour] = useState("");
 
-  // Fechar modal com tecla ESC
+  // 📦 Carregar eventos do backend (somente futuros)
   useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === "Escape") setIsModalOpen(false);
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch("http://localhost:4000/api/calendar");
+        const data = await res.json();
+        const today = new Date();
+        const upcoming = data.filter((e) => new Date(e.date) >= today);
+        const nextEvent = upcoming.sort(
+          (a, b) => new Date(a.date) - new Date(b.date)
+        )[0];
+        setEvents(nextEvent ? [nextEvent] : []);
+      } catch (err) {
+        console.error("Erro ao carregar eventos:", err);
+      }
     };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
+    fetchEvents();
   }, []);
 
+// 📦 Carregar séries já registradas
+useEffect(() => {
+  const fetchSeries = async () => {
+    try {
+      const res = await fetch("http://localhost:4000/api/series");
+      const data = await res.json();
+
+      // ✅ Ordenar do mais antigo para o mais recente
+      const sortedData = data.sort(
+        (a, b) => new Date(a.startDate) - new Date(b.startDate)
+      );
+
+      setSeriesList(sortedData);
+    } catch (err) {
+      console.error("Erro ao carregar séries:", err);
+    }
+  };
+  fetchSeries();
+}, []);
+
+// 📦 Registrar série
+const handleSaveSeries = async (event) => {
+  if (!event || !startDate || !hour) {
+    alert("Preencha todos os campos!");
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:4000/api/series", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: `Série - ${event.title}`,
+        startDate,
+        hour,
+        eventId: event.id,
+      }),
+    });
+
+    if (!res.ok) throw new Error("Erro ao salvar série");
+
+    const newSeries = await res.json();
+    setMessage(`✅ Série "${newSeries.title}" registrada com sucesso!`);
+
+    // ✅ Adiciona a nova série e mantém a ordem crescente (mais antigo → mais recente)
+    setSeriesList((prev) =>
+      [...prev, newSeries].sort(
+        (a, b) => new Date(a.startDate) - new Date(b.startDate)
+      )
+    );
+
+    setStartDate("");
+    setHour("");
+  } catch (err) {
+    console.error(err);
+    setMessage("Erro ao registrar série");
+  }
+};
+
+
+  // 📦 Atualizar série (edição inline)
+  const handleUpdateSeries = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/series/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startDate: editingStartDate,
+          hour: editingHour,
+        }),
+      });
+      const updated = await res.json();
+      setSeriesList((prev) =>
+        prev.map((s) => (s.id === updated.id ? updated : s))
+      );
+      setEditingId(null);
+      setMessage("✅ Série atualizada com sucesso!");
+    } catch (err) {
+      console.error(err);
+      setMessage("Erro ao atualizar série");
+    }
+  };
+
+  // 📦 Deletar série
+  const handleDeleteSeries = async (id) => {
+    if (!window.confirm("Deseja realmente deletar esta série?")) return;
+    try {
+      await fetch(`http://localhost:4000/api/series/${id}`, { method: "DELETE" });
+      setSeriesList((prev) => prev.filter((s) => s.id !== id));
+      setMessage("✅ Série deletada com sucesso!");
+    } catch (err) {
+      console.error(err);
+      setMessage("Erro ao deletar série");
+    }
+  };
+
   return (
-    <div className="flex-1 overflow-auto p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Séries de Ensaio</h1>
-          <p className="text-gray-600">
-            Gerencie suas séries de ensaios programados
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-          >
-            <Zap className="w-4 h-4 mr-2" />
-            Auto-assign
-          </button>
-          <button className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center">
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Série
-          </button>
-        </div>
-      </div>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-gray-800 mb-4">
+        Séries de Ensaios
+      </h1>
 
-      {/* Lista de Séries */}
-      <div className="space-y-4 mb-8">
-        {/* Card exemplo fixo */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Concerto de Dezembro 2025
-            </h3>
-            <span className="w-3 h-3 rounded-full bg-green-400"></span>
-          </div>
+      {/* 📅 Próximos eventos */}
+      {events.length > 0 ? (
+        events.map((event) => {
+          const daysLeft = Math.ceil(
+            (new Date(event.date) - new Date()) / (1000 * 60 * 60 * 24)
+          );
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Data Início</p>
-              <p className="text-gray-800">01/12/2025</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Data Fim</p>
-              <p className="text-gray-800">15/12/2025</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Ensaio</p>
-              <p className="text-gray-800">Segundas e Quartas, 19h</p>
-            </div>
-          </div>
-
-          {/* Datas */}
-          <div className="border-t border-gray-200 pt-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">
-              Datas dos Ensaios
-            </h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded text-center">
-                01/12
-              </span>
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded text-center">
-                03/12
-              </span>
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded text-center">
-                08/12
-              </span>
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded text-center">
-                10/12
-              </span>
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded text-center">
-                15/12
-              </span>
-              <span className="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded text-center">
-                +2
-              </span>
-            </div>
-          </div>
-
-          {/* Rodapé */}
-          <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">12 membros escalados</span>
-              <span className="text-sm text-gray-600">5 músicas</span>
-            </div>
-            <button className="text-teal-600 hover:text-teal-700 flex items-center">
-              <Edit className="w-4 h-4 mr-1" />
-              Editar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Próximos eventos do calendário */}
-      {upcomingEvents.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Próximos Ensaios do Calendário
-          </h2>
-          <div className="space-y-3">
-            {upcomingEvents.slice(0, 5).map((event, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-100 shadow-sm"
-              >
+          return (
+            <div
+              key={event.id}
+              className="bg-white p-4 rounded-lg shadow-md border border-gray-100 mb-6"
+            >
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-800">{event.title}</p>
+                  <h3 className="font-semibold text-gray-800">{event.title}</h3>
                   <p className="text-sm text-gray-500">
-                    {new Date(event.start).toLocaleDateString("pt-BR")}{" "}
-                    {event.start.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {new Date(event.date).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
                 <span className="text-xs px-2 py-1 bg-teal-100 text-teal-700 rounded">
-                  Calendário
+                  Faltam {daysLeft} dias
                 </span>
               </div>
-            ))}
-          </div>
+
+              {/* 📆 Registrar Série */}
+              <div className="mt-4 border-t border-gray-200 pt-4">
+                <h4 className="text-gray-700 font-medium mb-2">
+                  Registrar Série de Ensaios
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Início dos Ensaios
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Hora do Ensaio
+                    </label>
+                    <input
+                      type="time"
+                      value={hour}
+                      onChange={(e) => setHour(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                  <button
+                    onClick={() => handleSaveSeries(event)}
+                    className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition"
+                  >
+                    Salvar Série
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        <p className="text-gray-500">Nenhum evento futuro encontrado.</p>
+      )}
+
+      {/* 💾 Mensagem de sucesso */}
+      {message && (
+        <div className="mt-4 p-3 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg text-sm">
+          {message}
         </div>
       )}
 
-      {/* Modal Auto-Assign */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Auto-assign de Membros
-              </h3>
-            </div>
-            <div className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Selecionar Série
-                </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                  <option>Concerto de Dezembro 2025</option>
-                  <option>Festival de Verão 2026</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Regra de Descanso
-                </label>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600">
-                    Membros terão pelo menos 1 dia de descanso entre ensaios
-                    consecutivos. A escala priorizará membros com menor número
-                    de ensaios recentes.
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pré-visualização
-                </label>
-                <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">
-                        01/12 - Ensaio 1
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        8 membros escalados
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">
-                        03/12 - Ensaio 2
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        8 membros escalados
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700"
+      {/* 📋 Lista de séries registradas */}
+      {seriesList.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-gray-800 mb-3">
+            Séries Registradas
+          </h2>
+          <div className="space-y-3">
+            {seriesList.map((serie) => (
+              <div
+                key={serie.id}
+                className="p-3 bg-white rounded-lg border border-gray-100 shadow-sm flex justify-between items-center"
               >
-                Cancelar
-              </button>
-              <button className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white">
-                Confirmar
-              </button>
-            </div>
+                <div>
+                  <p className="font-medium text-gray-800">{serie.title}</p>
+
+                  {editingId === serie.id ? (
+                    <div className="flex gap-2 mt-1">
+                      <input
+                        type="date"
+                        value={editingStartDate}
+                        onChange={(e) => setEditingStartDate(e.target.value)}
+                        className="border border-gray-300 rounded px-2 py-1"
+                      />
+                      <input
+                        type="time"
+                        value={editingHour}
+                        onChange={(e) => setEditingHour(e.target.value)}
+                        className="border border-gray-300 rounded px-2 py-1"
+                      />
+                      <button
+                        onClick={() => handleUpdateSeries(serie.id)}
+                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-1">
+                      {new Date(serie.startDate).toLocaleDateString("pt-BR")} às{" "}
+                      {serie.hour}
+                    </p>
+                  )}
+                </div>
+
+                {editingId !== serie.id && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingId(serie.id);
+                        setEditingStartDate(
+                          new Date(serie.startDate).toISOString().split("T")[0]
+                        );
+                        setEditingHour(serie.hour);
+                      }}
+                      className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSeries(serie.id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                    >
+                      Deletar
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}

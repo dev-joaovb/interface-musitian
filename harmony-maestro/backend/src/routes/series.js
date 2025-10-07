@@ -4,72 +4,115 @@ import { PrismaClient } from "@prisma/client";
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Buscar todas as séries
-router.get("/", async (req, res) => {
+// 📌 Listar todas as séries
+router.get("/series", async (req, res) => {
   try {
     const series = await prisma.series.findMany({
-      include: { songs: true } // Exemplo: série pode estar ligada a músicas
+      include: { events: true },
+      orderBy: { createdAt: "desc" },
     });
     res.json(series);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error("Erro ao listar séries:", err);
+    res.status(500).json({ error: "Erro ao listar séries" });
   }
 });
 
-// Criar série
-router.post("/", async (req, res) => {
+// 📌 Criar nova série (vinculada a um evento)
+router.post("/series", async (req, res) => {
   try {
-    const { title, description, songsIds } = req.body;
+    const { eventId, startDate, hour } = req.body;
+
+    const event = await prisma.event.findUnique({
+      where: { id: Number(eventId) },
+    });
+
+    if (!event) return res.status(404).json({ error: "Evento não encontrado" });
+
+    const seriesDate = new Date(`${startDate}T00:00:00-03:00`);
+    const eventDate = new Date(event.date);
+
+    // ❌ Impede cadastro de série após o evento
+    if (seriesDate > eventDate) {
+      return res.status(400).json({
+        error: "Não é possível registrar um ensaio após a data do evento.",
+      });
+    }
 
     const series = await prisma.series.create({
       data: {
-        title,
-        description,
-        songs: songsIds
-          ? { connect: songsIds.map((id) => ({ id })) }
-          : undefined
+        title: `Série de Ensaios - ${event.title}`,
+        startDate: seriesDate,
+        hour,
+        events: { connect: { id: Number(eventId) } },
       },
-      include: { songs: true }
     });
 
     res.json(series);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error("Erro ao criar série:", err);
+    res.status(500).json({ error: "Erro ao criar série" });
   }
 });
 
-// Atualizar série
-router.put("/:id", async (req, res) => {
+// 📌 Atualizar série
+router.put("/series/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, songsIds } = req.body;
+    const { startDate, hour } = req.body;
 
-    const series = await prisma.series.update({
-      where: { id: parseInt(id) },
+    // Busca a série existente para obter o evento vinculado
+    const existingSeries = await prisma.series.findUnique({
+      where: { id: Number(id) },
+      include: { events: true },
+    });
+
+    if (!existingSeries) {
+      return res.status(404).json({ error: "Série não encontrada" });
+    }
+
+    // Verifica se há evento vinculado e valida a data
+    if (existingSeries.events.length > 0 && startDate) {
+      const eventDate = new Date(existingSeries.events[0].date);
+      const newSeriesDate = new Date(`${startDate}T00:00:00-03:00`);
+
+      if (newSeriesDate > eventDate) {
+        return res.status(400).json({
+          error: "A data do ensaio não pode ser posterior à data do evento vinculado.",
+        });
+      }
+    }
+
+    const updated = await prisma.series.update({
+      where: { id: Number(id) },
       data: {
-        title,
-        description,
-        songs: songsIds
-          ? { set: songsIds.map((id) => ({ id })) }
-          : undefined
+        startDate: startDate
+          ? new Date(`${startDate}T00:00:00-03:00`)
+          : undefined,
+        hour: hour || undefined,
       },
-      include: { songs: true }
     });
 
-    res.json(series);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json(updated);
+  } catch (err) {
+    console.error("Erro ao atualizar série:", err);
+    res.status(500).json({ error: "Erro ao atualizar série" });
   }
 });
 
-// Deletar série
-router.delete("/:id", async (req, res) => {
+// 📌 Deletar série
+router.delete("/series/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.series.delete({ where: { id: parseInt(id) } });
-    res.json({ message: "Série removida com sucesso!" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+
+    await prisma.series.delete({
+      where: { id: Number(id) },
+    });
+
+    res.json({ message: "Série deletada com sucesso" });
+  } catch (err) {
+    console.error("Erro ao deletar série:", err);
+    res.status(500).json({ error: "Erro ao deletar série" });
   }
 });
 

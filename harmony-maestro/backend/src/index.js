@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 import calendarRoutes from "./routes/calendar.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import bibliotecaRoutes from "./routes/biblioteca.js";
+import seriesRoutes from "./routes/series.js";
 
 dotenv.config();
 
@@ -43,6 +44,8 @@ app.use("/api", calendarRoutes);
 app.use("/api", dashboardRoutes);
 
 app.use("/api", bibliotecaRoutes);
+
+app.use("/api", seriesRoutes);
 
 
 // Iniciar servidor
