@@ -8,12 +8,16 @@ import Series from "./pages/Series";
 import Membros from "./pages/Membros";
 import Notificacoes from "./pages/Notificacoes";
 import Configuracoes from "./pages/Configuracoes";
+import Login  from "./pages/Login";
+import Register from "./pages/Register";
 
 export default function App() {
   return (
     <Router>
       <MainLayout>
         <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/biblioteca" element={<Biblioteca />} />

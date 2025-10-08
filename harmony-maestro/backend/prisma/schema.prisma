@@ -8,21 +8,29 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  activityLogs ActivityLog[]
+  id              Int      @id @default(autoincrement())
+  name            String
+  email           String   @unique
+  password        String
+  role            String   @default("user") // "admin" | "user"
+  invites         Invite[] @relation("UserInvites")
+  receivedInvites Invite[] @relation("UserReceivedInvites")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  activityLogs    ActivityLog[]
 }
 
-model Member {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
+model Invite {
+  id           Int      @id @default(autoincrement())
+  inviterId    Int
+  inviteeId    Int?
+  inviteeEmail String
+  status       String   @default("pending") // "pending" | "accepted" | "rejected"
   active    Boolean  @default(true)
-  createdAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  inviter User  @relation("UserInvites", fields: [inviterId], references: [id])
+  invitee User? @relation("UserReceivedInvites", fields: [inviteeId], references: [id])
 }
 
 model Event {
@@ -31,11 +39,11 @@ model Event {
   date        DateTime
   location    String?
   description String?
-  color       String?   @default("#3b82f6")
-  status      String    @default("pendente") // escalado, pendente, cancelado
+  color       String?  @default("#3b82f6")
+  status      String   @default("pendente") // escalado, pendente, cancelado
   seriesId    Int?
-  series      Series?   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
+  series      Series?  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 }
 
 model Song {

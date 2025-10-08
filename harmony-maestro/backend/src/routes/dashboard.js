@@ -13,7 +13,7 @@ router.get("/dashboard", async (req, res) => {
       orderBy: { date: "asc" }
     });
 
-    const activeMembers = await prisma.member.count({
+    const activeMembers = await prisma.invite.count({
       where: { active: true }
     });
 
