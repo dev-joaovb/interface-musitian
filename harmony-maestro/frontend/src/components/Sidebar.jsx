@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   FiMusic,
   FiHome,
@@ -9,10 +9,20 @@ import {
   FiUsers,
   FiBell,
   FiSettings,
+  FiLogOut,
 } from "react-icons/fi";
 
 export default function Sidebar({ mobile = false, onClose }) {
-  // se mobile=true, devolvemos um painel posicionado (fixed) para overlay
+  const navigate = useNavigate();
+
+  const user = JSON.parse(localStorage.getItem("user")) || { name: "Usuário", email: "sememail@exemplo.com" };
+
+  const handleLogout = () => {
+    localStorage.removeItem("userToken");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
   const classes = mobile
     ? "md:hidden w-64 h-full bg-white border-r border-gray-200 fixed left-0 top-0"
     : "hidden md:flex";
@@ -61,14 +71,21 @@ export default function Sidebar({ mobile = false, onClose }) {
           <div className="mt-auto">
             <div className="p-4 mt-4 bg-gray-100 rounded-lg">
               <div className="flex items-center">
-                <img className="w-10 h-10 rounded-full" src="http://static.photos/people/200x200/1" alt="Carlos" />
+                <img
+                  className="w-10 h-10 rounded-full"
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=14b8a6&color=fff`}
+                  alt={user.name}
+                />
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">Carlos (Admin)</p>
-                  <p className="text-xs text-gray-500">carlos@example.com</p>
+                  <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                  <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
               </div>
-              <button className="w-full mt-3 px-3 py-2 text-xs font-medium text-center text-white bg-teal-600 rounded-lg hover:bg-teal-700">
-                Sair
+              <button
+                onClick={handleLogout}
+                className="w-full mt-3 px-3 py-2 text-xs font-medium text-center text-white bg-teal-600 rounded-lg hover:bg-teal-700 flex items-center justify-center gap-2"
+              >
+                <FiLogOut className="w-4 h-4" /> Sair
               </button>
             </div>
           </div>
@@ -76,7 +93,9 @@ export default function Sidebar({ mobile = false, onClose }) {
       </div>
 
       {mobile && onClose ? (
-        <button className="absolute top-3 right-3 text-gray-600" onClick={onClose}>✕</button>
+        <button className="absolute top-3 right-3 text-gray-600" onClick={onClose}>
+          ✕
+        </button>
       ) : null}
     </aside>
   );

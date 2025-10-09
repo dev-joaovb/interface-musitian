@@ -1,5 +1,5 @@
 // src/pages/Login.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { LogIn } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -8,9 +8,14 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
 
-  const handleChange = (e) => {
+  useEffect(() => {
+    // Se já estiver logado, redireciona direto para o painel
+    const token = localStorage.getItem("userToken");
+    if (token) navigate("/");
+  }, [navigate]);
+
+  const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,22 +31,35 @@ const Login = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao fazer login");
 
-      localStorage.setItem("token", data.token);
+      // Salva o token e usuário
+      localStorage.setItem("userToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      navigate("/membros");
+
+      // Redireciona
+      navigate("/");
     } catch (err) {
       setMessage(err.message);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md border border-gray-100">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">Bem-vindo de volta</h1>
-        <p className="text-gray-600 mb-6 text-center">Acesse sua conta para continuar</p>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">
+          Bem-vindo de volta
+        </h1>
+        <p className="text-gray-600 mb-6 text-center">
+          Acesse sua conta para continuar
+        </p>
 
         {message && (
-          <div className="mb-4 text-sm text-red-500 text-center">{message}</div>
+          <div
+            className={`mb-4 text-sm text-center ${
+              message.includes("Erro") ? "text-red-500" : "text-teal-600"
+            }`}
+          >
+            {message}
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">

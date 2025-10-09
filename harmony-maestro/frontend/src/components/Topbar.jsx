@@ -3,6 +3,8 @@ import { FiSearch, FiBell, FiMenu } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 export default function Topbar({ onMenuClick }) {
+  const user = JSON.parse(localStorage.getItem("user")) || { name: "Usuário" };
+
   return (
     <>
       {/* Mobile header */}
@@ -17,7 +19,11 @@ export default function Topbar({ onMenuClick }) {
           <button className="text-gray-500 focus:outline-none">
             <FiBell className="w-5 h-5" />
           </button>
-          <img className="w-8 h-8 ml-4 rounded-full" src="http://static.photos/people/200x200/1" alt="Carlos" />
+          <img
+            className="w-8 h-8 ml-4 rounded-full"
+            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=14b8a6&color=fff`}
+            alt={user.name}
+          />
         </div>
       </div>
 
@@ -25,21 +31,26 @@ export default function Topbar({ onMenuClick }) {
       <div className="hidden md:flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white">
         <div className="flex items-center">
           <div className="relative">
-            <input type="text" placeholder="Pesquisar..." className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            <input
+              type="text"
+              placeholder="Pesquisar..."
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
             <FiSearch className="absolute left-3 top-2.5 text-gray-400 w-4 h-4" />
           </div>
         </div>
         <div className="flex items-center space-x-4">
-            <Link
-              to="/notificacoes"
-              className="relative text-gray-500 focus:outline-none"
-            >
-                <FiBell className="w-5 h-5" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full"></span>
-            </Link> 
+          <Link to="/notificacoes" className="relative text-gray-500 focus:outline-none">
+            <FiBell className="w-5 h-5" />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full"></span>
+          </Link>
           <div className="flex items-center">
-            <img className="w-8 h-8 rounded-full" src="http://static.photos/people/200x200/1" alt="Carlos" />
-            <span className="ml-2 text-sm font-medium text-gray-700">Carlos</span>
+            <img
+              className="w-8 h-8 rounded-full"
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=14b8a6&color=fff`}
+              alt={user.name}
+            />
+            <span className="ml-2 text-sm font-medium text-gray-700">{user.name}</span>
           </div>
         </div>
       </div>

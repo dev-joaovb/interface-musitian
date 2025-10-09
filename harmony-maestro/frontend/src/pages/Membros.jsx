@@ -12,7 +12,7 @@ const Membros = () => {
 
   // Carrega o usuário logado e verifica token
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("userToken");
     const userData = localStorage.getItem("user");
     if (!token || !userData) {
       navigate("/login");
@@ -25,7 +25,7 @@ const Membros = () => {
   // Buscar membros do backend
   const fetchMembros = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("userToken");
       const res = await fetch("http://localhost:4000/api/users", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -42,7 +42,7 @@ const Membros = () => {
   // Alterar role (admin/user)
   const toggleRole = async (id, currentRole) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("userToken");
       const newRole = currentRole === "admin" ? "user" : "admin";
       const res = await fetch(`http://localhost:4000/api/users/${id}/role`, {
         method: "PATCH",
@@ -68,7 +68,7 @@ const Membros = () => {
   const deleteMember = async (id) => {
     if (!window.confirm("Tem certeza que deseja remover este membro?")) return;
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("userToken");
       const res = await fetch(`http://localhost:4000/api/users/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },

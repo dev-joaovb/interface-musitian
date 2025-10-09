@@ -12,6 +12,7 @@ import bibliotecaRoutes from "./routes/biblioteca.js";
 import seriesRoutes from "./routes/series.js";
 import registerRoutes from "./routes/register.js";
 import loginRoutes from "./routes/login.js";
+import usersRoutes from "./routes/users.js";
 
 dotenv.config();
 
@@ -52,6 +53,8 @@ app.use("/api", seriesRoutes);
 app.use("/api", registerRoutes);
 
 app.use("/api", loginRoutes);
+
+app.use("/api", usersRoutes);
 
 
 // Iniciar servidor

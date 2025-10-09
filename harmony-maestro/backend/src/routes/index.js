@@ -10,7 +10,7 @@ router.use('/biblioteca', require('./biblioteca'))
 router.use('/dashboard', require('./dashboard'));
 router.use('/calendar', require('./calendar'));
 router.use('/members', require('./members'));
-router.use('/songs', require('./songs'));
+router.use('/users', require('./users'));
 router.use('/series', require('./series'));
 router.use('/events', require('./events'));
 router.use('/notifications', require('./notifications'));

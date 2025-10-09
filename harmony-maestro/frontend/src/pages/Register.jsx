@@ -1,5 +1,5 @@
 // src/pages/Register.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UserPlus } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -12,9 +12,13 @@ const Register = () => {
   });
   const [message, setMessage] = useState("");
 
-  const handleChange = (e) => {
+  useEffect(() => {
+    const token = localStorage.getItem("userToken");
+    if (token) navigate("/");
+  }, [navigate]);
+
+  const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,21 +34,35 @@ const Register = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao registrar usuário");
 
+      // (Opcional) login automático após cadastro:
+      localStorage.setItem("userToken", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
       setMessage("✅ Cadastro realizado com sucesso!");
-      setTimeout(() => navigate("/login"), 1500);
+      setTimeout(() => navigate("/"), 1500);
     } catch (err) {
       setMessage(err.message);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md border border-gray-100">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">Crie sua conta</h1>
-        <p className="text-gray-600 mb-6 text-center">Participe do grupo e gerencie seus eventos</p>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">
+          Crie sua conta
+        </h1>
+        <p className="text-gray-600 mb-6 text-center">
+          Participe do grupo e gerencie seus eventos
+        </p>
 
         {message && (
-          <div className="mb-4 text-sm text-teal-600 text-center">{message}</div>
+          <div
+            className={`mb-4 text-sm text-center ${
+              message.includes("Erro") ? "text-red-500" : "text-teal-600"
+            }`}
+          >
+            {message}
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
