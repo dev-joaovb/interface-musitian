@@ -12,7 +12,7 @@ router.use('/calendar', require('./calendar'));
 router.use('/members', require('./members'));
 router.use('/users', require('./users'));
 router.use('/series', require('./series'));
-router.use('/events', require('./events'));
+router.use('/inviteRoutes', require('./inviteRoutes'));
 router.use('/notifications', require('./notifications'));
 
 module.exports = router;

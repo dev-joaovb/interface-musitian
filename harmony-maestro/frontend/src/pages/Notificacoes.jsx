@@ -1,69 +1,177 @@
 // src/pages/Notificacoes.jsx
-import React, { useState } from "react";
-import { Bell, Music, Users } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Bell, Loader2, Check, X } from "lucide-react";
 
 const Notificacoes = () => {
-  // Mock notifications (depois será substituído por API)
-  const [notificacoes, setNotificacoes] = useState([
-    {
-      id: 1,
-      titulo: "Novo ensaio marcado",
-      descricao: "07/10/2025 - 19h | Sala A",
-      tipo: "ensaio",
-      data: "07/10/2025",
-    },
-    {
-      id: 2,
-      titulo: 'Nova música adicionada: "Aurora"',
-      descricao: "05/10/2025",
-      tipo: "musica",
-      data: "05/10/2025",
-    },
-    {
-      id: 3,
-      titulo: "Você foi escalado para o próximo ensaio",
-      descricao: "14/10/2025",
-      tipo: "escala",
-      data: "14/10/2025",
-    },
-  ]);
+  const [notificacoes, setNotificacoes] = useState([]);
+  const [convites, setConvites] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user") || "{}"));
+  const token = localStorage.getItem("userToken");
 
-  const getIcon = (tipo) => {
-    switch (tipo) {
-      case "ensaio":
-        return <Bell className="text-teal-600 w-5 h-5 mr-3" />;
-      case "musica":
-        return <Music className="text-purple-600 w-5 h-5 mr-3" />;
-      case "escala":
-        return <Users className="text-blue-600 w-5 h-5 mr-3" />;
-      default:
-        return <Bell className="text-gray-500 w-5 h-5 mr-3" />;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [notifRes, inviteRes] = await Promise.all([
+          fetch(`http://localhost:4000/api/notifications/${user.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`http://localhost:4000/api/invites/received/${user.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        const notifData = await notifRes.json();
+        const inviteData = await inviteRes.json();
+
+        setNotificacoes(notifData);
+        setConvites(inviteData);
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user.id, token]);
+
+  const aceitarConvite = async (inviteId) => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/invites/accept/${inviteId}`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("Erro ao aceitar convite");
+      setConvites((prev) => prev.filter((c) => c.id !== inviteId));
+
+      // 🔄 Atualiza o role do usuário para "user"
+      const roleRes = await fetch(`http://localhost:4000/api/users/role/${user.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role: "user" }),
+      });
+
+      if (!roleRes.ok) throw new Error("Erro ao atualizar role do usuário");
+
+      // ✅ Atualiza o usuário localmente após mudar o role
+      const updatedUser = { ...user, role: "user" };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser); // <-- ADICIONADO AQUI
+
+      alert("Convite aceito com sucesso!");
+    } catch (err) {
+      console.error("Erro ao aceitar convite:", err);
+      alert("Não foi possível aceitar o convite.");
+    }
+  };
+
+  const recusarConvite = async (inviteId) => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/invites/reject/${inviteId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Erro ao recusar convite");
+
+      setConvites((prev) => prev.filter((c) => c.id !== inviteId));
+      alert("Convite recusado com sucesso!");
+    } catch (err) {
+      console.error("Erro ao recusar convite:", err);
+      alert("Não foi possível recusar o convite.");
     }
   };
 
   return (
-    <div className="flex-1 overflow-auto p-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Notificações</h1>
+    <div className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <Bell className="w-6 h-6 text-teal-600" />
+        Minhas Notificações
+      </h1>
 
-      {notificacoes.length > 0 ? (
-        <div className="space-y-4">
-          {notificacoes.map((notif) => (
-            <div
-              key={notif.id}
-              className="p-4 bg-white border rounded-lg shadow-sm hover:bg-gray-50 transition"
-            >
-              <div className="flex items-start">
-                {getIcon(notif.tipo)}
-                <div>
-                  <p className="font-medium text-gray-800">{notif.titulo}</p>
-                  <p className="text-sm text-gray-500">{notif.descricao}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
         </div>
       ) : (
-        <p className="text-gray-500 text-sm">Nenhuma notificação no momento.</p>
+        <>
+          {/* Convites */}
+          {convites.length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-gray-700 mb-3">
+                Convites Pendentes
+              </h2>
+              {convites.map((c) => (
+                <div
+                  key={c.id}
+                  className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center mb-3"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      Convite de {c.inviter.name}
+                    </p>
+                    <p className="text-sm text-gray-500">{c.inviter.email}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => aceitarConvite(c.id)}
+                      className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg flex items-center"
+                    >
+                      <Check className="w-4 h-4 mr-1" /> Aceitar
+                    </button>
+                    <button
+                      onClick={() => recusarConvite(c.id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg flex items-center"
+                    >
+                      <X className="w-4 h-4 mr-1" /> Recusar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Notificações normais */}
+<div className="space-y-4">
+  {(() => {
+    // 🔹 Filtra notificações com menos de 24h
+    const now = new Date();
+    const validNotifs = notificacoes.filter((n) => {
+      const notifDate = new Date(n.date);
+      const diffHours = (now - notifDate) / (1000 * 60 * 60);
+      return diffHours < 24;
+    });
+
+    // 🔹 Limita a 20 notificações mais recentes
+    const limitedNotifs = validNotifs
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 20);
+
+    return limitedNotifs.length > 0 ? (
+      limitedNotifs.map((n) => (
+        <div
+          key={n.id}
+          className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
+        >
+          <h3 className="font-semibold text-gray-800">{n.title}</h3>
+          <p className="text-gray-600">{n.message}</p>
+          <p className="text-xs text-gray-400 mt-2">
+            {new Date(n.date).toLocaleString("pt-BR")}
+          </p>
+        </div>
+      ))
+    ) : (
+      <p className="text-gray-500 text-center">
+        Nenhuma notificação encontrada (todas expiraram).
+      </p>
+    );
+  })()}
+</div>
+        </>
       )}
     </div>
   );

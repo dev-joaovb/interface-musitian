@@ -13,6 +13,7 @@ import seriesRoutes from "./routes/series.js";
 import registerRoutes from "./routes/register.js";
 import loginRoutes from "./routes/login.js";
 import usersRoutes from "./routes/users.js";
+import inviteRoutes from "./routes/inviteRoutes.js";
 
 dotenv.config();
 
@@ -55,6 +56,8 @@ app.use("/api", registerRoutes);
 app.use("/api", loginRoutes);
 
 app.use("/api", usersRoutes);
+
+app.use("/api", inviteRoutes);
 
 
 // Iniciar servidor
