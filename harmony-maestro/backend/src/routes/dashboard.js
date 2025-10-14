@@ -13,8 +13,8 @@ router.get("/dashboard", async (req, res) => {
       orderBy: { date: "asc" }
     });
 
-    const activeMembers = await prisma.invite.count({
-      where: { active: true }
+    const activeMembers = await prisma.user.count({
+      where: { statusAcount: "active" }
     });
 
     const songsCount = await prisma.song.count();

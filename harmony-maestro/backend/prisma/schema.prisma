@@ -19,6 +19,8 @@ model User {
   updatedAt       DateTime @updatedAt
   activityLogs    ActivityLog[]
   notifications  Notification[]  @relation("UserNotifications")
+  notifEmail      Boolean  @default(false)
+  statusAcount    String  @default("active")
 }
 
 model Invite {

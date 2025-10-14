@@ -2,6 +2,8 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
+import bcrypt from "bcrypt";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -92,6 +94,81 @@ router.delete("/users/:id", authenticateToken, verifyAdmin, async (req, res) => 
   } catch (err) {
     console.error("Erro ao deletar usuário:", err);
     res.status(500).json({ error: "Erro ao remover usuário" });
+  }
+});
+
+// ✉️ Configuração do envio de e-mail
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "sejoaovb@gmail.com",
+    pass: process.env.EMAIL_PASS, // use uma senha de app do Gmail
+  },
+});
+
+// 📋 Buscar dados de um usuário
+router.get("/users/:id", authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: Number(req.params.id) },
+    });
+
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+    res.json(user);
+  } catch (err) {
+    console.error("Erro ao buscar usuário:", err);
+    res.status(500).json({ error: "Erro ao buscar usuário" });
+  }
+});
+
+// ✏️ Atualizar dados do usuário (nome, email, senha e notificações)
+router.put("/users/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, senha } = req.body;
+
+    // Só permite atualizar o próprio usuário (ou permitir admins se desejar)
+    if (req.user.id !== Number(id)) {
+      return res.status(403).json({ error: "Ação não permitida" });
+    }
+
+    const updateData = {};
+
+    if (name) updateData.name = name;
+
+    if (email) {
+      // evita conflito de email
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing && existing.id !== Number(id)) {
+        return res.status(400).json({ error: "Email já cadastrado" });
+      }
+      updateData.email = email;
+    }
+
+    // Atualização de senha com verificação da senha atual
+    if (req.body.senhaAtual && req.body.novaSenha) {
+      const user = await prisma.user.findUnique({ where: { id: Number(id) } });
+
+      const senhaCorreta = await bcrypt.compare(req.body.senhaAtual, user.password);
+      if (!senhaCorreta) {
+        return res.status(400).json({ error: "Senha atual incorreta." });
+      }
+
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(req.body.novaSenha, saltRounds);
+      updateData.password = hashedPassword;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: Number(id) },
+      data: updateData,
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error("Erro ao atualizar usuário:", err);
+    res.status(500).json({ error: "Erro ao atualizar usuário" });
   }
 });
 
