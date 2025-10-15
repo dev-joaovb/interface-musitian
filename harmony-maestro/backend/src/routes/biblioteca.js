@@ -41,10 +41,25 @@ router.use("/uploads", express.static(path.resolve("uploads")));
 // GET /api/biblioteca
 router.get("/biblioteca", authenticateToken, async (req, res) => {
   try {
+    let targetUserId = req.user.id;
+
+    // 🔹 Se for "user", busca o admin que o convidou (correção: campo correto é inviteeId)
+    if (req.user.role === "user") {
+      const invite = await prisma.invite.findFirst({
+        where: { inviteeId: req.user.id }, // <-- corrigido de invitedUserId para inviteeId
+        select: { inviterId: true },
+      });
+
+      if (invite && invite.inviterId) {
+        targetUserId = invite.inviterId;
+      }
+    }
+
     const songs = await prisma.song.findMany({
-      where: { userId: req.user.id }, // 🔹 Mostra apenas as músicas do usuário logado
+      where: { userId: targetUserId },
       orderBy: { createdAt: "desc" },
     });
+
     res.json(songs);
   } catch (error) {
     console.error("Erro ao buscar músicas:", error);

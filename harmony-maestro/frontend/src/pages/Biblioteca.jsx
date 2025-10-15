@@ -12,6 +12,8 @@ export default function Biblioteca() {
   const [musicas, setMusicas] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingMusic, setEditingMusic] = useState(null);
+  const [userRole, setUserRole] = useState("admin"); // padrão
+
 
   const [form, setForm] = useState({
     titulo: "",
@@ -21,16 +23,47 @@ export default function Biblioteca() {
   });
 
   // 🔹 Buscar músicas do backend
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+    useEffect(() => {
+      const token = localStorage.getItem("userToken"); // <-- usar userToken (consistente com o login)
 
-    fetch("http://localhost:4000/api/biblioteca", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((json) => setMusicas(json))
-      .catch((err) => console.error("Erro ao carregar músicas:", err));
-  }, []);
+      async function carregarDados() {
+        try {
+          // 📦 Buscar músicas (autenticado)
+          const musicasRes = await fetch("http://localhost:4000/api/biblioteca", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (!musicasRes.ok) {
+            // se retornou 401/403 etc, logue e saia
+            console.error("Erro ao buscar músicas:", musicasRes.status, await musicasRes.text());
+            setMusicas([]);
+          } else {
+            const musicasJson = await musicasRes.json();
+            setMusicas(musicasJson);
+          }
+
+          // 📦 Buscar perfil do usuário
+          const perfilRes = await fetch("http://localhost:4000/api/users/profile", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (perfilRes.ok) {
+            const perfilJson = await perfilRes.json();
+            setUserRole(perfilJson?.role ?? "admin");
+          } else {
+            console.warn("Não foi possível carregar o perfil do usuário:", perfilRes.status);
+          }
+        } catch (err) {
+          console.error("Erro ao carregar dados:", err);
+        }
+      }
+
+      // chama a função (evita chamar sem token)
+      if (token) carregarDados();
+      else {
+        console.warn("Token ausente no localStorage: userToken");
+      }
+    }, []);
 
   // Abrir modal
   const openModal = (music = null) => {
@@ -129,12 +162,17 @@ export default function Biblioteca() {
           <p className="text-gray-600">Gerencie seu acervo de músicas</p>
         </div>
         <button
-          onClick={() => openModal()}
-          className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center"
-        >
-          <FiPlus className="w-4 h-4 mr-2" />
-          Adicionar Música
-        </button>
+  onClick={() => openModal()}
+  disabled={userRole === "user"}
+  className={`${
+    userRole === "user"
+      ? "bg-gray-300 cursor-not-allowed"
+      : "bg-teal-600 hover:bg-teal-700"
+  } text-white px-4 py-2 rounded-lg flex items-center`}
+>
+  <FiPlus className="w-4 h-4 mr-2" />
+  Adicionar Música
+</button>
       </div>
 
       {/* Grid de músicas */}
@@ -200,19 +238,30 @@ export default function Biblioteca() {
                   Reproduzir
                 </button> */}
                 <button
-                  onClick={() => openModal(music)}
-                  className="w-1/2 py-3 bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors"
-                >
-                  <FiEdit className="w-4 h-4 mr-2" />
-                  Editar
-                </button>
+  onClick={() => openModal(music)}
+  disabled={userRole === "user"}
+  className={`w-1/2 py-3 flex items-center justify-center transition-colors rounded-bl-lg ${
+    userRole === "user"
+      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+      : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+  }`}
+>
+  <FiEdit className="w-4 h-4 mr-2" />
+  Editar
+</button>
+
                 <button
-                  onClick={() => handleDelete(music.id)}
-                  className="w-1/2 py-3 bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-colors"
-                >
-                  <FiTrash2 className="w-4 h-4 mr-2" />
-                  Excluir
-                </button>
+  onClick={() => handleDelete(music.id)}
+  disabled={userRole === "user"}
+  className={`w-1/2 py-3 flex items-center justify-center transition-colors rounded-br-lg ${
+    userRole === "user"
+      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+      : "bg-red-50 text-red-600 hover:bg-red-100"
+  }`}
+>
+  <FiTrash2 className="w-4 h-4 mr-2" />
+  Excluir
+</button>
               </div>
             </div>
           );
@@ -220,7 +269,7 @@ export default function Biblioteca() {
       </div>
 
       {/* Modal */}
-      {showModal && (
+      {showModal && userRole !== "user" && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">

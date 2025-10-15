@@ -172,4 +172,31 @@ router.put("/userss/:id", authenticateToken, async (req, res) => {
   }
 });
 
+
+// 🔹 Rota para obter o perfil do usuário logado
+router.get("/users/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        statusAcount: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Erro ao carregar perfil:", error);
+    res.status(500).json({ error: "Erro ao carregar perfil." });
+  }
+});
+
 export default router;
