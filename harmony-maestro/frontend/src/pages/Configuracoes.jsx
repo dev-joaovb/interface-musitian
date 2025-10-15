@@ -20,7 +20,7 @@ const Configuracoes = () => {
   useEffect(() => {
     if (!user || !token) return;
 
-    fetch(`http://localhost:4000/api/users/${user.id}`, {
+    fetch(`http://localhost:4000/api/userss/${user.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -72,7 +72,7 @@ const Configuracoes = () => {
       payload.novaSenha = formData.novaSenha;
     }
 
-    const res = await fetch(`http://localhost:4000/api/users/${user.id}`, {
+    const res = await fetch(`http://localhost:4000/api/userss/${user.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

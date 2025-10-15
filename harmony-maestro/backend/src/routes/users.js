@@ -107,7 +107,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // 📋 Buscar dados de um usuário
-router.get("/users/:id", authenticateToken, async (req, res) => {
+router.get("/userss/:id", authenticateToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: Number(req.params.id) },
@@ -122,7 +122,7 @@ router.get("/users/:id", authenticateToken, async (req, res) => {
 });
 
 // ✏️ Atualizar dados do usuário (nome, email, senha e notificações)
-router.put("/users/:id", authenticateToken, async (req, res) => {
+router.put("/userss/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, senha } = req.body;

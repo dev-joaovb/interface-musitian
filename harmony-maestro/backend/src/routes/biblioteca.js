@@ -5,17 +5,23 @@ import path from "path";
 import jwt from "jsonwebtoken";
 
 // 🔐 Middleware para autenticar token
-const authenticateToken = (req, res, next) => {
+export function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Token não fornecido" });
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: "Token inválido" });
-    req.user = user;
+  if (!token) {
+    return res.status(401).json({ error: "Token não fornecido" });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET || "segredo_super_seguro", (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ error: "Token inválido" });
+    }
+
+    req.user = decoded; // 🔹 Aqui vem o { id, email, role } do login
     next();
   });
-};
+}
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -33,32 +39,41 @@ const upload = multer({ storage });
 router.use("/uploads", express.static(path.resolve("uploads")));
 
 // GET /api/biblioteca
-router.get("/biblioteca", async (req, res) => {
-  const songs = await prisma.song.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-  res.json(songs);
+router.get("/biblioteca", authenticateToken, async (req, res) => {
+  try {
+    const songs = await prisma.song.findMany({
+      where: { userId: req.user.id }, // 🔹 Mostra apenas as músicas do usuário logado
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(songs);
+  } catch (error) {
+    console.error("Erro ao buscar músicas:", error);
+    res.status(500).json({ error: "Erro ao carregar músicas" });
+  }
 });
 
 // POST /api/biblioteca
 router.post("/biblioteca", authenticateToken, upload.single("file"), async (req, res) => {
+  console.log("🟢 Usuário logado:", req.user);
   const { title, artist } = req.body;
 
+  
   const fileUrl = req.file
-    ? `http://localhost:4000/uploads/${req.file.filename}`
-    : null;
+      ? `http://localhost:4000/uploads/${req.file.filename}`
+      : null;
 
-  const song = await prisma.song.create({
-    data: {
-      title,
-      artist,
-      fileUrl,
-      userId: req.user.id, // 🔹 vincula a música ao usuário logado
-    },
+    const song = await prisma.song.create({
+      data: {
+        title,
+        artist,
+        fileUrl,
+        userId: req.user.id,
+      },
+    });
+
+    res.json(song);
   });
 
-  res.json(song);
-});
 
 // PUT /api/biblioteca/:id
 router.put("/biblioteca/:id", authenticateToken, upload.single("file"), async (req, res) => {

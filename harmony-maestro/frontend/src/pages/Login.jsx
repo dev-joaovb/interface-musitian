@@ -32,6 +32,7 @@ const Login = () => {
       if (!res.ok) throw new Error(data.error || "Erro ao fazer login");
 
       // Salva o token e usuário
+      localStorage.setItem("token", data.token);
       localStorage.setItem("userToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
