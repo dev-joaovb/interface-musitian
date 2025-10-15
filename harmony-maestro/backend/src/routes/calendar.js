@@ -1,13 +1,32 @@
 import express from "express";
+import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+
+
+
+// 🔐 Middleware para autenticação
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1]; // "Bearer <token>"
+
+  if (!token) return res.status(401).json({ error: "Token não fornecido" });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: "Token inválido" });
+    req.user = user; // user.id vem do token
+    next();
+  });
+}
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 // Listar todos
-router.get("/calendar", async (req, res) => {
+router.get("/calendar", authenticateToken, async (req, res) => {
   try {
-    const events = await prisma.event.findMany();
+    const events = await prisma.event.findMany({
+      where: { userId: req.user.id },
+    });
     res.json(events);
   } catch (err) {
     res.status(500).json({ error: "Erro ao buscar eventos" });
@@ -15,25 +34,41 @@ router.get("/calendar", async (req, res) => {
 });
 
 // Criar
-router.post("/calendar", async (req, res) => {
+router.post("/calendar", authenticateToken, async (req, res) => {
   try {
     const { title, date, location, description, color } = req.body;
     const event = await prisma.event.create({
-      data: { title, date: new Date(date), location, description, color },
+      data: {
+        title,
+        date: new Date(date),
+        location,
+        description,
+        color,
+        userId: req.user.id, // 🔹 Relaciona ao usuário logado
+      },
     });
     res.json(event);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Erro ao criar evento" });
   }
 });
 
 // Atualizar evento
-router.put("/calendar/:id", async (req, res) => {
+router.put("/calendar/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, date, location, description, color, status } = req.body;
 
-    const event = await prisma.event.update({
+    const event = await prisma.event.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!event || event.userId !== req.user.id) {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+
+    const updated = await prisma.event.update({
       where: { id: Number(id) },
       data: {
         ...(title && { title }),
@@ -45,50 +80,36 @@ router.put("/calendar/:id", async (req, res) => {
       },
     });
 
-    res.json(event);
+    res.json(updated);
   } catch (err) {
     console.error("Erro ao atualizar evento:", err);
-    if (err.code === "P2025") {
-      // Prisma error: Record not found
-      return res.status(404).json({ error: "Evento não encontrado" });
-    }
     res.status(500).json({ error: "Erro ao atualizar evento" });
   }
 });
 
 // 🗓️ Deletar evento + deletar todas as séries órfãs após a remoção do evento
-router.delete("/calendar/:id", async (req, res) => {
+router.delete("/calendar/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const eventId = Number(id);
 
-    // 1) Verifica se o evento existe
     const event = await prisma.event.findUnique({
       where: { id: eventId },
     });
 
-    if (!event) {
-      return res.status(404).json({ error: "Evento não encontrado" });
+    if (!event || event.userId !== req.user.id) {
+      return res.status(403).json({ error: "Acesso negado" });
     }
 
-    // 2) Deleta o evento
-    await prisma.event.delete({
-      where: { id: eventId },
-    });
+    await prisma.event.delete({ where: { id: eventId } });
 
-    // 3) Busca todas as séries que NÃO possuem nenhum evento (órfãs)
     const orphanSeries = await prisma.series.findMany({
-      where: {
-        events: {
-          none: {}, // nenhuma relação em events
-        },
-      },
+      where: { events: { none: {} } },
       select: { id: true },
     });
 
     const orphanIds = orphanSeries.map((s) => s.id);
 
-    // 4) Deleta todas as séries órfãs (se houver)
     let deletedSeriesCount = 0;
     if (orphanIds.length > 0) {
       const result = await prisma.series.deleteMany({
@@ -105,11 +126,8 @@ router.delete("/calendar/:id", async (req, res) => {
       deletedSeriesCount,
     });
   } catch (err) {
-    console.error("Erro ao deletar evento e séries relacionadas:", err);
-    if (err.code === "P2025") {
-      return res.status(404).json({ error: "Evento não encontrado" });
-    }
-    return res.status(500).json({ error: "Erro ao deletar evento e séries" });
+    console.error("Erro ao deletar evento:", err);
+    res.status(500).json({ error: "Erro ao deletar evento e séries" });
   }
 });
 

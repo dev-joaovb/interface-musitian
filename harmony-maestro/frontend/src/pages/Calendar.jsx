@@ -12,6 +12,7 @@ export default function Calendar() {
   const [events, setEvents] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentEventId, setCurrentEventId] = useState(null);
+  
 
   const [form, setForm] = useState({
     id: "",
@@ -22,10 +23,15 @@ export default function Calendar() {
     color: "#3b82f6",
   });
 
+
   // 🔹 Carregar eventos do backend
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
     axios
-      .get("http://localhost:4000/api/calendar") // 🔹 URL com base no backend
+      .get("http://localhost:4000/api/calendar", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       .then((res) => {
         if (Array.isArray(res.data)) {
           setEvents(res.data);
@@ -81,6 +87,7 @@ export default function Calendar() {
         return;
     }
 
+    const token = localStorage.getItem("token");
     const payload = {
         title: form.title,
         date: form.start,
@@ -93,8 +100,11 @@ export default function Calendar() {
         if (currentEventId) {
         // Atualizar evento existente
         const res = await axios.put(
-            `http://localhost:4000/api/calendar/${currentEventId}`,
-            payload
+          `http://localhost:4000/api/calendar/${currentEventId}`,
+          payload,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
 
         setEvents((prev) =>
@@ -103,8 +113,11 @@ export default function Calendar() {
         } else {
         // Criar novo evento
         const res = await axios.post(
-            "http://localhost:4000/api/calendar",
-            payload
+          "http://localhost:4000/api/calendar",
+          payload,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
 
         setEvents((prev) => [...prev, res.data]);

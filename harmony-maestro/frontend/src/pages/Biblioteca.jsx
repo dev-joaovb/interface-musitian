@@ -22,7 +22,11 @@ export default function Biblioteca() {
 
   // 🔹 Buscar músicas do backend
   useEffect(() => {
-    fetch("http://localhost:4000/api/biblioteca")
+    const token = localStorage.getItem("token");
+
+    fetch("http://localhost:4000/api/biblioteca", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => res.json())
       .then((json) => setMusicas(json))
       .catch((err) => console.error("Erro ao carregar músicas:", err));
@@ -60,28 +64,30 @@ export default function Biblioteca() {
   // Salvar música
   const handleSave = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("title", form.titulo);
-    formData.append("artist", form.compositor);
-    formData.append("tipo", form.tipo);
-    if (form.arquivo) formData.append("file", form.arquivo);
+    const token = localStorage.getItem("token");
+
+    const formDataSend = new FormData();
+    formDataSend.append("title", form.titulo);
+    formDataSend.append("artist", form.compositor);
+    formDataSend.append("tipo", form.tipo);
+    if (form.arquivo) formDataSend.append("file", form.arquivo);
 
     try {
       let res;
       if (editingMusic) {
-        res = await fetch(
-          `http://localhost:4000/api/biblioteca/${editingMusic.id}`,
-          {
-            method: "PUT",
-            body: formData,
-          }
-        );
+        res = await fetch(`http://localhost:4000/api/biblioteca/${editingMusic.id}`, {
+          method: "PUT",
+          body: formDataSend,
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } else {
         res = await fetch("http://localhost:4000/api/biblioteca", {
           method: "POST",
-          body: formData,
+          body: formDataSend,
+          headers: { Authorization: `Bearer ${token}` },
         });
       }
+
       const newMusic = await res.json();
 
       if (editingMusic) {
@@ -100,10 +106,14 @@ export default function Biblioteca() {
 
   // Excluir música
   const handleDelete = async (id) => {
+    const token = localStorage.getItem("token");
+
     try {
       await fetch(`http://localhost:4000/api/biblioteca/${id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
+
       setMusicas((prev) => prev.filter((m) => m.id !== id));
     } catch (err) {
       console.error("Erro ao excluir música:", err);

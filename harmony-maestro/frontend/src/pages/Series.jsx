@@ -14,87 +14,113 @@ const Series = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/calendar");
+        const token = localStorage.getItem("token");
+
+        const res = await fetch("http://localhost:4000/api/calendar", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Erro ao buscar eventos");
+
         const data = await res.json();
         const today = new Date();
+
+        // Filtra somente eventos futuros
         const upcoming = data.filter((e) => new Date(e.date) >= today);
+
+        // Ordena e pega o mais próximo
         const nextEvent = upcoming.sort(
           (a, b) => new Date(a.date) - new Date(b.date)
         )[0];
+
         setEvents(nextEvent ? [nextEvent] : []);
       } catch (err) {
         console.error("Erro ao carregar eventos:", err);
       }
     };
+
     fetchEvents();
   }, []);
 
-// 📦 Carregar séries já registradas
-useEffect(() => {
-  const fetchSeries = async () => {
-    try {
-      const res = await fetch("http://localhost:4000/api/series");
-      const data = await res.json();
+  // 📦 Carregar séries já registradas
+  useEffect(() => {
+    const fetchSeries = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const res = await fetch("http://localhost:4000/api/series", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
 
-      // ✅ Ordenar do mais antigo para o mais recente
-      const sortedData = data.sort(
-        (a, b) => new Date(a.startDate) - new Date(b.startDate)
+        const sortedData = data.sort(
+          (a, b) => new Date(a.startDate) - new Date(b.startDate)
+        );
+
+        setSeriesList(sortedData);
+      } catch (err) {
+        console.error("Erro ao carregar séries:", err);
+      }
+    };
+    fetchSeries();
+  }, []);
+
+
+  // 📦 Registrar série
+  const handleSaveSeries = async (event) => {
+    if (!event || !startDate || !hour) {
+      alert("Preencha todos os campos!");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch("http://localhost:4000/api/series", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: `Série - ${event.title}`,
+          startDate,
+          hour,
+          eventId: event.id,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Erro ao salvar série");
+
+      const newSeries = await res.json();
+      setMessage(`✅ Série "${newSeries.title}" registrada com sucesso!`);
+      setSeriesList((prev) =>
+        [...prev, newSeries].sort(
+          (a, b) => new Date(a.startDate) - new Date(b.startDate)
+        )
       );
 
-      setSeriesList(sortedData);
+      setStartDate("");
+      setHour("");
     } catch (err) {
-      console.error("Erro ao carregar séries:", err);
+      console.error(err);
+      setMessage("Erro ao registrar série");
     }
   };
-  fetchSeries();
-}, []);
-
-// 📦 Registrar série
-const handleSaveSeries = async (event) => {
-  if (!event || !startDate || !hour) {
-    alert("Preencha todos os campos!");
-    return;
-  }
-
-  try {
-    const res = await fetch("http://localhost:4000/api/series", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: `Série - ${event.title}`,
-        startDate,
-        hour,
-        eventId: event.id,
-      }),
-    });
-
-    if (!res.ok) throw new Error("Erro ao salvar série");
-
-    const newSeries = await res.json();
-    setMessage(`✅ Série "${newSeries.title}" registrada com sucesso!`);
-
-    // ✅ Adiciona a nova série e mantém a ordem crescente (mais antigo → mais recente)
-    setSeriesList((prev) =>
-      [...prev, newSeries].sort(
-        (a, b) => new Date(a.startDate) - new Date(b.startDate)
-      )
-    );
-
-    setStartDate("");
-    setHour("");
-  } catch (err) {
-    console.error(err);
-    setMessage("Erro ao registrar série");
-  }
-};
 
 
-  // 📦 Atualizar série (edição inline)
+    // 📦 Atualizar série (edição inline)
   const handleUpdateSeries = async (id) => {
+    const token = localStorage.getItem("token");
+
     try {
       const res = await fetch(`http://localhost:4000/api/series/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           startDate: editingStartDate,
           hour: editingHour,
@@ -112,11 +138,17 @@ const handleSaveSeries = async (event) => {
     }
   };
 
-  // 📦 Deletar série
+    // 📦 Deletar série
   const handleDeleteSeries = async (id) => {
     if (!window.confirm("Deseja realmente deletar esta série?")) return;
+
+    const token = localStorage.getItem("token");
+
     try {
-      await fetch(`http://localhost:4000/api/series/${id}`, { method: "DELETE" });
+      await fetch(`http://localhost:4000/api/series/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setSeriesList((prev) => prev.filter((s) => s.id !== id));
       setMessage("✅ Série deletada com sucesso!");
     } catch (err) {
