@@ -13,15 +13,22 @@ import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
+  const [role, setRole] = useState(null);
 
   // 🔹 Carregar dados do backend
 useEffect(() => {
-  fetch("http://localhost:4000/api/dashboard")
+  const token = localStorage.getItem("token");
+    fetch("http://localhost:4000/api/dashboard", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
     .then((res) => {
       if (!res.ok) throw new Error("Erro ao carregar dashboard");
       return res.json();
     })
-    .then((json) => setData(json))
+    .then((json) => {
+      setData(json);
+      setRole(json.role);
+    })
     .catch((err) => console.error("Erro no fetch do Dashboard:", err));
 }, []);
 
@@ -138,39 +145,33 @@ useEffect(() => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Link
-          to="/series"
-          className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors"
-        >
-          <FiPlus className="w-5 h-5 text-teal-600 mr-2" />
-          <span className="font-medium text-gray-700">Novo Ensaio</span>
-        </Link>
+      {role === "admin" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Link to="/series" className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
+            <FiPlus className="w-5 h-5 text-teal-600 mr-2" />
+            <span className="font-medium text-gray-700">Novo Ensaio</span>
+          </Link>
 
-        <Link
-          to="/biblioteca"
-          className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors"
-        >
-          <FiUpload className="w-5 h-5 text-teal-600 mr-2" />
-          <span className="font-medium text-gray-700">Upload de Música</span>
-        </Link>
+          <Link to="/biblioteca" className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
+            <FiUpload className="w-5 h-5 text-teal-600 mr-2" />
+            <span className="font-medium text-gray-700">Upload de Música</span>
+          </Link>
 
-        <Link
-          to="/series"
-          className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors"
-        >
-          <FiLayers className="w-5 h-5 text-teal-600 mr-2" />
-          <span className="font-medium text-gray-700">Nova Série</span>
-        </Link>
+          <Link to="/series" className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
+            <FiLayers className="w-5 h-5 text-teal-600 mr-2" />
+            <span className="font-medium text-gray-700">Nova Série</span>
+          </Link>
 
-        <Link
-          to="/membros"
-          className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors"
-        >
-          <FiUserPlus className="w-5 h-5 text-teal-600 mr-2" />
-          <span className="font-medium text-gray-700">Adicionar Membro</span>
-        </Link>
-      </div>
+          <Link to="/membros" className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
+            <FiUserPlus className="w-5 h-5 text-teal-600 mr-2" />
+            <span className="font-medium text-gray-700">Adicionar Membro</span>
+          </Link>
+        </div>
+      ) : (
+        <div className="p-4 mb-6 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-center">
+          Você está em um grupo — apenas o administrador pode criar ou editar dados.
+        </div>
+      )}
 
       {/* Atividades Recentes */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100">

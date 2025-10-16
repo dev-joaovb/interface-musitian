@@ -1,71 +1,107 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
+import { authenticateToken } from "./biblioteca.js";
+
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 // GET /api/dashboard
-router.get("/dashboard", async (req, res) => {
+router.get("/dashboard", authenticateToken, async (req, res) => {
   try {
-    // 📌 Estatísticas
+    const loggedUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: {
+        invites: true,
+        receivedInvites: true,
+      },
+    });
+
+    if (!loggedUser) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    // 🔹 Se o usuário for 'user', pega o admin que o convidou
+    let ownerId = loggedUser.id;
+    if (loggedUser.role === "user") {
+      const invite = await prisma.invite.findFirst({
+        where: {
+          inviteeId: loggedUser.id,
+          status: "accepted",
+          active: true,
+        },
+      });
+      if (invite) ownerId = invite.inviterId;
+    }
+
+    // 🔹 Buscar dados do dono (admin do grupo)
     const nextEvent = await prisma.event.findFirst({
-      where: { date: { gte: new Date() } },
-      orderBy: { date: "asc" }
+      where: { userId: ownerId, date: { gte: new Date() } },
+      orderBy: { date: "asc" },
     });
 
     const activeMembers = await prisma.user.count({
-      where: { statusAcount: "active" }
+      where: { statusAcount: "active" },
     });
 
-    const songsCount = await prisma.song.count();
+    const songsCount = await prisma.song.count({
+      where: { userId: ownerId },
+    });
 
-    // 📌 Próximos Ensaios
     const upcomingEvents = await prisma.event.findMany({
-      where: { date: { gte: new Date() } },
+      where: { userId: ownerId, date: { gte: new Date() } },
       orderBy: { date: "asc" },
       take: 3,
-      include: { series: true }
+      include: { series: true },
     });
 
-    // 📌 Atividades Recentes
-    // Sugestão: criar um modelo `ActivityLog` no Prisma para registrar qualquer evento
+    // 🔹 Logs de atividades recentes
     const recentActivities = await prisma.activityLog.findMany({
+      where: {
+        OR: [
+          { userId: ownerId },
+          { user: { id: ownerId } },
+        ],
+      },
       orderBy: { createdAt: "desc" },
-      take: 5,
-      include: { user: true }
+      take: 6,
+      include: { user: true },
     });
 
     res.json({
+      role: loggedUser.role,
+      ownerId,
       stats: {
         nextEvent: nextEvent
           ? {
               title: nextEvent.title,
               date: nextEvent.date,
-              location: nextEvent.location
+              location: nextEvent.location,
             }
           : null,
         activeMembers,
-        songsCount
+        songsCount,
       },
       upcomingEvents: upcomingEvents.map((e) => ({
         id: e.id,
         title: e.title,
         date: e.date,
         location: e.location,
-        status: e.status // Ex: "escalado", "pendente"
+        status: e.status,
       })),
       recentActivities: recentActivities.map((a) => ({
         id: a.id,
         type: a.type,
         message: a.message,
         createdAt: a.createdAt,
-        user: a.user ? { id: a.user.id, name: a.user.name } : null
-      }))
+        user: a.user ? { id: a.user.id, name: a.user.name } : null,
+      })),
     });
   } catch (error) {
     console.error("Erro no dashboard:", error);
     res.status(500).json({ error: "Erro ao carregar dados do dashboard" });
   }
 });
+
 
 export default router;
