@@ -12,6 +12,8 @@ export default function Calendar() {
   const [events, setEvents] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentEventId, setCurrentEventId] = useState(null);
+  const [userRole, setUserRole] = useState("admin");
+
   
 
   const [form, setForm] = useState({
@@ -33,8 +35,9 @@ export default function Calendar() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
-        if (Array.isArray(res.data)) {
-          setEvents(res.data);
+        if (Array.isArray(res.data.events)) {
+          setEvents(res.data.events);
+          setUserRole(res.data.role);
         } else {
           console.error("Resposta inesperada da API:", res.data);
           setEvents([]);
@@ -169,8 +172,19 @@ export default function Calendar() {
 
 
   // Handlers
-  const handleDateClick = (arg) => openModal("new", arg.date);
-  const handleEventClick = (arg) => openModal("edit", null, arg.event);
+  // const handleDateClick = (arg) => openModal("new", arg.date);
+  // const handleEventClick = (arg) => openModal("edit", null, arg.event);
+
+  const handleDateClick = (arg) => {
+    if (userRole !== "admin") return; // Bloqueia criação
+    openModal("new", arg.date);
+  };
+
+  const handleEventClick = (arg) => {
+    if (userRole !== "admin") return; // Bloqueia edição
+    openModal("edit", null, arg.event);
+  };
+
 
   // Converte p/ FullCalendar
   const fcEvents = events.map((e) => ({
@@ -191,13 +205,15 @@ export default function Calendar() {
           <h1 className="text-2xl font-bold text-gray-800">Calendário</h1>
           <p className="text-gray-600">Gerencie seus ensaios e eventos</p>
         </div>
-        <button
-          onClick={() => openModal("new")}
-          className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center"
-        >
-          <span className="mr-2">＋</span>
-          Novo Evento
-        </button>
+        {userRole === "admin" && (
+  <button
+    onClick={() => openModal("new")}
+    className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center"
+  >
+    <span className="mr-2">＋</span>
+    Novo Evento
+  </button>
+)}
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
@@ -309,7 +325,7 @@ export default function Calendar() {
           Cancelar
         </button>
 
-        {currentEventId && (
+        {userRole === "admin" && currentEventId && (
           <button
             onClick={deleteEvent}
             className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
@@ -317,13 +333,16 @@ export default function Calendar() {
             Excluir
           </button>
         )}
-
+        
+        {userRole === "admin" && (
         <button
           onClick={saveEvent}
           className="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700"
         >
           Salvar
         </button>
+        )}
+
       </div>
     </div>
   </div>

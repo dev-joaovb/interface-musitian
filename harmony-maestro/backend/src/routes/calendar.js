@@ -21,17 +21,71 @@ function authenticateToken(req, res, next) {
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Listar todos
-router.get("/calendar", authenticateToken, async (req, res) => {
+// Listar todos (da página Series.jsx)
+// 📅 Listar eventos do calendário
+router.get("/calendar/series", authenticateToken, async (req, res) => {
   try {
-    const events = await prisma.event.findMany({
-      where: { userId: req.user.id },
+    // Busca usuário logado com seus convites recebidos
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { receivedInvites: true },
     });
-    res.json(events);
+
+    let ownerId = user.id; // padrão: ele mesmo
+    if (user.role === "user") {
+      // se for convidado, busca o admin que o convidou
+      const acceptedInvite = user.receivedInvites.find(
+        (invite) => invite.status === "accepted" && invite.active
+      );
+      if (acceptedInvite) ownerId = acceptedInvite.inviterId;
+    }
+
+    // busca eventos do admin (ou do próprio user, se for admin)
+    const events = await prisma.event.findMany({
+      where: { userId: ownerId },
+      orderBy: { date: "asc" },
+    });
+
+    res.json({
+      events,
+      role: user.role,
+      ownerId,
+    });
   } catch (err) {
+    console.error("Erro ao buscar eventos:", err);
     res.status(500).json({ error: "Erro ao buscar eventos" });
   }
 });
+
+
+// Listar eventos - Admin vê seus próprios eventos, User vê do admin que o convidou
+router.get("/calendar", authenticateToken, async (req, res) => {
+  try {
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { receivedInvites: { where: { status: "accepted", active: true } } },
+    });
+
+    let targetUserId = req.user.id;
+
+    // Se o usuário for "user", ele verá o calendário do admin que o convidou
+    if (currentUser.role === "user" && currentUser.receivedInvites.length > 0) {
+      targetUserId = currentUser.receivedInvites[0].inviterId;
+    }
+
+    const events = await prisma.event.findMany({
+      where: { userId: targetUserId },
+      orderBy: { date: "asc" },
+    });
+
+    res.json({ events, role: currentUser.role });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar eventos" });
+  }
+});
+
+
 
 // Criar
 router.post("/calendar", authenticateToken, async (req, res) => {

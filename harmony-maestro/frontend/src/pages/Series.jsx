@@ -10,13 +10,16 @@ const Series = () => {
   const [editingStartDate, setEditingStartDate] = useState("");
   const [editingHour, setEditingHour] = useState("");
 
+  const [role, setRole] = useState("admin");
+  const [ownerId, setOwnerId] = useState(null);
+
   // 📦 Carregar eventos do backend (somente futuros)
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const token = localStorage.getItem("token");
 
-        const res = await fetch("http://localhost:4000/api/calendar", {
+        const res = await fetch("http://localhost:4000/api/calendar/series", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -27,10 +30,11 @@ const Series = () => {
         const data = await res.json();
         const today = new Date();
 
-        // Filtra somente eventos futuros
-        const upcoming = data.filter((e) => new Date(e.date) >= today);
+        // data.events é o novo array retornado
+        const upcoming = data.events.filter(
+          (e) => new Date(e.date) >= today
+        );
 
-        // Ordena e pega o mais próximo
         const nextEvent = upcoming.sort(
           (a, b) => new Date(a.date) - new Date(b.date)
         )[0];
@@ -44,6 +48,7 @@ const Series = () => {
     fetchEvents();
   }, []);
 
+
   // 📦 Carregar séries já registradas
   useEffect(() => {
     const fetchSeries = async () => {
@@ -54,11 +59,14 @@ const Series = () => {
         });
         const data = await res.json();
 
-        const sortedData = data.sort(
-          (a, b) => new Date(a.startDate) - new Date(b.startDate)
-        );
-
-        setSeriesList(sortedData);
+        if (data.series) {
+          const sortedData = data.series.sort(
+            (a, b) => new Date(a.startDate) - new Date(b.startDate)
+          );
+          setSeriesList(sortedData);
+          setRole(data.role);
+          setOwnerId(data.ownerId);
+        }
       } catch (err) {
         console.error("Erro ao carregar séries:", err);
       }
@@ -215,12 +223,14 @@ const Series = () => {
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500"
                     />
                   </div>
-                  <button
-                    onClick={() => handleSaveSeries(event)}
-                    className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition"
-                  >
-                    Salvar Série
-                  </button>
+                  {role === "admin" && (
+                    <button
+                      onClick={() => handleSaveSeries(event)}
+                      className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition"
+                    >
+                      Salvar Série
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -287,7 +297,7 @@ const Series = () => {
                   )}
                 </div>
 
-                {editingId !== serie.id && (
+                {role === "admin" && editingId !== serie.id && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => {

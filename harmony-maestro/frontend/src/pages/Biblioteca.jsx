@@ -23,8 +23,8 @@ export default function Biblioteca() {
   });
 
   // 🔹 Buscar músicas do backend
-    useEffect(() => {
-      const token = localStorage.getItem("userToken"); // <-- usar userToken (consistente com o login)
+  useEffect(() => {
+      const token = localStorage.getItem("userToken");
 
       async function carregarDados() {
         try {
@@ -34,7 +34,6 @@ export default function Biblioteca() {
           });
 
           if (!musicasRes.ok) {
-            // se retornou 401/403 etc, logue e saia
             console.error("Erro ao buscar músicas:", musicasRes.status, await musicasRes.text());
             setMusicas([]);
           } else {
@@ -58,12 +57,23 @@ export default function Biblioteca() {
         }
       }
 
-      // chama a função (evita chamar sem token)
+      // Chama a função (evita chamar sem token)
       if (token) carregarDados();
-      else {
-        console.warn("Token ausente no localStorage: userToken");
-      }
-    }, []);
+      else console.warn("Token ausente no localStorage: userToken");
+
+      // 🔄 NOVO: Escuta mudanças de role (quando o user aceita ou sai do grupo)
+      const handleUserUpdate = () => {
+        console.log("🔁 Atualizando biblioteca após mudança de role...");
+        carregarDados(); // Recarrega as músicas e perfil
+      };
+
+      window.addEventListener("userUpdated", handleUserUpdate);
+
+      // 🔁 Limpa o listener quando o componente desmonta
+      return () => {
+        window.removeEventListener("userUpdated", handleUserUpdate);
+      };
+    }, []); // ← mantém o mesmo comportamento do seu useEffect original
 
   // Abrir modal
   const openModal = (music = null) => {

@@ -20,12 +20,31 @@ const authenticateToken = (req, res, next) => {
 // 📌 Listar todas as séries
 router.get("/series", authenticateToken, async (req, res) => {
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { receivedInvites: true },
+    });
+
+    let ownerId = user.id; // padrão: ele mesmo (admin)
+    if (user.role === "user") {
+      // procura o convite aceito mais recente
+      const acceptedInvite = user.receivedInvites.find(
+        (i) => i.status === "accepted" && i.active
+      );
+      if (acceptedInvite) ownerId = acceptedInvite.inviterId;
+    }
+
     const series = await prisma.series.findMany({
-      where: { userId: req.user.id },
+      where: { userId: ownerId },
       include: { events: true },
       orderBy: { createdAt: "desc" },
     });
-    res.json(series);
+
+    res.json({
+      series,
+      role: user.role,
+      ownerId,
+    });
   } catch (err) {
     console.error("Erro ao listar séries:", err);
     res.status(500).json({ error: "Erro ao listar séries" });

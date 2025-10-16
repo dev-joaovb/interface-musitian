@@ -62,6 +62,25 @@ const Notificacoes = () => {
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser); // <-- ADICIONADO AQUI
 
+      // 🔁 Faz novo login automático para atualizar o token JWT
+        const loginRes = await fetch("http://localhost:4000/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: updatedUser.email, password: localStorage.getItem("userPass") }),
+        });
+
+        if (loginRes.ok) {
+          const loginData = await loginRes.json();
+          localStorage.setItem("userToken", loginData.token);
+          localStorage.setItem("user", JSON.stringify(loginData.user));
+          window.dispatchEvent(new Event("userUpdated"));
+          alert("Convite aceito com sucesso!");
+          window.location.reload(); // garante que a biblioteca recarregue o contexto
+        } else {
+          alert("Convite aceito, mas houve falha ao atualizar o login.");
+        }
+
+
       alert("Convite aceito com sucesso!");
     } catch (err) {
       console.error("Erro ao aceitar convite:", err);
