@@ -149,7 +149,12 @@ export default function Calendar() {
 
     try {
         await axios.delete(
-        `http://localhost:4000/api/calendar/${currentEventId}`
+          `http://localhost:4000/api/calendar/${currentEventId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
         );
 
         setEvents((prev) => prev.filter((e) => e.id !== currentEventId));

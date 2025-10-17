@@ -1,5 +1,5 @@
 // App.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -18,45 +18,65 @@ import Configuracoes from "./pages/Configuracoes";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
-// 🔐 Protege rotas privadas
+// 🔐 Proteção de rotas
 function ProtectedRoute({ children }) {
   const user = localStorage.getItem("userToken");
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }
 
-// 🔹 Loader Global Reutilizável
-function GlobalLoader() {
+// 🌀 Loader global com Tailwind
+function Loader({ isVisible }) {
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-50 transition-all">
-      <div className="flex flex-col items-center">
-        <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-gray-600 font-medium animate-pulse">
-          Carregando...
-        </p>
+    <div
+      className={`fixed inset-0 flex items-center justify-center bg-gray-100/80 z-[9999] transition-opacity duration-500 ${
+        isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+    >
+      <div className="flex flex-col items-center gap-2">
+        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm text-gray-600">Carregando...</p>
       </div>
     </div>
   );
 }
 
-// 🔹 Controla transição de páginas com delay suave
-function PageWrapper({ children }) {
+// 🎯 Controla o delay e adiciona o fade-in
+function PageTransitionWrapper({ children }) {
   const location = useLocation();
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fadeIn, setFadeIn] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 500); // delay entre rotas
-    return () => clearTimeout(timer);
+    setIsLoading(true);
+    setFadeIn(false);
+
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+      setTimeout(() => setFadeIn(true), 100); // ativa o fade-in suave
+    }, 700);
+
+    return () => clearTimeout(timeout);
   }, [location.pathname]);
 
-  return loading ? <GlobalLoader /> : children;
+  return (
+    <>
+      <Loader isVisible={isLoading} />
+      <div
+        className={`transition-opacity duration-700 ${
+          fadeIn ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {!isLoading && children}
+      </div>
+    </>
+  );
 }
 
 export default function App() {
   return (
     <Router>
-      <PageWrapper>
+      <PageTransitionWrapper>
         <Routes>
           {/* Rotas públicas */}
           <Route path="/login" element={<Login />} />
@@ -82,7 +102,7 @@ export default function App() {
             }
           />
         </Routes>
-      </PageWrapper>
+      </PageTransitionWrapper>
     </Router>
   );
 }
