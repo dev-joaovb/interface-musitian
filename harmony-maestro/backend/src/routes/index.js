@@ -12,5 +12,6 @@ router.use('/calendar', require('./calendar'));
 router.use('/users', require('./users'));
 router.use('/series', require('./series'));
 router.use('/inviteRoutes', require('./inviteRoutes'));
+router.use('/logActivity', require('./logActivity'));
 
 module.exports = router;

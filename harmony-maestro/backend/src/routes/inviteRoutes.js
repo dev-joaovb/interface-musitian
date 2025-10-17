@@ -1,6 +1,7 @@
 // routes/inviteRoutes.js
 import express from "express";
 import { PrismaClient } from "@prisma/client";
+import { logActivity } from "./logActivity.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -164,6 +165,8 @@ router.post("/invites", async (req, res) => {
       },
     });
 
+    await logActivity(inviterId, "invite_created", `Convite enviado para ${inviteeEmail} por ${inviter.email}`);
+
     res.json(invite);
   } catch (err) {
     console.error("Erro ao criar convite:", err);
@@ -219,6 +222,8 @@ router.post("/invites/accept/:inviteId", async (req, res) => {
       },
     });
 
+    await logActivity(invite.inviteeId, "invite_accepted", `Convite aceito por ${invite.inviteeEmail}`);
+
     res.json(updated);
   } catch (err) {
     console.error("Erro ao aceitar convite:", err);
@@ -253,6 +258,8 @@ router.post("/invites/reject/:inviteId", async (req, res) => {
       },
     });
 
+    await logActivity(invite.inviteeId, "invite_rejected", `Convite recusado por ${invite.inviteeEmail}`);
+
     res.json(updated);
   } catch (err) {
     console.error("Erro ao recusar convite:", err);
@@ -272,6 +279,8 @@ router.patch("/users/role/:userId", async (req, res) => {
       data: { role },
     });
 
+    await logActivity(Number(userId), "enter_group", `Usuário ${updatedUser.email} entrou no grupo a convite do administrador.`);
+
     res.json(updatedUser);
   } catch (err) {
     console.error("Erro ao atualizar role do usuário:", err);
@@ -283,6 +292,9 @@ router.patch("/users/role/:userId", async (req, res) => {
 router.patch("/invites/leave/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
+    const updatedUser = await prisma.user.update({
+      where: { id: Number(userId) },
+    });
 
     // Atualiza o status de todos os convites aceitos desse usuário
     await prisma.invite.updateMany({
@@ -294,6 +306,8 @@ router.patch("/invites/leave/:userId", async (req, res) => {
         status: "leaver", // Marca como "leaver" para indicar que saiu do grupo
       },
     });
+
+    await logActivity(Number(userId), "leave_group", `Usuário ${updatedUser.email} saiu do grupo.`);
 
     res.json({ message: "Status do convite atualizado para 'rejected'" });
   } catch (err) {

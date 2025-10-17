@@ -103,5 +103,23 @@ router.get("/dashboard", authenticateToken, async (req, res) => {
   }
 });
 
+// DELETE /api/activity/clear — Limpa logs antigos (somente admin)
+router.delete("/activity/clear", authenticateToken, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Acesso negado" });
+  }
+
+  const deleted = await prisma.activityLog.deleteMany({
+    where: {
+      createdAt: {
+        lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // logs com +30 dias
+      },
+    },
+  });
+
+  res.json({ message: `🧹 ${deleted.count} logs antigos removidos com sucesso.` });
+});
+
+
 
 export default router;

@@ -3,6 +3,7 @@ import multer from "multer";
 import { PrismaClient } from "@prisma/client";
 import path from "path";
 import jwt from "jsonwebtoken";
+import { logActivity } from "./logActivity.js";  
 
 // 🔐 Middleware para autenticar token
 export function authenticateToken(req, res, next) {
@@ -86,6 +87,8 @@ router.post("/biblioteca", authenticateToken, upload.single("file"), async (req,
       },
     });
 
+    await logActivity(req.user.id, "song_added", `Música "${title}" foi adicionada por ${req.user.email}`);
+
     res.json(song);
   });
 
@@ -123,6 +126,8 @@ router.delete("/biblioteca/:id", authenticateToken, async (req, res) => {
   if (song.userId !== req.user.id) return res.status(403).json({ error: "Ação não permitida" });
 
   await prisma.song.delete({ where: { id: songId } });
+
+  await logActivity(req.user.id, "song_deleted", `Música "${song.title}" foi excluída por ${req.user.email}`);
   res.json({ message: "Música excluída com sucesso" });
 });
 

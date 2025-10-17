@@ -1,6 +1,8 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+import { logActivity } from "./logActivity.js";  
+
 
 
 
@@ -101,6 +103,9 @@ router.post("/calendar", authenticateToken, async (req, res) => {
         userId: req.user.id, // 🔹 Relaciona ao usuário logado
       },
     });
+
+    await logActivity(req.user.id, "event_created", `Evento "${title}" foi criado por ${req.user.email}`);
+
     res.json(event);
   } catch (err) {
     console.error(err);
@@ -134,6 +139,8 @@ router.put("/calendar/:id", authenticateToken, async (req, res) => {
       },
     });
 
+    await logActivity(req.user.id, "event_updated", `Evento "${title}" foi atualizado por ${req.user.email}`);
+
     res.json(updated);
   } catch (err) {
     console.error("Erro ao atualizar evento:", err);
@@ -156,6 +163,8 @@ router.delete("/calendar/:id", authenticateToken, async (req, res) => {
     }
 
     await prisma.event.delete({ where: { id: eventId } });
+
+    await logActivity(req.user.id, "event_deleted", `Evento "${event.title}" foi deletado por ${req.user.email}`);
 
     const orphanSeries = await prisma.series.findMany({
       where: { events: { none: {} } },

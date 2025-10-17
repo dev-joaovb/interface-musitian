@@ -175,10 +175,28 @@ useEffect(() => {
 
       {/* Atividades Recentes */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-800">
             Atividade Recente
           </h2>
+          {role === "admin" && (
+            <button
+              onClick={async () => {
+                const token = localStorage.getItem("token");
+                if (window.confirm("Tem certeza que deseja limpar atividades antigas (90+ dias)?")) {
+                  const res = await fetch("http://localhost:4000/api/activity/clear", {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                  });
+                  const data = await res.json();
+                  alert(data.message || "Limpeza concluída!");
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm font-bold shadow-sm"
+            >
+              🧹 Limpar atividades antigas
+            </button>
+          )}
         </div>
         <div className="divide-y divide-gray-200">
           {data.recentActivities.map((a) => (

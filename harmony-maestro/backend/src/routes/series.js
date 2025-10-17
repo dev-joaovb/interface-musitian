@@ -1,6 +1,7 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import { logActivity } from "./logActivity.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -82,6 +83,8 @@ router.post("/series", authenticateToken, async (req, res) => {
       },
     });
 
+    await logActivity(req.user.id, "series_created", `Série de ensaios para o evento "${event.title}" foi criada por ${req.user.email}`);
+
     res.json(series);
   } catch (err) {
     console.error("Erro ao criar série:", err);
@@ -132,6 +135,8 @@ router.put("/series/:id", authenticateToken, async (req, res) => {
       },
     });
 
+    await logActivity(req.user.id, "series_updated", `Série de ensaios "${existingSeries.title}" foi atualizada por ${req.user.email}`);
+
     res.json(updated);
   } catch (err) {
     console.error("Erro ao atualizar série:", err);
@@ -158,6 +163,8 @@ router.delete("/series/:id", authenticateToken, async (req, res) => {
     }
 
     await prisma.series.delete({ where: { id: Number(id) } });
+
+    await logActivity(req.user.id, "series_deleted", `Série de ensaios "${existing.title}" foi deletada por ${req.user.email}`);
 
     res.json({ message: "Série deletada com sucesso" });
   } catch (err) {
