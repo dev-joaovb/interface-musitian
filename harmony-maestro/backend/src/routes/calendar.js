@@ -93,10 +93,28 @@ router.get("/calendar", authenticateToken, async (req, res) => {
 router.post("/calendar", authenticateToken, async (req, res) => {
   try {
     const { title, date, location, description, color } = req.body;
+
+    // 🔍 Converter data recebida
+    const newEventDate = new Date(date);
+
+    // 🔹 Busca o evento mais recente (maior data)
+    const latestEvent = await prisma.event.findFirst({
+      where: { userId: req.user.id },
+      orderBy: { date: "desc" },
+    });
+
+    // ⚠️ Verificação: se já existe um evento e o novo é anterior
+    if (latestEvent && newEventDate < latestEvent.date) {
+      return res.status(400).json({
+        error: `Não é permitido criar eventos antes de ${latestEvent.date.toLocaleString("pt-BR")}`,
+      });
+    }
+
+    // 🆗 Cria o novo evento normalmente
     const event = await prisma.event.create({
       data: {
         title,
-        date: new Date(date),
+        date: newEventDate,
         location,
         description,
         color,
@@ -104,7 +122,11 @@ router.post("/calendar", authenticateToken, async (req, res) => {
       },
     });
 
-    await logActivity(req.user.id, "event_created", `Evento "${title}" foi criado por ${req.user.email}`);
+    await logActivity(
+      req.user.id,
+      "event_created",
+      `Evento "${title}" foi criado por ${req.user.email}`
+    );
 
     res.json(event);
   } catch (err) {
@@ -112,6 +134,7 @@ router.post("/calendar", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Erro ao criar evento" });
   }
 });
+
 
 // Atualizar evento
 router.put("/calendar/:id", authenticateToken, async (req, res) => {
@@ -193,6 +216,33 @@ router.delete("/calendar/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Erro ao deletar evento e séries" });
   }
 });
+
+// 🧹 Limpar eventos passados automaticamente - executa a cada hora
+const deletePastEvents = async () => {
+  try {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Todos os eventos com data menor que o início do dia atual
+    const deleted = await prisma.event.deleteMany({
+      where: {
+        date: {
+          lt: todayStart,
+        },
+      },
+    });
+    if (deleted.count > 0) {
+      console.log(`🧹 ${deleted.count} eventos passados removidos automaticamente.`);
+    }
+  } catch (err) {
+    console.error("Erro ao limpar eventos passados:", err);
+  }
+};
+
+// Executa a cada hora (3600000ms)
+setInterval(deletePastEvents, 60 * 60 * 1000);
+
+// Opcional: Executa imediatamente ao iniciar o servidor
+deletePastEvents();
 
 
 

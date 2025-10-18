@@ -138,7 +138,15 @@ export default function Calendar() {
         setIsModalOpen(false);
         window.location.reload();
     } catch (err) {
-        console.error("Erro ao salvar evento:", err);
+        // 🔹 Se o backend retornar erro 400 (data anterior a último evento)
+        if (err.response && err.response.status === 400) {
+          alert(err.response.data.error); // Exibe a mensagem do backend
+        } else {
+          console.error("Erro ao criar evento:", err);
+          alert("Ocorreu um erro ao criar o evento. Tente novamente.");
+        }
+
+      //  console.error("Erro ao salvar evento:", err);
     }
     };
 
