@@ -1,6 +1,7 @@
 // src/pages/Membros.jsx
 import React, { useState, useEffect } from "react";
 import { Search, UserPlus, Loader2, CheckCircle } from "lucide-react";
+import { Trash2 } from "lucide-react"; // Ícone de exclusão
 
 const Membros = () => {
   const [email, setEmail] = useState("");
@@ -200,21 +201,66 @@ useEffect(() => {
     {/* Membros do grupo (visível para admin) */}
     {user.role === "admin" && groupMembers.length > 0 && (
       <div className="mt-8">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">
-          Membros do Grupo
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {groupMembers.map((m) => (
-            <div
-              key={m.id}
-              className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
-            >
-              <h3 className="font-semibold text-gray-800">{m.name}</h3>
-              <p className="text-sm text-gray-500">{m.email}</p>
-            </div>
-          ))}
-        </div>
+  <h2 className="text-lg font-semibold text-gray-700 mb-4">
+    Membros do Grupo
+  </h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {groupMembers.map((m) => (
+      <div
+        key={m.id}
+        className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 relative"
+      >
+        <h3 className="font-semibold text-gray-800">{m.name}</h3>
+        <p className="text-sm text-gray-500">{m.email}</p>
+
+        {/* 🔘 Botão para excluir membro */}
+        <button
+          title="Excluir membro do grupo"
+          onClick={async () => {
+            if (
+              !window.confirm(`Tem certeza que deseja remover ${m.name} do grupo?`)
+            )
+              return;
+
+            try {
+              const token = localStorage.getItem("userToken");
+
+              // Atualiza o role de volta para admin
+              const res = await fetch(
+                `http://localhost:4000/api/users/${m.id}/role`,
+                {
+                  method: "PATCH",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ role: "admin" }),
+                }
+              );
+
+              if (!res.ok) throw new Error("Erro ao alterar função do usuário");
+
+              // Atualiza status do convite para "leaver"
+              await fetch(`http://localhost:4000/api/invites/leave/${m.id}`, {
+                method: "PATCH",
+                headers: { Authorization: `Bearer ${token}` },
+              });
+
+              alert(`Membro ${m.name} foi removido do grupo com sucesso!`);
+              window.location.reload();
+            } catch (err) {
+              console.error(err);
+              alert("Não foi possível remover o membro do grupo.");
+            }
+          }}
+          className="absolute top-3 right-3 p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-full transition"
+        >
+          <Trash2 size={18} />
+        </button>
       </div>
+    ))}
+  </div>
+</div>
     )}
 
 {/* 👤 Exibição de informações do grupo para usuários comuns */}
@@ -268,7 +314,7 @@ useEffect(() => {
       if (!res.ok) throw new Error("Erro ao sair do grupo");
       
 
-      // Atualiza status do convite para "rejected"
+      // Atualiza status do convite para "leaver"
       await fetch(`http://localhost:4000/api/invites/leave/${user.id}`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` },

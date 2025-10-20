@@ -6,9 +6,35 @@ import { logActivity } from "./logActivity.js";
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// 🧹 Excluir convites "pending" com mais de 12h
+const deleteOldPendingInvites = async () => {
+  try {
+    const cutoffDate = new Date(Date.now() - 12 * 60 * 60 * 1000); // 12 horas atrás
+    const deleted = await prisma.invite.deleteMany({
+      where: {
+        status: "pending",
+        createdAt: {
+          lt: cutoffDate, // lt = menor que (anterior à data limite)
+        },
+      },
+    });
+
+    if (deleted.count > 0) {
+      console.log(`🧹 ${deleted.count} convites pendentes antigos removidos automaticamente.`);
+    }
+  } catch (err) {
+    console.error("Erro ao excluir convites pendentes antigos:", err);
+  }
+};
+
+
 // 👥 Listar membros do grupo de um administrador
 router.get("/group/:inviterId", async (req, res) => {
   try {
+
+    // 🧹 Limpa convites pendentes antigos antes de listar
+    await deleteOldPendingInvites();
+
     const { inviterId } = req.params;
 
     const members = await prisma.invite.findMany({
@@ -41,6 +67,10 @@ router.get("/group/:inviterId", async (req, res) => {
 // 👤 Ver administrador que convidou e outros membros do mesmo grupo
 router.get("/groupinfo/:userId", async (req, res) => {
   try {
+
+    // 🧹 Limpa convites pendentes antigos antes de listar
+    await deleteOldPendingInvites();
+
     const { userId } = req.params;
 
     // Busca o convite que o usuário recebeu e foi aceito
@@ -178,6 +208,10 @@ router.post("/invites", async (req, res) => {
 router.get("/invites/:userId", async (req, res) => {
 
   try {
+
+    // 🧹 Limpa convites pendentes antigos antes de listar
+    await deleteOldPendingInvites();
+
     const { userId } = req.params;
 
     const invites = await prisma.invite.findMany({
@@ -288,12 +322,13 @@ router.patch("/users/role/:userId", async (req, res) => {
   }
 });
 
-// Atualizar status do convite para "rejected" quando o usuário sair do grupo
+// Atualizar status do convite para "leaver" quando o usuário sair do grupo
 router.patch("/invites/leave/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const updatedUser = await prisma.user.update({
       where: { id: Number(userId) },
+      data: {},
     });
 
     // Atualiza o status de todos os convites aceitos desse usuário
