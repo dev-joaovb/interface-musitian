@@ -24,6 +24,7 @@ model User {
   statusAcount    String           @default("active")
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  presenca Presenca[]
 }
 
 model Invite {
@@ -74,6 +75,20 @@ model Series {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  status_presenca String    @default("Aguardando Resposta") // "Confirmou presença", "Não Disponível", "Aguardando Resposta"
+  presenca Presenca[]
+}
+
+model Presenca {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  serieId   Int
+  status    String   @default("Aguardando Resposta")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serie Series @relation(fields: [serieId], references: [id], onDelete: Cascade)
 }
 
 model Notification {

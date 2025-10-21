@@ -13,6 +13,14 @@ const Series = () => {
   const [role, setRole] = useState("admin");
   const [ownerId, setOwnerId] = useState(null);
 
+  const [selectedPresencas, setSelectedPresencas] = useState([]);
+  // const [confirmedSeries, setConfirmedSeries] = useState([]);
+  const [confirmedSeries, setConfirmedSeries] = useState(() => {
+  const saved = localStorage.getItem("confirmedSeries");
+  return saved ? JSON.parse(saved) : [];
+});
+
+
   // 📦 Carregar eventos do backend (somente futuros)
   useEffect(() => {
     const fetchEvents = async () => {
@@ -165,6 +173,60 @@ const Series = () => {
     }
   };
 
+  // 📦 Confirmar presença na séries
+  
+ // ✅ Confirmar presença
+const handleConfirmPresence = async (id, status) => {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`http://localhost:4000/api/series/${id}/presenca`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!res.ok) throw new Error("Erro ao confirmar presença");
+    const updated = await res.json();
+
+    setSeriesList((prev) =>
+      prev.map((s) => (s.id === updated.serieId ? { ...s, status_presenca: status } : s))
+    );
+
+    // 🔒 Bloqueia os botões daquela série específica e salva no localStorage
+    setConfirmedSeries((prev) => {
+      const updated = [...prev, id];
+      localStorage.setItem("confirmedSeries", JSON.stringify(updated));
+      return updated;
+    });
+
+    setMessage(`✅ Sua presença foi marcada como: ${status}`);
+  } catch (err) {
+    console.error(err);
+    setMessage("Erro ao confirmar presença");
+  }
+};
+
+
+// ✅ Visualizar lista de presenças (admin)
+const handleViewPresences = async (id) => {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`http://localhost:4000/api/series/${id}/presenca`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Erro ao carregar presenças");
+    const data = await res.json();
+
+    setSelectedPresencas(data); // ✅ Armazena no estado
+  } catch (err) {
+    console.error(err);
+    setMessage("Erro ao carregar presenças");
+  }
+};
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-4">
@@ -295,6 +357,36 @@ const Series = () => {
                       {serie.hour}
                     </p>
                   )}
+
+                  {/* ✅ Botões de confirmação de presença - visível apenas para usuários */}
+{role === "user" && (
+  <div className="mt-2 flex gap-2">
+    <button
+      onClick={() => handleConfirmPresence(serie.id, "Confirmou presença")}
+      disabled={confirmedSeries.includes(serie.id)}
+      className={`px-3 py-1 rounded text-white transition-colors ${
+        confirmedSeries.includes(serie.id)
+          ? "bg-green-400 cursor-not-allowed"
+          : "bg-green-600 hover:bg-green-700"
+      }`}
+    >
+      Confirmar Presença
+    </button>
+    <button
+      onClick={() => handleConfirmPresence(serie.id, "Não Disponível")}
+      disabled={confirmedSeries.includes(serie.id)}
+      className={`px-3 py-1 rounded text-white transition-colors ${
+        confirmedSeries.includes(serie.id)
+          ? "bg-red-400 cursor-not-allowed"
+          : "bg-red-600 hover:bg-red-700"
+      }`}
+    >
+      Não Disponível
+    </button>
+  </div>
+)}
+
+
                 </div>
 
                 {role === "admin" && editingId !== serie.id && (
@@ -317,10 +409,54 @@ const Series = () => {
                     >
                       Deletar
                     </button>
+
+                    {role === "admin" && (
+  <button
+    onClick={() => handleViewPresences(serie.id)}
+    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+  >
+    Ver Lista de Confirmados
+  </button>
+)}
+
                   </div>
                 )}
               </div>
             ))}
+
+            {/* ✅ Lista visual de presenças */}
+{role === "admin" && selectedPresencas.length > 0 && (
+  <div className="mt-6 bg-gray-800 p-4 rounded-lg shadow">
+    <h3 className="text-lg font-semibold text-white mb-3">Lista de Presenças</h3>
+    <table className="w-full text-sm text-gray-200">
+      <thead>
+        <tr className="border-b border-gray-700">
+          <th className="text-left py-2">Nome</th>
+          <th className="text-left py-2">Email</th>
+          <th className="text-left py-2">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {selectedPresencas.map((p) => (
+          <tr key={p.id} className="border-b border-gray-700 hover:bg-gray-700/30">
+            <td className="py-2">{p.nome}</td>
+            <td className="py-2">{p.email}</td>
+            <td className="py-2">
+              {p.status === "Confirmou presença" ? (
+                <span className="text-green-400 font-medium">{p.status}</span>
+              ) : p.status === "Não Disponível" ? (
+                <span className="text-red-400 font-medium">{p.status}</span>
+              ) : (
+                <span className="text-yellow-400 font-medium">{p.status}</span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
           </div>
         </div>
       )}

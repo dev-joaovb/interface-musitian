@@ -144,6 +144,114 @@ router.put("/series/:id", authenticateToken, async (req, res) => {
   }
 });
 
+/// Atualizações de presença nos ensaios
+
+// ✅ Confirmar presença (cada usuário tem o seu status)  — CORRIGIDO
+router.patch("/series/:id/presenca", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params; // ID da série
+    const { status } = req.body; // "Confirmou presença" | "Não Disponível"
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+    if (user.role !== "user") {
+      return res.status(403).json({ error: "Apenas usuários podem confirmar presença" });
+    }
+
+    // verifica se a série existe
+    const serie = await prisma.series.findUnique({ where: { id: Number(id) } });
+    if (!serie) return res.status(404).json({ error: "Série não encontrada" });
+
+    // tenta encontrar presença existente
+    const existing = await prisma.presenca.findFirst({
+      where: {
+        userId: user.id,
+        serieId: Number(id),
+      },
+    });
+
+    let presenca;
+    if (existing) {
+      presenca = await prisma.presenca.update({
+        where: { id: existing.id },
+        data: { status },
+      });
+    } else {
+      presenca = await prisma.presenca.create({
+        data: {
+          userId: user.id,
+          serieId: Number(id),
+          status,
+        },
+      });
+    }
+
+    await logActivity(req.user.id, "series_presence_update", `Usuário ${user.name} marcou presença como "${status}"`);
+
+    res.json(presenca);
+  } catch (err) {
+    console.error("Erro ao confirmar presença:", err);
+    res.status(500).json({ error: "Erro ao confirmar presença" });
+  }
+});
+
+
+// ✅ Listar presenças (visível apenas para admin)
+router.get("/series/:id/presenca", authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+
+    if (user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ error: "Apenas administradores podem visualizar presenças" });
+    }
+
+    const { id } = req.params;
+
+    // ✅ 1️⃣ Busca todos os usuários que aceitaram o convite (fazem parte do grupo)
+    const acceptedUsers = await prisma.invite.findMany({
+      where: {
+        status: "accepted",
+        active: true,
+      },
+      include: {
+        invitee: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    // ✅ 2️⃣ Busca todas as presenças registradas para esta série
+    const presencas = await prisma.presenca.findMany({
+      where: { serieId: Number(id) },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+
+    // ✅ 3️⃣ Monta a lista final combinando os dois (presenças + usuários sem resposta)
+    const listaFinal = acceptedUsers.map((invite) => {
+      const userPresenca = presencas.find(
+        (p) => p.userId === invite.invitee?.id
+      );
+
+      return {
+        id: invite.invitee?.id,
+        nome: invite.invitee?.name,
+        email: invite.invitee?.email,
+        status: userPresenca ? userPresenca.status : "Aguardando Resposta",
+      };
+    });
+
+    // ✅ 4️⃣ Retorna a lista unificada
+    res.json(listaFinal);
+  } catch (err) {
+    console.error("Erro ao listar presenças:", err);
+    res.status(500).json({ error: "Erro ao listar presenças" });
+  }
+});
+
+
+
 
 // 📌 Deletar série
 router.delete("/series/:id", authenticateToken, async (req, res) => {
