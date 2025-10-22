@@ -133,7 +133,10 @@ const Notificacoes = () => {
                     <p className="font-semibold text-gray-800">
                       Convite de {c.inviter.name}
                     </p>
-                    <p className="text-sm text-gray-500">{c.inviter.email}</p>
+                    <p className="text-sm text-gray-500 mb-1">{c.inviter.email}</p>
+                    <p className="text-xs text-gray-400">
+                      Você foi convidado por <strong>{c.inviter.name}</strong> para participar do grupo dele.
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <button

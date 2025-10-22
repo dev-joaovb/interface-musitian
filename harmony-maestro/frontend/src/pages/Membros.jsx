@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { Search, UserPlus, Loader2, CheckCircle } from "lucide-react";
 import { Trash2 } from "lucide-react"; // Ícone de exclusão
+import { Info } from "lucide-react";
+
 
 const Membros = () => {
   const [email, setEmail] = useState("");
@@ -16,6 +18,10 @@ const Membros = () => {
 
   const [adminInfo, setAdminInfo] = useState(null);
   const [meusMembros, setMeusMembros] = useState([]);
+
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
 
 useEffect(() => {
   if (user.role !== "user") return;
@@ -136,6 +142,23 @@ useEffect(() => {
     fetchGroupMembers();
   }, []);
 
+  // 🔍 Buscar informações detalhadas do usuário
+  const fetchUserDetails = async (userId) => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/users/details/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Erro ao buscar detalhes do usuário");
+      const data = await res.json();
+      setSelectedUser(data);
+      setShowModal(true);
+    } catch (err) {
+      console.error(err);
+      alert("Não foi possível carregar informações do usuário.");
+    }
+  };
+
+
   return (
   <div className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 min-h-screen">
     <h1 className="text-3xl font-bold text-gray-800 mb-6">Membros</h1>
@@ -182,21 +205,35 @@ useEffect(() => {
             <h3 className="font-semibold text-gray-800">{userFound.name}</h3>
             <p className="text-sm text-gray-500">{userFound.email}</p>
           </div>
-          {!invited ? (
+
+          <div className="flex items-center gap-3">
+            {/* ✅ Botão de Convidar ou texto de convite enviado */}
+            {!invited ? (
+              <button
+                onClick={handleInvite}
+                className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg flex items-center"
+              >
+                <UserPlus className="w-4 h-4 mr-2" /> Convidar
+              </button>
+            ) : (
+              <div className="flex items-center text-green-600 font-medium">
+                <CheckCircle className="w-5 h-5 mr-1" /> Convite Enviado
+              </div>
+            )}
+
+            {/* 🔍 Ver informações do membro */}
             <button
-              onClick={handleInvite}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg flex items-center"
+              title="Ver informações do usuário"
+              onClick={() => fetchUserDetails(userFound.id)}
+              className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg flex items-center text-sm transition"
             >
-              <UserPlus className="w-4 h-4 mr-2" /> Convidar
+              <Info className="w-4 h-4 mr-1" /> Ver informações
             </button>
-          ) : (
-            <div className="flex items-center text-green-600 font-medium">
-              <CheckCircle className="w-5 h-5 mr-1" /> Convite Enviado
-            </div>
-          )}
+          </div>
         </div>
       </div>
     )}
+
 
     {/* Membros do grupo (visível para admin) */}
     {user.role === "admin" && groupMembers.length > 0 && (
@@ -212,6 +249,15 @@ useEffect(() => {
       >
         <h3 className="font-semibold text-gray-800">{m.name}</h3>
         <p className="text-sm text-gray-500">{m.email}</p>
+
+        {/* 🔍 Ver informações do membro */}
+        <button
+          title="Ver informações do usuário"
+          onClick={() => fetchUserDetails(m.id)}
+          className="mt-2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-lg flex items-center text-sm transition"
+        >
+          <Info className="w-4 h-4 mr-1" /> Ver informações
+        </button>
 
         {/* 🔘 Botão para excluir membro */}
         <button
@@ -263,103 +309,170 @@ useEffect(() => {
 </div>
     )}
 
-{/* 👤 Exibição de informações do grupo para usuários comuns */}
-{user.role === "user" && adminInfo && (
-  <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 mt-6">
-    <h2 className="text-lg font-semibold text-gray-800 mb-2">
-      Administrador do grupo
-    </h2>
-    <p className="text-gray-700">
-      <strong>{adminInfo.name}</strong> ({adminInfo.email})
-    </p>
+    {/* 👤 Exibição de informações do grupo para usuários comuns */}
+    {user.role === "user" && adminInfo && (
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mt-8">
+        {/* 🧑‍💼 Administrador */}
+        <div className="border-b border-gray-200 pb-4 mb-4">
+          <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+            Administrador do grupo
+          </h2>
+          <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+            <div>
+              <p className="text-gray-800 font-medium">{adminInfo.name}</p>
+              <p className="text-sm text-gray-500">{adminInfo.email}</p>
+            </div>
+            <button
+              title="Ver informações do administrador"
+              onClick={() => fetchUserDetails(adminInfo.id)}
+              className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-lg flex items-center text-sm transition"
+            >
+              <Info className="w-4 h-4 mr-1" /> Ver informações
+            </button>
+          </div>
+        </div>
 
-    <h1 className="text-2xl font-bold text-gray-800 mt-6 mb-6">Membros Convidados</h1>
+        {/* 👥 Membros */}
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Membros Convidados</h1>
 
-    <div className="mt-4">
-      <h3 className="font-semibold text-gray-700 mb-2">
-        {/* Membros do grupo (incluindo você): */}
-      </h3>
-      <ul className="space-y-1">
-        <li key={user.id} className="text-gray-800 font-medium">
-          • {user.name} ({user.email}){" "}
-          <span className="text-gray-500 text-sm">(você)</span>
-        </li>
+        <div className="space-y-3">
+          {/* Exibe o próprio usuário */}
+          <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
+            <div>
+              <p className="text-gray-800 font-medium">
+                {user.name}{" "}
+                <span className="text-gray-500 text-sm">(você)</span>
+              </p>
+              <p className="text-sm text-gray-500">{user.email}</p>
+            </div>
+            <button
+              title="Ver suas informações"
+              onClick={() => fetchUserDetails(user.id)}
+              className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-lg flex items-center text-sm transition"
+            >
+              <Info className="w-4 h-4 mr-1" /> Ver informações
+            </button>
+          </div>
 
-        {meusMembros.length > 0 ? (
-          meusMembros.map((m) => (
-            <li key={m.id} className="text-gray-600">
-              • {m.name} ({m.email})
-            </li>
-          ))
-        ) : (
-          <li className="text-gray-500 italic">Nenhum outro membro no grupo.</li>
-        )}
-      </ul>
-    </div>
-  
-  
-        {/* Botão Sair do grupo */}
-<button
-  onClick={async () => {
-    try {
-      // Atualiza o role de volta para "admin"
-      const res = await fetch(`http://localhost:4000/api/users/role/${user.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role: "admin" }),
-      });
-      if (!res.ok) throw new Error("Erro ao sair do grupo");
-      
+          {/* Exibe demais membros */}
+          {meusMembros.length > 0 ? (
+            meusMembros.map((m) => (
+              <div
+                key={m.id}
+                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100"
+              >
+                <div>
+                  <p className="text-gray-800 font-medium">{m.name}</p>
+                  <p className="text-sm text-gray-500">{m.email}</p>
+                </div>
 
-      // Atualiza status do convite para "leaver"
-      await fetch(`http://localhost:4000/api/invites/leave/${user.id}`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+                <button
+                  title="Ver informações do membro"
+                  onClick={() => fetchUserDetails(m.id)}
+                  className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-lg flex items-center text-sm transition"
+                >
+                  <Info className="w-4 h-4 mr-1" /> Ver informações
+                </button>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 italic text-center mt-2">
+              Nenhum outro membro no grupo.
+            </p>
+          )}
+        </div>
 
-      const updatedUser = await res.json();
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+        {/* 🚪 Botão Sair do grupo */}
+        <div className="flex justify-end">
+          <button
+            onClick={async () => {
+              try {
+                // Atualiza o role de volta para "admin"
+                const res = await fetch(`http://localhost:4000/api/users/role/${user.id}`, {
+                  method: "PATCH",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ role: "admin" }),
+                });
+                if (!res.ok) throw new Error("Erro ao sair do grupo");
 
-      // 🔁 Faz novo login automático para atualizar o token JWT
-      const loginRes = await fetch("http://localhost:4000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: updatedUser.email, password: localStorage.getItem("userPass") }),
-      });
+                // Atualiza status do convite para "leaver"
+                await fetch(`http://localhost:4000/api/invites/leave/${user.id}`, {
+                  method: "PATCH",
+                  headers: { Authorization: `Bearer ${token}` },
+                });
 
-      if (loginRes.ok) {
-        const loginData = await loginRes.json();
-        localStorage.setItem("userToken", loginData.token);
-        localStorage.setItem("user", JSON.stringify(loginData.user));
-        window.dispatchEvent(new Event("userUpdated"));
-        alert("Você saiu do grupo com sucesso!");
-        window.location.reload();
-      } else {
-        alert("Você saiu do grupo, mas houve falha ao atualizar o login.");
-      }
+                const updatedUser = await res.json();
+                localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      
+                // 🔁 Novo login automático
+                const loginRes = await fetch("http://localhost:4000/api/login", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    email: updatedUser.email,
+                    password: localStorage.getItem("userPass"),
+                  }),
+                });
 
-      // Limpa estados do grupo
-      setAdminInfo(null);
-      setMeusMembros([]);
+                if (loginRes.ok) {
+                  const loginData = await loginRes.json();
+                  localStorage.setItem("userToken", loginData.token);
+                  localStorage.setItem("user", JSON.stringify(loginData.user));
+                  window.dispatchEvent(new Event("userUpdated"));
+                  alert("Você saiu do grupo com sucesso!");
+                  window.location.reload();
+                } else {
+                  alert("Você saiu do grupo, mas houve falha ao atualizar o login.");
+                }
 
-      alert("Você saiu do grupo com sucesso!");
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-      alert("Não foi possível sair do grupo.");
-    }
-  }}
-  className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
->
-  Sair do grupo
-</button>
+                // Limpa estados
+                setAdminInfo(null);
+                setMeusMembros([]);
+              } catch (err) {
+                console.error(err);
+                alert("Não foi possível sair do grupo.");
+              }
+            }}
+            className="mt-6 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-sm transition"
+          >
+            Sair do grupo
+          </button>
+        </div>
       </div>
     )}
+
+
+    {/* 🪪 Modal de informações do usuário */}
+    {showModal && selectedUser && (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+        <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+          <button
+            onClick={() => setShowModal(false)}
+            className="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold"
+          >
+            ×
+          </button>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+            Informações do Usuário
+          </h2>
+          <div className="space-y-2 text-gray-700">
+            <p><strong>Nome:</strong> {selectedUser.name}</p>
+            <p><strong>Email:</strong> {selectedUser.email}</p>
+            <p><strong>Sexo:</strong> {selectedUser.sexo || "Não informado"}</p>
+            <p><strong>Experiência:</strong> {selectedUser.experiencia ?? "Não informado"} {selectedUser.experiencia ? "anos" : ""}</p>
+            <p><strong>Instrumento:</strong> {selectedUser.instrumento || "Não informado"}</p>
+            <p><strong>Qtd. Instrumentos:</strong> {selectedUser.instrumentosQtd ?? "Não informado"}</p>
+            <p><strong>Data de Nascimento:</strong> {selectedUser.idade ? new Date(selectedUser.idade).toLocaleDateString("pt-BR") : "Não informada"}</p>
+            <p><strong>Disponibilidade:</strong> {selectedUser.disponibilidade || "Não informado"}</p>
+            <p><strong>Celular:</strong> {selectedUser.celular || "Não informado"}</p>
+          </div>
+        </div>
+      </div>
+    )}
+
   </div>
 );
 };

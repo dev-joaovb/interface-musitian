@@ -136,6 +136,36 @@ router.get("/users/search", async (req, res) => {
   }
 });
 
+// 🔍 Buscar informações detalhadas de um usuário (para admin visualizar antes de convidar)
+router.get("/users/details/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id: Number(id) },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        sexo: true,
+        experiencia: true,
+        instrumento: true,
+        instrumentosQtd: true,
+        idade: true,
+        disponibilidade: true,
+        celular: true,
+      },
+    });
+
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+    res.json(user);
+  } catch (err) {
+    console.error("Erro ao buscar detalhes do usuário:", err);
+    res.status(500).json({ error: "Erro interno ao buscar detalhes do usuário" });
+  }
+});
+
+
 // Alias (compatibilidade) => /invites/received/:userId
 router.get("/invites/received/:userId", async (req, res) => {
   try {

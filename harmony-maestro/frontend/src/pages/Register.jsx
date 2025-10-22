@@ -46,7 +46,7 @@ const Register = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("userToken");
-    if (token) navigate("/login");
+    if (token) navigate("/");
   }, [navigate]);
 
   const handleChange = (e) =>
@@ -73,10 +73,10 @@ const Register = () => {
       if (!res.ok) throw new Error(data.error || "Erro ao registrar usuário");
 
       // (Opcional) login automático após cadastro:
-      localStorage.setItem("userToken", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // localStorage.setItem("userToken", data.token);
+      // localStorage.setItem("user", JSON.stringify(data.user));
 
-      setMessage("✅ Cadastro realizado com sucesso!");
+      setMessage("✅ Cadastro realizado com sucesso! Redirecionando para o login...");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       setMessage(err.message);
@@ -168,19 +168,91 @@ const Register = () => {
             />
           </div>
 
-          {/* Instrumento principal */}
+          {/* 🎵 Instrumento principal */}
           <div>
             <label className="text-sm font-medium text-gray-700">
               Instrumento principal
             </label>
-            <input
-              type="text"
+            <select
               name="instrumento"
               value={formData.instrumento}
               onChange={handleChange}
-              className="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 outline-none"
-            />
+              className="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 outline-none bg-white"
+            >
+              <option value="">Selecione seu instrumento</option>
+
+              {/* 🎸 Cordas */}
+              <optgroup label="🎸 Cordas">
+                <option value="Violão">Violão</option>
+                <option value="Guitarra">Guitarra</option>
+                <option value="Baixo">Baixo</option>
+                <option value="Contrabaixo">Contrabaixo</option>
+                <option value="Violino">Violino</option>
+                <option value="Viola">Viola</option>
+                <option value="Violoncelo">Violoncelo</option>
+                <option value="Harpa">Harpa</option>
+              </optgroup>
+
+              {/* 🎷 Sopros */}
+              <optgroup label="🎷 Sopros">
+                <option value="Flauta doce">Flauta doce</option>
+                <option value="Flauta transversal">Flauta transversal</option>
+                <option value="Clarinete">Clarinete</option>
+                <option value="Saxofone alto">Saxofone alto</option>
+                <option value="Saxofone tenor">Saxofone tenor</option>
+                <option value="Oboé">Oboé</option>
+                <option value="Fagote">Fagote</option>
+                <option value="Trompete">Trompete</option>
+                <option value="Trombone">Trombone</option>
+                <option value="Tuba">Tuba</option>
+                <option value="Cornetim">Cornetim</option>
+                <option value="Trompa">Trompa</option>
+                <option value="Gaita">Gaita</option>
+              </optgroup>
+
+              {/* 🥁 Percussão */}
+              <optgroup label="🥁 Percussão">
+                <option value="Bateria">Bateria</option>
+                <option value="Cajón">Cajón</option>
+                <option value="Pandeiro">Pandeiro</option>
+                <option value="Tamborim">Tamborim</option>
+                <option value="Congas">Congas</option>
+                <option value="Bongo">Bongo</option>
+                <option value="Tímpano">Tímpano</option>
+                <option value="Pratos">Pratos</option>
+                <option value="Triângulo">Triângulo</option>
+              </optgroup>
+
+              {/* 🎹 Teclas */}
+              <optgroup label="🎹 Teclas">
+                <option value="Piano">Piano</option>
+                <option value="Teclado">Teclado</option>
+                <option value="Órgão">Órgão</option>
+                <option value="Cravo">Cravo</option>
+                <option value="Acordeon">Acordeon</option>
+              </optgroup>
+
+              {/* 🎤 Vocais */}
+              <optgroup label="🎤 Vocais">
+                <option value="Vocal">Vocal</option>
+                <option value="Back vocal">Back vocal</option>
+                <option value="Tenor">Tenor</option>
+                <option value="Soprano">Soprano</option>
+                <option value="Contralto">Contralto</option>
+                <option value="Baixo (voz)">Baixo (voz)</option>
+              </optgroup>
+
+              {/* 🎺 Outros / regionais */}
+              <optgroup label="🌍 Outros instrumentos">
+                <option value="Ukulele">Ukulele</option>
+                <option value="Bandolim">Bandolim</option>
+                <option value="Cavaquinho">Cavaquinho</option>
+                <option value="Percussão geral">Percussão geral</option>
+                <option value="Outros">Outros</option>
+              </optgroup>
+            </select>
           </div>
+
 
           {/* Quantos instrumentos toca */}
           <div>
