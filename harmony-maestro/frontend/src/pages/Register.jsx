@@ -3,18 +3,50 @@ import React, { useState, useEffect } from "react";
 import { UserPlus } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 
+
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-  });
+    sexo: "",
+    experiencia: "",
+    instrumento: "",
+    instrumentosQtd: "",
+    idade: "",
+    disponibilidade: "",
+    celular: "",
+    });
   const [message, setMessage] = useState("");
+
+  // Função que formata o valor para (99) 99999-9999 enquanto o usuário digita
+  const formatPhoneInput = (value) => {
+    const digits = (value || "").replace(/\D/g, "").slice(0, 11); // só dígitos, máximo 11
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10)
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    // 11 dígitos
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  };
+
+  // Handler específico para o campo celular
+  const handlePhoneChange = (e) => {
+    const raw = e.target.value;
+    const formatted = formatPhoneInput(raw);
+    setFormData((prev) => ({ ...prev, celular: formatted }));
+  };
+
+  // Validação rápida que garante 11 dígitos (útil no submit)
+  const isPhoneValid = (phone) => {
+    const digits = (phone || "").replace(/\D/g, "");
+    return digits.length === 11;
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("userToken");
-    if (token) navigate("/");
+    if (token) navigate("/login");
   }, [navigate]);
 
   const handleChange = (e) =>
@@ -23,6 +55,12 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+
+    // valida celular (se preenchido)
+    if (formData.celular && !isPhoneValid(formData.celular)) {
+      setMessage("Por favor, informe um número de celular válido com 11 dígitos.");
+      return;
+    }
 
     try {
       const res = await fetch("http://localhost:4000/api/register", {
@@ -39,7 +77,7 @@ const Register = () => {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       setMessage("✅ Cadastro realizado com sucesso!");
-      setTimeout(() => navigate("/"), 1500);
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       setMessage(err.message);
     }
@@ -98,6 +136,107 @@ const Register = () => {
               required
               className="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 outline-none"
             />
+          </div>
+
+          {/* Sexo */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">Sexo</label>
+            <select
+              name="sexo"
+              value={formData.sexo}
+              onChange={handleChange}
+              required
+              className="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 outline-none"
+            >
+              <option value="">Selecione</option>
+              <option value="M">Masculino</option>
+              <option value="F">Feminino</option>
+            </select>
+          </div>
+
+          {/* Experiência como músico */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Experiência (em anos)
+            </label>
+            <input
+              type="number"
+              name="experiencia"
+              value={formData.experiencia}
+              onChange={handleChange}
+              className="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 outline-none"
+            />
+          </div>
+
+          {/* Instrumento principal */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Instrumento principal
+            </label>
+            <input
+              type="text"
+              name="instrumento"
+              value={formData.instrumento}
+              onChange={handleChange}
+              className="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 outline-none"
+            />
+          </div>
+
+          {/* Quantos instrumentos toca */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Quantos instrumentos sabe tocar
+            </label>
+            <input
+              type="number"
+              name="instrumentosQtd"
+              value={formData.instrumentosQtd}
+              onChange={handleChange}
+              className="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 outline-none"
+            />
+          </div>
+
+          {/* Idade */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">Data de Nascimento</label>
+            <input
+              type="date"
+              name="idade"
+              value={formData.idade}
+              onChange={handleChange}
+              className="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 outline-none"
+            />
+          </div>
+
+          {/* Disponibilidade */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">Disponibilidade</label>
+            <input
+              type="text"
+              name="disponibilidade"
+              value={formData.disponibilidade}
+              onChange={handleChange}
+              placeholder="Ex: Noites e finais de semana"
+              className="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 outline-none"
+            />
+          </div>
+
+          {/* Número de celular */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">Celular</label>
+            <input
+              type="tel"
+              name="celular"
+              inputMode="tel"
+              value={formData.celular}
+              onChange={handlePhoneChange}
+              placeholder="(00) 90000-0000"
+              maxLength={16} // formação: (99) 99999-9999 => 15-16 chars incluindo espaços/hífens
+              className="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 outline-none"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Formato: (DD) 9XXXX-XXXX — 11 dígitos
+            </p>
           </div>
 
           <button

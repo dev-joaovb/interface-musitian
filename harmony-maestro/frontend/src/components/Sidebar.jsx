@@ -20,6 +20,12 @@ export default function Sidebar({ mobile = false, onClose }) {
   const handleLogout = () => {
     localStorage.removeItem("userToken");
     localStorage.removeItem("user");
+
+    localStorage.removeItem("token");           // ✅ caso o login use esse nome
+    localStorage.removeItem("userId");          // ✅ remove ID do usuário logado
+    localStorage.removeItem("role");            // ✅ remove papel (user/admin)
+    localStorage.removeItem("confirmedSeries"); // ✅ limpa bloqueios de presença
+
     navigate("/login");
   };
 

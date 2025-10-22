@@ -37,6 +37,10 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("userPass", formData.password);
 
+      // 🔹 Salva o token e informações do usuário
+      localStorage.setItem("userId", data.user.id);   // ✅ Salva o ID do usuário logado
+      localStorage.setItem("role", data.user.role);   // ✅ Salva o papel (user/admin)
+
       // Redireciona
       navigate("/");
     } catch (err) {

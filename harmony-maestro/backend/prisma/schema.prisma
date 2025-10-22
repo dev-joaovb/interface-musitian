@@ -13,6 +13,14 @@ model User {
   email           String           @unique
   password        String
   role            String           @default("admin") // "admin" | "user"
+  sexo            String?          // "M" ou "F"
+  experiencia     Int?             // Experiência em anos
+  instrumento     String?          // Instrumento principal
+  instrumentosQtd Int?             // Quantos instrumentos toca
+  idade           DateTime?        // Data de nascimento
+  disponibilidade String?          // Disponibilidade
+  celular         String?          // Número de celular
+  
   invites         Invite[]         @relation("UserInvites")
   receivedInvites Invite[]         @relation("UserReceivedInvites")
   activityLogs    ActivityLog[]

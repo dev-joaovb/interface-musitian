@@ -27,6 +27,11 @@ const Series = () => {
       try {
         const token = localStorage.getItem("token");
 
+          const userId = localStorage.getItem("userId");
+          const storedData =
+            JSON.parse(localStorage.getItem("confirmedSeriesByUser") || "{}");
+          setConfirmedSeries(storedData[userId] || []);
+
         const res = await fetch("http://localhost:4000/api/calendar/series", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -178,6 +183,7 @@ const Series = () => {
  // ✅ Confirmar presença
 const handleConfirmPresence = async (id, status) => {
   const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId"); // ← 🔹 Salve o ID do usuário logado no login e use aqui
   try {
     const res = await fetch(`http://localhost:4000/api/series/${id}/presenca`, {
       method: "PATCH",
@@ -192,14 +198,24 @@ const handleConfirmPresence = async (id, status) => {
     const updated = await res.json();
 
     setSeriesList((prev) =>
-      prev.map((s) => (s.id === updated.serieId ? { ...s, status_presenca: status } : s))
+      prev.map((s) =>
+        s.id === updated.serieId ? { ...s, status_presenca: status } : s
+      )
     );
 
-    // 🔒 Bloqueia os botões daquela série específica e salva no localStorage
+    // 🔒 Bloqueia apenas para o usuário atual
     setConfirmedSeries((prev) => {
-      const updated = [...prev, id];
-      localStorage.setItem("confirmedSeries", JSON.stringify(updated));
-      return updated;
+      const storedData =
+        JSON.parse(localStorage.getItem("confirmedSeriesByUser") || "{}");
+
+      const userConfirmed = storedData[userId] || [];
+      const updatedUserConfirmed = [...new Set([...userConfirmed, id])];
+
+      const newData = { ...storedData, [userId]: updatedUserConfirmed };
+
+      localStorage.setItem("confirmedSeriesByUser", JSON.stringify(newData));
+
+      return updatedUserConfirmed;
     });
 
     setMessage(`✅ Sua presença foi marcada como: ${status}`);
