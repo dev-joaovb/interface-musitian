@@ -4,6 +4,7 @@ const router = express.Router();
 
 router.use('/ping', (req, res) => res.json({ pong: true }));
 
+router.use('/partitura', require('./partitura'));
 router.use('/register', require('./register'));
 router.use('/login', require('./login'));
 router.use('/biblioteca', require('./biblioteca'))

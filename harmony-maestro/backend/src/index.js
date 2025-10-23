@@ -14,6 +14,7 @@ import registerRoutes from "./routes/register.js";
 import loginRoutes from "./routes/login.js";
 import usersRoutes from "./routes/users.js";
 import inviteRoutes from "./routes/inviteRoutes.js";
+import partituraRoutes from "./routes/partitura.js";
 
 dotenv.config();
 
@@ -58,6 +59,8 @@ app.use("/api", loginRoutes);
 app.use("/api", usersRoutes);
 
 app.use("/api", inviteRoutes);
+
+app.use("/api", partituraRoutes);
 
 
 

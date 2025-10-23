@@ -165,6 +165,25 @@ export default function Biblioteca() {
 
   return (
     <div className="p-4 md:p-6">
+
+      {/* Botões de navegação entre Biblioteca e Partituras */}
+      <div className="flex justify-center items-center mb-6 space-x-4">
+        <button
+          onClick={() => (window.location.href = "/biblioteca")}
+          className="bg-teal-600 hover:bg-teal-700 text-white font-bold w-12 h-10 rounded-full flex items-center justify-center shadow-md transition"
+          title="Biblioteca Musical"
+        >
+          &lt;
+        </button>
+        <button
+          onClick={() => (window.location.href = "/partitura")}
+          className="bg-teal-600 hover:bg-teal-700 text-white w-12 h-10 font-bold rounded-full flex items-center justify-center shadow-md transition"
+          title="Partituras"
+        >
+          &gt;
+        </button>
+      </div>
+
       {/* Header */}
       <div className="mb-6 flex justify-between items-center">
         <div>

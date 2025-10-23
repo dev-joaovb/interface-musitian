@@ -12,5 +12,8 @@
     "concurrently": "^8.2.2",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^5.4.296"
   }
 }

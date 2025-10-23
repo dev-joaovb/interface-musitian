@@ -17,6 +17,7 @@ import Notificacoes from "./pages/Notificacoes";
 import Configuracoes from "./pages/Configuracoes";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Partitura from "./pages/Partitura";
 
 // 🔐 Proteção de rotas
 function ProtectedRoute({ children }) {
@@ -92,6 +93,7 @@ export default function App() {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/calendar" element={<Calendar />} />
                     <Route path="/biblioteca" element={<Biblioteca />} />
+                    <Route path="/partitura" element={<Partitura />} />
                     <Route path="/series" element={<Series />} />
                     <Route path="/membros" element={<Membros />} />
                     <Route path="/notificacoes" element={<Notificacoes />} />

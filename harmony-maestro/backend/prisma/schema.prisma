@@ -32,7 +32,8 @@ model User {
   statusAcount    String           @default("active")
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  presenca Presenca[]
+  presenca        Presenca[]
+  partitura       Partitura[]
 }
 
 model Invite {
@@ -71,6 +72,16 @@ model Song {
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+}
+
+model Partitura {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  arquivoUrl  String
+  criadoEm    DateTime @default(now())
+  usuario     User     @relation(fields: [usuarioId], references: [id])
+  usuarioId   Int
 }
 
 model Series {
