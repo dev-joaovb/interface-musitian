@@ -4,20 +4,7 @@ import path from "path";
 import fs from "fs";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-import cors from "cors";
-import { fileURLToPath } from "url";
 
-const app = express();
-app.use(cors({
-  origin: "http://localhost:5173", // endereço do seu front
-  methods: ["GET", "POST", "PATCH", "DELETE"],
-  allowedHeaders: ["Content-Type"],
-}));
-
-// 🔹 Configura o caminho estático corretamente
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // 🔐 Middleware para autenticar token
 export function authenticateToken(req, res, next) {
@@ -40,6 +27,24 @@ export function authenticateToken(req, res, next) {
 
 const prisma = new PrismaClient();
 const router = express.Router();
+
+router.get("/partitura/file/:id", authenticateToken, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const partitura = await prisma.partitura.findUnique({ where: { id } });
+    if (!partitura) return res.status(404).json({ error: "Partitura não encontrada" });
+
+    const filePath = path.resolve("." + partitura.arquivoUrl);
+
+    // Se tiver CORS global no app.js, essa linha é opcional. De qualquer forma:
+    res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+
+    return res.sendFile(filePath);
+  } catch (err) {
+    console.error("Erro ao enviar arquivo da partitura:", err);
+    return res.status(500).json({ error: "Erro ao enviar partitura" });
+  }
+});
 
 // 📁 Pasta de uploads de partituras
 const uploadPath = path.resolve("uploads/partituras");

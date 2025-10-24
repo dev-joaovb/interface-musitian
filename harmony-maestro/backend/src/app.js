@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const apiRouter = require('./routes');
+import { fileURLToPath } from "url";
 
 const app = express();
 
@@ -11,6 +12,10 @@ const allowed = process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
 app.use(cors({ origin: allowed }));
 app.use(express.json());
 app.use(morgan('dev'));
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // rota saúde
 app.get('/', (req, res) => res.json({ ok: true, name: 'backend', env: process.env.NODE_ENV || 'dev' }));

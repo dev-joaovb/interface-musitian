@@ -17,6 +17,7 @@ export default function Partitura() {
   const [user, setUser] = useState(null);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [showPdf, setShowPdf] = useState(false);
+  const [thumbnailsGenerated, setThumbnailsGenerated] = useState(false);
 
 
   const navigate = useNavigate();
@@ -45,26 +46,39 @@ export default function Partitura() {
 
     // 🔹 Gera miniaturas das partituras ao carregar
     useEffect(() => {
-    const generateThumbnails = async () => {
-        const updated = await Promise.all(
-        partituras.map(async (p) => {
-            try {
-            const fileUrl = p.arquivoUrl?.startsWith("http")
-                ? p.arquivoUrl
-                : `http://localhost:4000${p.arquivoUrl || ""}`;
+    // 💡 ATUALIZAÇÃO: Se as miniaturas já foram geradas, não faça nada.
+    if (partituras.length === 0 || thumbnailsGenerated) return;
 
-            // 🔧 Garante que o worker esteja registrado antes de gerar o PDF
+    const generateThumbnails = async (partiturasList) => {
+        // Mapeia a lista de partituras para uma nova lista com as miniaturas
+        const updated = await Promise.all(
+        partiturasList.map(async (p) => {
+            // Se a miniatura já existe (após um upload novo), pula.
+            if (p.thumbnail !== undefined) return p;
+
+            try {
+            const fileUrl = `http://localhost:4000/api/partitura/file/${p.id}`;
+
+            // 🔧 Garante que o worker esteja registrado
             if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
             }
 
-            // const pdf = await pdfjsLib.getDocument({ url: fileUrl }).promise;
-            const response = await fetch(fileUrl);
+            const token = localStorage.getItem("userToken");
+
+            const response = await fetch(fileUrl, {
+                headers: { Authorization: `Bearer ${localStorage.getItem("userToken")}` },
+            });
+
+            // Verifica se a resposta foi OK (evita erros com 404/401)
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
             const data = await response.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data }).promise;
 
             const page = await pdf.getPage(1);
-            const viewport = page.getViewport({ scale: 0.3 });
+            // 💡 Aumentei um pouco a escala (de 0.3 para 0.5) para melhor qualidade da miniatura, ajuste se necessário
+            const viewport = page.getViewport({ scale: 0.5 }); 
 
             const canvas = document.createElement("canvas");
             const context = canvas.getContext("2d");
@@ -81,11 +95,19 @@ export default function Partitura() {
             }
         })
         );
+        
+        // 💡 Atualiza o estado UMA ÚNICA VEZ com a lista completa de miniaturas
         setPartituras(updated);
+        // 💡 Marca como gerado para evitar o loop
+        setThumbnailsGenerated(true);
     };
 
-    if (partituras.length > 0) generateThumbnails();
-    }, [partituras.length]);
+    // 💡 Chamamos a função de geração APENAS se houver partituras e não tiver sido gerada
+    generateThumbnails(partituras);
+
+    // 💡 DEPENDÊNCIA: O useEffect rodará se a lista for carregada ou se um novo item for adicionado
+    // O `thumbnailsGenerated` garante que a primeira leva não cause um loop infinito.
+    }, [partituras, thumbnailsGenerated]); // Adicionar 'thumbnailsGenerated' à lista de dependências
 
 
   const handleUpload = async (e) => {
@@ -113,6 +135,9 @@ export default function Partitura() {
       setNome("");
       setDescricao("");
       setFile(null);
+
+      setThumbnailsGenerated(false); // Reseta para gerar miniatura da nova partitura
+
     } else {
       alert("Erro ao enviar partitura");
     }
@@ -140,14 +165,14 @@ export default function Partitura() {
       <div className="flex justify-center items-center mb-6 space-x-4">
         <button
           onClick={() => (window.location.href = "/biblioteca")}
-          className="bg-teal-600 hover:bg-teal-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md transition"
+          className="bg-teal-600 hover:bg-teal-700 text-white w-12 h-10 rounded-full flex items-center justify-center shadow-md transition"
           title="Biblioteca Musical"
         >
           &lt;
         </button>
         <button
           onClick={() => (window.location.href = "/partitura")}
-          className="bg-teal-600 hover:bg-teal-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md transition"
+          className="bg-teal-600 hover:bg-teal-700 text-white w-12 h-10 rounded-full flex items-center justify-center shadow-md transition"
           title="Partituras"
         >
           &gt;
@@ -161,7 +186,7 @@ export default function Partitura() {
       {/* Upload */}
       <form
         onSubmit={handleUpload}
-        className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col md:flex-row items-center gap-4"
+        className="bg-white p-4 rounded-lg shadow-md mb-14 flex flex-col md:flex-row items-center gap-4"
       >
         <input
           type="text"
@@ -194,7 +219,7 @@ export default function Partitura() {
       </form>
 
       {/* Lista de partituras */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 justify-center md:grid-cols-4 lg:grid-cols-4">
         {partituras.length === 0 ? (
             <p className="text-gray-500 text-center col-span-full">
             Nenhuma partitura enviada ainda.
@@ -208,14 +233,14 @@ export default function Partitura() {
             return (
                 <div
                 key={p.id}
-                className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition cursor-pointer"
+                className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer w-70 transform transition duration-300 hover:scale-105 hover:brightness-90 hover:shadow-xl"
                 onClick={() => {
                     setPdfUrl(fileUrl);
                     setShowPdf(true);
                 }}
                 >
                 {/* Miniatura */}
-                <div className="relative w-full h-60 bg-gray-100 flex items-center justify-center">
+                <div className="relative w-full h-95 bg-gray-100 flex items-center justify-center">
                     {p.thumbnail ? (
                     <img
                         src={p.thumbnail}
@@ -228,9 +253,9 @@ export default function Partitura() {
                 </div>
 
                 {/* Detalhes */}
-                <div className="p-4">
-                    <h3 className="text-lg font-medium text-gray-800">{p.nome}</h3>
-                    <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+                <div className="p-3">
+                    <h3 className="text-base font-semibold text-gray-800 truncate">{p.nome}</h3>
+                    <p className="text-xs text-gray-500 mb-2 line-clamp-2">
                     {p.descricao || "Sem descrição"}
                     </p>
 
