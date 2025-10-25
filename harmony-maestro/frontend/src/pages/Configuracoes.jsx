@@ -3,13 +3,21 @@ import React, { useEffect, useState } from "react";
 
 const Configuracoes = () => {
   const [formData, setFormData] = useState({
-    nome: "",
-    email: "",
-    senha: "",
-    notifEmail: false,
-    notifWhats: false,
-    tema: "Claro",
-  });
+  nome: "",
+  email: "",
+  senha: "",
+  notifEmail: false,
+  notifWhats: false,
+  tema: "Claro",
+  sexo: "",
+  idade: "",
+  experiencia: "",
+  instrumentosQtd: "",
+  instrumento: "",
+  disponibilidade: "",
+  celular: "",
+});
+
 
   const [showPasswordFields, setShowPasswordFields] = useState(false);
 
@@ -30,6 +38,13 @@ const Configuracoes = () => {
           nome: data.name || "",
           email: data.email || "",
           notifEmail: data.notifEmail || false,
+          sexo: data.sexo || "",
+          idade: data.idade ? new Date(data.idade).toLocaleDateString("pt-BR") : "",
+          experiencia: data.experiencia || "",
+          instrumentosQtd: data.instrumentosQtd || "",
+          instrumento: data.instrumento || "",
+          disponibilidade: data.disponibilidade || "",
+          celular: data.celular || "",
         }));
       })
       .catch((err) => console.error("Erro ao carregar dados:", err));
@@ -64,6 +79,11 @@ const Configuracoes = () => {
       notifEmail: formData.notifEmail,
       notifWhats: formData.notifWhats,
       tema: formData.tema,
+      experiencia: formData.experiencia,
+      instrumentosQtd: formData.instrumentosQtd,
+      instrumento: formData.instrumento,
+      disponibilidade: formData.disponibilidade,
+      celular: formData.celular,
     };
 
     // Inclui dados de senha somente se o usuário quiser alterar
@@ -103,162 +123,280 @@ const Configuracoes = () => {
       </div>
 
       <div className="flex-1 overflow-auto p-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border max-w-3xl">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            Preferências do Usuário
-          </h2>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {/* Nome */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Nome
-              </label>
-              <input
-                type="text"
-                name="nome"
-                value={formData.nome}
-                onChange={handleChange}
-                className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
-              />
+          <div className="flex flex-col md:flex-row gap-8">
+          
+            {/* Preferencias */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border max-w-3xl">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                Preferências do Usuário
+              </h2>
+
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                {/* Nome */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Nome
+                  </label>
+                  <input
+                    type="text"
+                    name="nome"
+                    value={formData.nome}
+                    onChange={handleChange}
+                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Senha */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Senha</label>
+
+                  {/* Botão para mostrar/ocultar campos */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordFields(!showPasswordFields)}
+                    className="mt-2 text-teal-600 hover:text-teal-700 text-sm font-semibold"
+                  >
+                    {showPasswordFields ? "Cancelar" : "Editar senha"}
+                  </button>
+
+                  {/* Campos exibidos apenas ao clicar em "Editar senha" */}
+                  {showPasswordFields && (
+                    <div className="mt-4 space-y-3 transition-all duration-300">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Senha atual
+                        </label>
+                        <input
+                          type="password"
+                          name="senhaAtual"
+                          value={formData.senhaAtual || ""}
+                          onChange={handleChange}
+                          placeholder="Digite sua senha atual"
+                          className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Nova senha
+                        </label>
+                        <input
+                          type="password"
+                          name="novaSenha"
+                          value={formData.novaSenha || ""}
+                          onChange={handleChange}
+                          placeholder="Digite a nova senha"
+                          className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Confirmar nova senha
+                        </label>
+                        <input
+                          type="password"
+                          name="confirmarSenha"
+                          value={formData.confirmarSenha || ""}
+                          onChange={handleChange}
+                          placeholder="Confirme a nova senha"
+                          className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Notificações */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="notifEmail"
+                    name="notifEmail"
+                    checked={formData.notifEmail}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-teal-600 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="notifEmail"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    Receber notificações por e-mail
+                  </label>
+                </div>
+
+                <div className="flex items-center opacity-50 cursor-not-allowed">
+                  <input
+                    type="checkbox"
+                    id="notifWhats"
+                    name="notifWhats"
+                    checked={formData.notifWhats}
+                    onChange={handleChange}
+                    disabled
+                    className="h-4 w-4 text-teal-600 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="notifWhats"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    Receber notificações por WhatsApp (em breve)
+                  </label>
+                </div>
+
+                {/* Tema */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Tema
+                  </label>
+                  <select
+                    name="tema"
+                    value={formData.tema}
+                    onChange={handleChange}
+                    disabled
+                    className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-teal-500 focus:border-teal-500"
+                  >
+                    <option>Claro</option>
+                    <option>Escuro</option>
+                  </select>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2 px-4 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                >
+                  Salvar Alterações
+                </button>
+              </form>
             </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
-              />
+            {/* Outros dados */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border w-full md:w-1/2">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                Outros Dados
+              </h2>
+
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                {/* Sexo (somente leitura) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Sexo</label>
+                  <input
+                    type="text"
+                    value={formData.sexo}
+                    readOnly
+                    className="mt-2 block w-full border-gray-300 rounded-lg bg-gray-100 shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Data de Nascimento (somente leitura) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Data de Nascimento
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.idade}
+                    readOnly
+                    className="mt-2 block w-full border-gray-300 rounded-lg bg-gray-100 shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Experiência */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Experiência (anos)
+                  </label>
+                  <input
+                    type="number"
+                    name="experiencia"
+                    value={formData.experiencia}
+                    onChange={handleChange}
+                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Quantidade de instrumentos */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Quantidade de instrumentos
+                  </label>
+                  <input
+                    type="number"
+                    name="instrumentosQtd"
+                    value={formData.instrumentosQtd}
+                    onChange={handleChange}
+                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Instrumento preferido */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Instrumento preferido
+                  </label>
+                  <input
+                    type="text"
+                    name="instrumento"
+                    value={formData.instrumento}
+                    onChange={handleChange}
+                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Disponibilidade */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Disponibilidade
+                  </label>
+                  <input
+                    type="text"
+                    name="disponibilidade"
+                    value={formData.disponibilidade}
+                    onChange={handleChange}
+                    placeholder="Ex: Manhã, tarde, noite..."
+                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Celular */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Celular
+                  </label>
+                  <input
+                    type="text"
+                    name="celular"
+                    value={formData.celular}
+                    onChange={handleChange}
+                    placeholder="(DDD) 99999-9999"
+                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2 px-4 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                >
+                  Salvar Alterações
+                </button>
+              </form>
             </div>
+          </div>
 
-{/* Senha */}
-<div>
-  <label className="block text-sm font-medium text-gray-700">Senha</label>
-
-  {/* Botão para mostrar/ocultar campos */}
-  <button
-    type="button"
-    onClick={() => setShowPasswordFields(!showPasswordFields)}
-    className="mt-2 text-teal-600 hover:text-teal-700 text-sm font-semibold"
-  >
-    {showPasswordFields ? "Cancelar" : "Editar senha"}
-  </button>
-
-  {/* Campos exibidos apenas ao clicar em "Editar senha" */}
-  {showPasswordFields && (
-    <div className="mt-4 space-y-3 transition-all duration-300">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Senha atual
-        </label>
-        <input
-          type="password"
-          name="senhaAtual"
-          value={formData.senhaAtual || ""}
-          onChange={handleChange}
-          placeholder="Digite sua senha atual"
-          className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Nova senha
-        </label>
-        <input
-          type="password"
-          name="novaSenha"
-          value={formData.novaSenha || ""}
-          onChange={handleChange}
-          placeholder="Digite a nova senha"
-          className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Confirmar nova senha
-        </label>
-        <input
-          type="password"
-          name="confirmarSenha"
-          value={formData.confirmarSenha || ""}
-          onChange={handleChange}
-          placeholder="Confirme a nova senha"
-          className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
-        />
-      </div>
-    </div>
-  )}
-</div>
-
-            {/* Notificações */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="notifEmail"
-                name="notifEmail"
-                checked={formData.notifEmail}
-                onChange={handleChange}
-                className="h-4 w-4 text-teal-600 border-gray-300 rounded"
-              />
-              <label
-                htmlFor="notifEmail"
-                className="ml-2 text-sm text-gray-700"
-              >
-                Receber notificações por e-mail
-              </label>
-            </div>
-
-            <div className="flex items-center opacity-50 cursor-not-allowed">
-              <input
-                type="checkbox"
-                id="notifWhats"
-                name="notifWhats"
-                checked={formData.notifWhats}
-                onChange={handleChange}
-                disabled
-                className="h-4 w-4 text-teal-600 border-gray-300 rounded"
-              />
-              <label
-                htmlFor="notifWhats"
-                className="ml-2 text-sm text-gray-700"
-              >
-                Receber notificações por WhatsApp (em breve)
-              </label>
-            </div>
-
-            {/* Tema */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Tema
-              </label>
-              <select
-                name="tema"
-                value={formData.tema}
-                onChange={handleChange}
-                disabled
-                className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-teal-500 focus:border-teal-500"
-              >
-                <option>Claro</option>
-                <option>Escuro</option>
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2 px-4 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
-            >
-              Salvar Alterações
-            </button>
-          </form>
-        </div>
       </div>
     </div>
   );

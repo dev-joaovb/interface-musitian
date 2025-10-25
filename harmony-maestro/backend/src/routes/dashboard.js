@@ -48,6 +48,11 @@ router.get("/dashboard", authenticateToken, async (req, res) => {
       where: { userId: ownerId },
     });
 
+    const partituraCount = await prisma.partitura.count({
+      where: { usuarioId: ownerId },
+    });
+    
+
     const upcomingEvents = await prisma.event.findMany({
       where: { userId: ownerId, date: { gte: new Date() } },
       orderBy: { date: "asc" },
@@ -81,6 +86,7 @@ router.get("/dashboard", authenticateToken, async (req, res) => {
           : null,
         activeMembers,
         songsCount,
+        partituraCount,
       },
       upcomingEvents: upcomingEvents.map((e) => ({
         id: e.id,

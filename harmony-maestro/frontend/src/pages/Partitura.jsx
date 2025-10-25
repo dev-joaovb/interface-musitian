@@ -184,42 +184,45 @@ export default function Partitura() {
       </h1>
 
       {/* Upload */}
-      <form
-        onSubmit={handleUpload}
-        className="bg-white p-4 rounded-lg shadow-md mb-14 flex flex-col md:flex-row items-center gap-4"
-      >
-        <input
-          type="text"
-          placeholder="Nome da partitura"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          className="border p-2 rounded w-full md:w-1/4"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Descrição"
-          value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
-          className="border p-2 rounded w-full md:w-1/3"
-        />
-        <input
-          type="file"
-          accept="application/pdf"
-          onChange={(e) => setFile(e.target.files[0])}
-          className="border p-2 rounded w-full md:w-1/4"
-          required
-        />
-        <button
-          type="submit"
-          className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded shadow-md"
+      {user?.role === "admin" && (
+        <form
+            onSubmit={handleUpload}
+            className="bg-white p-4 rounded-lg shadow-md mb-14 flex flex-col md:flex-row items-center gap-4"
         >
-          Enviar
-        </button>
-      </form>
+            <input
+            type="text"
+            placeholder="Nome da partitura"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            className="border p-2 rounded w-full md:w-1/4"
+            required
+            />
+            <input
+            type="text"
+            placeholder="Descrição"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            className="border p-2 rounded w-full md:w-1/3"
+            />
+            <input
+            type="file"
+            accept="application/pdf"
+            onChange={(e) => setFile(e.target.files[0])}
+            className="border p-2 rounded w-full md:w-1/4"
+            required
+            />
+            <button
+            type="submit"
+            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded shadow-md"
+            >
+            Enviar
+            </button>
+        </form>
+      )}
+
 
       {/* Lista de partituras */}
-      <div className="grid gap-3 justify-center md:grid-cols-4 lg:grid-cols-4">
+      <div className="grid gap-8 justify-center md:grid-cols-4 lg:grid-cols-4">
         {partituras.length === 0 ? (
             <p className="text-gray-500 text-center col-span-full">
             Nenhuma partitura enviada ainda.
@@ -259,7 +262,7 @@ export default function Partitura() {
                     {p.descricao || "Sem descrição"}
                     </p>
 
-                    {user && (
+                    {user?.role === "admin" && (
                     <button
                         onClick={(e) => {
                         e.stopPropagation(); // impede abrir o PDF ao clicar em excluir

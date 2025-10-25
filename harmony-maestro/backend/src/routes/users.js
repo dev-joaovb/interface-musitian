@@ -125,19 +125,28 @@ router.get("/userss/:id", authenticateToken, async (req, res) => {
 router.put("/userss/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, senha } = req.body;
 
-    // Só permite atualizar o próprio usuário (ou permitir admins se desejar)
     if (req.user.id !== Number(id)) {
       return res.status(403).json({ error: "Ação não permitida" });
     }
 
+    const {
+      nome,
+      email,
+      senhaAtual,
+      novaSenha,
+      notifEmail,
+      experiencia,
+      instrumentosQtd,
+      instrumento,
+      disponibilidade,
+      celular,
+    } = req.body;
+
     const updateData = {};
 
-    if (name) updateData.name = name;
-
+    if (nome) updateData.name = nome;
     if (email) {
-      // evita conflito de email
       const existing = await prisma.user.findUnique({ where: { email } });
       if (existing && existing.id !== Number(id)) {
         return res.status(400).json({ error: "Email já cadastrado" });
@@ -145,24 +154,42 @@ router.put("/userss/:id", authenticateToken, async (req, res) => {
       updateData.email = email;
     }
 
-    // Atualização de senha com verificação da senha atual
-    if (req.body.senhaAtual && req.body.novaSenha) {
-      const user = await prisma.user.findUnique({ where: { id: Number(id) } });
+    if (typeof notifEmail !== "undefined") updateData.notifEmail = notifEmail;
+    if (typeof experiencia !== "undefined") updateData.experiencia = Number(experiencia);
+    if (typeof instrumentosQtd !== "undefined") updateData.instrumentosQtd = Number(instrumentosQtd);
+    if (instrumento) updateData.instrumento = instrumento;
+    if (disponibilidade) updateData.disponibilidade = disponibilidade;
+    if (celular) updateData.celular = celular;
 
-      const senhaCorreta = await bcrypt.compare(req.body.senhaAtual, user.password);
+    // Atualização de senha com verificação
+    if (senhaAtual && novaSenha) {
+      const user = await prisma.user.findUnique({ where: { id: Number(id) } });
+      const senhaCorreta = await bcrypt.compare(senhaAtual, user.password);
       if (!senhaCorreta) {
         return res.status(400).json({ error: "Senha atual incorreta." });
       }
 
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(req.body.novaSenha, saltRounds);
-      updateData.password = hashedPassword;
+      const hashed = await bcrypt.hash(novaSenha, 10);
+      updateData.password = hashed;
     }
 
     const updated = await prisma.user.update({
       where: { id: Number(id) },
       data: updateData,
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        notifEmail: true,
+        experiencia: true,
+        instrumentosQtd: true,
+        instrumento: true,
+        disponibilidade: true,
+        celular: true,
+        sexo: true,
+        idade: true,
+      },
     });
 
     res.json(updated);

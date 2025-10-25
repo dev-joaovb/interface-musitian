@@ -74,12 +74,28 @@ const upload = multer({
 // 📌 Listar partituras do usuário logado
 router.get("/partitura", authenticateToken, async (req, res) => {
   try {
+    let targetUserId = req.user.id;
+
+    // 🔹 Se for "user", busca o admin que o convidou
+    if (req.user.role === "user") {
+      const invite = await prisma.invite.findFirst({
+        where: { inviteeId: req.user.id },
+        select: { inviterId: true },
+      });
+
+      if (invite && invite.inviterId) {
+        targetUserId = invite.inviterId; // acessa o acervo do admin
+      }
+    }
+
     const partituras = await prisma.partitura.findMany({
-      where: { usuarioId: req.user.id },
+      where: { usuarioId: targetUserId },
       orderBy: { criadoEm: "desc" },
     });
+
     res.json(partituras);
   } catch (err) {
+    console.error("Erro ao buscar partituras:", err);
     res.status(500).json({ error: "Erro ao buscar partituras." });
   }
 });
@@ -87,6 +103,11 @@ router.get("/partitura", authenticateToken, async (req, res) => {
 // 📌 Upload de partitura
 router.post("/partitura/upload", authenticateToken, upload.single("file"), async (req, res) => {
   try {
+    // 🔒 Usuários "user" não podem enviar partituras
+    if (req.user.role === "user") {
+      return res.status(403).json({ error: "Usuário comum não pode enviar partituras." });
+    }
+
     const { nome, descricao } = req.body;
     const arquivoUrl = `/uploads/partituras/${req.file.filename}`;
 
@@ -105,9 +126,15 @@ router.post("/partitura/upload", authenticateToken, upload.single("file"), async
   }
 });
 
+
 // 📌 Deletar partitura
 router.delete("/partitura/:id", authenticateToken, async (req, res) => {
   try {
+    // 🔒 Usuários "user" não podem excluir partituras
+    if (req.user.role === "user") {
+      return res.status(403).json({ error: "Usuário comum não pode excluir partituras." });
+    }
+
     const id = Number(req.params.id);
     const partitura = await prisma.partitura.findUnique({ where: { id } });
 

@@ -8,6 +8,7 @@ import {
   FiUpload,
   FiLayers,
   FiUserPlus,
+  FiMusic,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
@@ -46,7 +47,7 @@ useEffect(() => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-teal-100 text-teal-600">
@@ -82,7 +83,7 @@ useEffect(() => {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-purple-100 text-purple-600">
-              <FiFileText className="w-5 h-5" />
+              <FiMusic className="w-5 h-5" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">
@@ -90,6 +91,23 @@ useEffect(() => {
               </p>
               <p className="text-xl font-semibold text-gray-800">
                 {data.stats.songsCount}
+              </p>
+            </div>
+          </div>
+        </div>
+
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-purple-100 text-purple-600">
+              <FiFileText className="w-5 h-5" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">
+                Partituras no Acervo
+              </p>
+              <p className="text-xl font-semibold text-gray-800">
+                {data.stats.partituraCount}
               </p>
             </div>
           </div>
