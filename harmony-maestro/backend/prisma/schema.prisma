@@ -103,6 +103,8 @@ model Presenca {
   userId    Int
   serieId   Int
   status    String   @default("Aguardando Resposta")
+  confirmacaoAdmin   String?  // "Compareceu" | "Não Compareceu" | null
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

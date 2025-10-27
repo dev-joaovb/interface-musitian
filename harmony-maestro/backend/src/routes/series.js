@@ -150,7 +150,7 @@ router.put("/series/:id", authenticateToken, async (req, res) => {
 router.patch("/series/:id/presenca", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params; // ID da série
-    const { status } = req.body; // "Confirmou presença" | "Não Disponível"
+    const { status } = req.body; // "Confirmou presença" | "Não Disponível"      "Resposta do usuário para avisar que estará presente ou não no dia do ensaio da série"
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
@@ -239,6 +239,7 @@ router.get("/series/:id/presenca", authenticateToken, async (req, res) => {
         nome: invite.invitee?.name,
         email: invite.invitee?.email,
         status: userPresenca ? userPresenca.status : "Aguardando Resposta",
+        confirmacaoAdmin: userPresenca?.confirmacaoAdmin || null,
       };
     });
 
@@ -250,6 +251,38 @@ router.get("/series/:id/presenca", authenticateToken, async (req, res) => {
   }
 });
 
+// ✅ Confirmação de presença (Admin)
+router.patch("/series/:serieId/presenca/:userId/confirmar", authenticateToken, async (req, res) => {
+  try {
+    const { serieId, userId } = req.params;
+    const { confirmacao } = req.body; // "Compareceu" | "Não Compareceu"
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ error: "Apenas administradores podem confirmar presença" });
+    }
+
+    // Verifica se já existe registro de presença
+    const presenca = await prisma.presenca.findFirst({
+      where: { userId: Number(userId), serieId: Number(serieId) },
+    });
+
+    if (!presenca) {
+      return res.status(404).json({ error: "Presença não encontrada para este usuário" });
+    }
+
+    // Atualiza confirmação
+    const updated = await prisma.presenca.update({
+      where: { id: presenca.id },
+      data: { confirmacaoAdmin: confirmacao },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error("Erro ao confirmar presença:", err);
+    res.status(500).json({ error: "Erro ao confirmar presença" });
+  }
+});
 
 
 

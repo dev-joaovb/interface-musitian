@@ -220,30 +220,49 @@ router.delete("/calendar/:id", authenticateToken, async (req, res) => {
 // 🧹 Limpar eventos passados automaticamente - executa a cada hora
 const deletePastEvents = async () => {
   try {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    // Todos os eventos com data menor que o início do dia atual
-    const deleted = await prisma.event.deleteMany({
+    const now = new Date(); // horário atual (remove tudo que já passou)
+
+    // 1) Deleta eventos cuja data já passou
+    const deletedEvents = await prisma.event.deleteMany({
       where: {
         date: {
-          lt: todayStart,
+          lt: now,
         },
       },
     });
-    if (deleted.count > 0) {
-      console.log(`🧹 ${deleted.count} eventos passados removidos automaticamente.`);
+
+    if (deletedEvents.count > 0) {
+      console.log(`🧹 ${deletedEvents.count} eventos passados removidos automaticamente.`);
+
+      // 2) Após remover eventos, procura por séries órfãs (sem nenhum evento)
+      const orphanSeries = await prisma.series.findMany({
+        where: { events: { none: {} } },
+        select: { id: true },
+      });
+
+      const orphanIds = orphanSeries.map((s) => s.id);
+
+      let deletedSeriesCount = 0;
+      if (orphanIds.length > 0) {
+        const result = await prisma.series.deleteMany({
+          where: { id: { in: orphanIds } },
+        });
+        deletedSeriesCount = result.count ?? 0;
+        console.log(`🧹 ${deletedSeriesCount} séries órfãs removidas automaticamente.`);
+      }
+
+      // (opcional) se quiser mais informação:
+      if (orphanIds.length > 0) {
+        console.log("🧹 IDs de séries removidas:", orphanIds);
+      }
     }
   } catch (err) {
     console.error("Erro ao limpar eventos passados:", err);
   }
 };
 
-// Executa a cada hora (3600000ms)
+// mantém a execução periódica (cada hora) e a execução imediata no boot
 setInterval(deletePastEvents, 60 * 60 * 1000);
-
-// Opcional: Executa imediatamente ao iniciar o servidor
 deletePastEvents();
-
-
 
 export default router;

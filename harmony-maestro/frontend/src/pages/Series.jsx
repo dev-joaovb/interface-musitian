@@ -13,6 +13,9 @@ const Series = () => {
   const [role, setRole] = useState("admin");
   const [ownerId, setOwnerId] = useState(null);
 
+  const [selectedSeriesId, setSelectedSeriesId] = useState(null);
+
+
   const [selectedPresencas, setSelectedPresencas] = useState([]);
   // const [confirmedSeries, setConfirmedSeries] = useState([]);
   const [confirmedSeries, setConfirmedSeries] = useState(() => {
@@ -237,9 +240,40 @@ const handleViewPresences = async (id) => {
     const data = await res.json();
 
     setSelectedPresencas(data); // ✅ Armazena no estado
+    setSelectedSeriesId(id); // ✅ guarda o ID da série
   } catch (err) {
     console.error(err);
     setMessage("Erro ao carregar presenças");
+  }
+};
+
+// ✅ Admin confirma presença (Compareceu / Não Compareceu)
+const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(
+      `http://localhost:4000/api/series/${serieId}/presenca/${userId}/confirmar`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ confirmacao }),
+      }
+    );
+
+    if (!res.ok) throw new Error("Erro ao confirmar presença");
+
+    // Atualiza estado local sem recarregar
+    setSelectedPresencas((prev) =>
+      prev.map((p) =>
+        p.id === userId ? { ...p, confirmacaoAdmin: confirmacao } : p
+      )
+    );
+  } catch (err) {
+    console.error(err);
+    setMessage("Erro ao confirmar presença");
   }
 };
 
@@ -375,32 +409,32 @@ const handleViewPresences = async (id) => {
                   )}
 
                   {/* ✅ Botões de confirmação de presença - visível apenas para usuários */}
-{role === "user" && (
-  <div className="mt-2 flex gap-2">
-    <button
-      onClick={() => handleConfirmPresence(serie.id, "Confirmou presença")}
-      disabled={confirmedSeries.includes(serie.id)}
-      className={`px-3 py-1 rounded text-white transition-colors ${
-        confirmedSeries.includes(serie.id)
-          ? "bg-green-400 cursor-not-allowed"
-          : "bg-green-600 hover:bg-green-700"
-      }`}
-    >
-      Confirmar Presença
-    </button>
-    <button
-      onClick={() => handleConfirmPresence(serie.id, "Não Disponível")}
-      disabled={confirmedSeries.includes(serie.id)}
-      className={`px-3 py-1 rounded text-white transition-colors ${
-        confirmedSeries.includes(serie.id)
-          ? "bg-red-400 cursor-not-allowed"
-          : "bg-red-600 hover:bg-red-700"
-      }`}
-    >
-      Não Disponível
-    </button>
-  </div>
-)}
+                  {role === "user" && (
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={() => handleConfirmPresence(serie.id, "Confirmou presença")}
+                        disabled={confirmedSeries.includes(serie.id)}
+                        className={`px-3 py-1 rounded text-white transition-colors ${
+                          confirmedSeries.includes(serie.id)
+                            ? "bg-green-400 cursor-not-allowed"
+                            : "bg-green-600 hover:bg-green-700"
+                        }`}
+                      >
+                        Confirmar Presença
+                      </button>
+                      <button
+                        onClick={() => handleConfirmPresence(serie.id, "Não Disponível")}
+                        disabled={confirmedSeries.includes(serie.id)}
+                        className={`px-3 py-1 rounded text-white transition-colors ${
+                          confirmedSeries.includes(serie.id)
+                            ? "bg-red-400 cursor-not-allowed"
+                            : "bg-red-600 hover:bg-red-700"
+                        }`}
+                      >
+                        Não Disponível
+                      </button>
+                    </div>
+                  )}
 
 
                 </div>
@@ -441,37 +475,76 @@ const handleViewPresences = async (id) => {
             ))}
 
             {/* ✅ Lista visual de presenças */}
-{role === "admin" && selectedPresencas.length > 0 && (
-  <div className="mt-6 bg-gray-800 p-4 rounded-lg shadow">
-    <h3 className="text-lg font-semibold text-white mb-3">Lista de Presenças</h3>
-    <table className="w-full text-sm text-gray-200">
-      <thead>
-        <tr className="border-b border-gray-700">
-          <th className="text-left py-2">Nome</th>
-          <th className="text-left py-2">Email</th>
-          <th className="text-left py-2">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {selectedPresencas.map((p) => (
-          <tr key={p.id} className="border-b border-gray-700 hover:bg-gray-700/30">
-            <td className="py-2">{p.nome}</td>
-            <td className="py-2">{p.email}</td>
-            <td className="py-2">
-              {p.status === "Confirmou presença" ? (
-                <span className="text-green-400 font-medium">{p.status}</span>
-              ) : p.status === "Não Disponível" ? (
-                <span className="text-red-400 font-medium">{p.status}</span>
-              ) : (
-                <span className="text-yellow-400 font-medium">{p.status}</span>
-              )}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-)}
+            {role === "admin" && selectedPresencas.length > 0 && (
+              <div className="mt-6 bg-gray-800 p-4 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-white mb-3">Lista de Presenças</h3>
+                <table className="w-full text-sm text-gray-200">
+                  <thead>
+                    <tr className="border-b border-gray-700">
+                      <th className="text-left py-2">Nome</th>
+                      <th className="text-left py-2">Email</th>
+                      <th className="text-left py-2">Status</th>
+                      <th className="text-left py-2">Confirmação de Presença</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedPresencas.map((p) => (
+                      <tr
+                        key={p.id}
+                        className={`border-b border-gray-700 ${
+                          p.confirmacaoAdmin ? "bg-gray-700/30 opacity-70" : "hover:bg-gray-700/30"
+                        }`}
+                      >
+                        <td className="py-2">{p.nome}</td>
+                        <td className="py-2">{p.email}</td>
+                        <td className="py-2">
+                          {p.status === "Confirmou presença" ? (
+                            <span className="text-green-400 font-medium">{p.status}</span>
+                          ) : p.status === "Não Disponível" ? (
+                            <span className="text-red-400 font-medium">{p.status}</span>
+                          ) : (
+                            <span className="text-yellow-400 font-medium">{p.status}</span>
+                          )}
+                        </td>
+
+                        <td className="py-2">
+                          {p.confirmacaoAdmin ? (
+                            <span className="text-blue-400 font-semibold">
+                              Formulário preenchido ({p.confirmacaoAdmin})
+                            </span>
+                          ) : (
+                            <div className="flex items-center space-x-4">
+                              <label className="flex items-center space-x-1">
+                                <input
+                                  type="radio"
+                                  name={`confirmacao-${p.id}`}
+                                  onChange={() =>
+                                    handleConfirmacaoAdmin(selectedSeriesId, p.id, "Compareceu")
+                                  }
+                                  className="accent-green-500"
+                                />
+                                <span>Sim</span>
+                              </label>
+                              <label className="flex items-center space-x-1">
+                                <input
+                                  type="radio"
+                                  name={`confirmacao-${p.id}`}
+                                  onChange={() =>
+                                    handleConfirmacaoAdmin(selectedSeriesId, p.id, "Não Compareceu")
+                                  }
+                                  className="accent-red-500"
+                                />
+                                <span>Não</span>
+                              </label>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
           </div>
         </div>

@@ -117,17 +117,17 @@ const Configuracoes = () => {
 };
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <div className="flex flex-col flex-1 overflow-hidden items-center">
       <div className="hidden md:flex items-center justify-between px-6 py-3">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Configurações</h1>
       </div>
 
       <div className="flex-1 overflow-auto p-6">
 
-          <div className="flex flex-col md:flex-row gap-8">
+          <div className="flex flex-col md:flex-row gap-6">
           
             {/* Preferencias */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border max-w-3xl">
+            <div className="bg-white p-6 rounded-lg shadow-sm border w-100">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">
                 Preferências do Usuário
               </h2>
@@ -277,7 +277,7 @@ const Configuracoes = () => {
 
                 <button
                   type="submit"
-                  className="w-full py-2 px-4 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                  className="w-full py-2 px-4 bg-teal-600 text-white rounded-lg hover:bg-teal-700 mt-35"
                 >
                   Salvar Alterações
                 </button>
@@ -285,7 +285,7 @@ const Configuracoes = () => {
             </div>
 
             {/* Outros dados */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border w-full md:w-1/2">
+            <div className="bg-white p-6 rounded-lg shadow-sm border w-100">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">
                 Outros Dados
               </h2>
