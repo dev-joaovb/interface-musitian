@@ -35,8 +35,8 @@ export default function Sidebar({ mobile = false, onClose }) {
 
   return (
     <aside className={classes}>
-      <div className="flex flex-col w-64 h-full">
-        <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200">
+      <div className="flex flex-col w-64 h-full border-r-2 border-gray-200 bg-white">
+        <div className="flex items-center justify-center h-14 px-4 border-b-1 border-gray-300">
           <div className="flex items-center">
             <FiMusic className="text-teal-600 w-6 h-6" />
             <span className="ml-2 text-xl font-bold text-gray-800">Harmony Maestro</span>

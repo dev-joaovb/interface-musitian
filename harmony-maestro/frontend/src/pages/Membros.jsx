@@ -455,22 +455,55 @@ useEffect(() => {
           >
             ×
           </button>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+
+          <h2 className="text-2xl font-semibold text-gray-800 mb-5 border-b pb-2">
             Informações do Usuário
           </h2>
-          <div className="space-y-2 text-gray-700">
-            <p><strong>Nome:</strong> {selectedUser.name}</p>
-            <p><strong>Email:</strong> {selectedUser.email}</p>
-            <p><strong>Sexo:</strong> {selectedUser.sexo || "Não informado"}</p>
-            <p><strong>Experiência:</strong> {selectedUser.experiencia ?? "Não informado"} {selectedUser.experiencia ? "anos" : ""}</p>
-            <p><strong>Instrumento:</strong> {selectedUser.instrumento || "Não informado"}</p>
-            <p><strong>Qtd. Instrumentos:</strong> {selectedUser.instrumentosQtd ?? "Não informado"}</p>
-            <p><strong>Data de Nascimento:</strong> {selectedUser.idade ? new Date(selectedUser.idade).toLocaleDateString("pt-BR") : "Não informada"}</p>
-            <p><strong>Disponibilidade:</strong> {selectedUser.disponibilidade || "Não informado"}</p>
-            <p><strong>Celular:</strong> {selectedUser.celular || "Não informado"}</p>
+
+          <div className="space-y-3 text-gray-700">
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+              <strong>Nome:</strong> {selectedUser.name}
+            </div>
+
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+              <strong>Email:</strong> {selectedUser.email}
+            </div>
+
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+              <strong>Sexo:</strong> {selectedUser.sexo || "Não informado"}
+            </div>
+
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+              <strong>Experiência:</strong> {selectedUser.experiencia ?? "Não informado"}{" "}
+              {selectedUser.experiencia ? "anos" : ""}
+            </div>
+
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+              <strong>Instrumento:</strong> {selectedUser.instrumento || "Não informado"}
+            </div>
+
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+              <strong>Qtd. Instrumentos:</strong> {selectedUser.instrumentosQtd ?? "Não informado"}
+            </div>
+
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+              <strong>Data de Nascimento:</strong>{" "}
+              {selectedUser.idade
+                ? new Date(selectedUser.idade).toLocaleDateString("pt-BR")
+                : "Não informada"}
+            </div>
+
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+              <strong>Disponibilidade:</strong> {selectedUser.disponibilidade || "Não informado"}
+            </div>
+
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+              <strong>Celular:</strong> {selectedUser.celular || "Não informado"}
+            </div>
           </div>
         </div>
       </div>
+
     )}
 
   </div>

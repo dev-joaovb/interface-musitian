@@ -28,7 +28,7 @@ export default function Topbar({ onMenuClick }) {
       </div>
 
       {/* Desktop header */}
-      <div className="hidden md:flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white">
+      <div className="hidden md:flex items-center justify-between px-6 py-3 h-14 border-b-1 border-gray-200 bg-white">
         <div className="flex items-center">
           {/* <div className="relative">
             <input
