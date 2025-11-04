@@ -2,6 +2,7 @@ import express from "express";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { logActivity } from "./logActivity.js";
+import { createGroupNotification } from "./createGroupNotification.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -82,6 +83,14 @@ router.post("/series", authenticateToken, async (req, res) => {
         events: { connect: { id: Number(eventId) } },
       },
     });
+
+
+    const adminName = req.user.name || "Admin";
+    await createGroupNotification(
+      req.user.id,
+      "Nova série de ensaios",
+      `${adminName} criou uma nova série de ensaios para o evento ${event.title}.`
+    );
 
     await logActivity(req.user.id, "series_created", `Série de ensaios para o evento "${event.title}" foi criada por ${req.user.email}`);
 

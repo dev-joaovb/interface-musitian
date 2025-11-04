@@ -1,7 +1,8 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
-import { logActivity } from "./logActivity.js";  
+import { logActivity } from "./logActivity.js";
+import { createGroupNotification } from "./createGroupNotification.js";
 
 
 
@@ -121,6 +122,13 @@ router.post("/calendar", authenticateToken, async (req, res) => {
         userId: req.user.id, // 🔹 Relaciona ao usuário logado
       },
     });
+
+    const adminName = req.user.name || "Admin";
+      await createGroupNotification(
+        req.user.id,
+        "Novo evento criado",
+        `${adminName} adicionou um novo evento, venha conferir.`
+      );
 
     await logActivity(
       req.user.id,

@@ -14,5 +14,6 @@ router.use('/users', require('./users'));
 router.use('/series', require('./series'));
 router.use('/inviteRoutes', require('./inviteRoutes'));
 router.use('/logActivity', require('./logActivity'));
+router.use('/createGroupNotification', require('./createGroupNotification'));
 
 module.exports = router;

@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import path from "path";
 import jwt from "jsonwebtoken";
 import { logActivity } from "./logActivity.js";  
+import { createGroupNotification } from "./createGroupNotification.js";
 
 // 🔐 Middleware para autenticar token
 export function authenticateToken(req, res, next) {
@@ -86,6 +87,15 @@ router.post("/biblioteca", authenticateToken, upload.single("file"), async (req,
         userId: req.user.id,
       },
     });
+
+  
+    const adminName = req.user.name || "Admin";
+      await createGroupNotification(
+        req.user.id,
+        "Nova música no acervo",
+        `${adminName} adicionou uma música nova no acervo musical, venha conferir.`
+      );
+
 
     await logActivity(req.user.id, "song_added", `Música "${title}" foi adicionada por ${req.user.email}`);
 

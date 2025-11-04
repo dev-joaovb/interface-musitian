@@ -4,6 +4,8 @@ import path from "path";
 import fs from "fs";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import { createGroupNotification } from "./createGroupNotification.js";
+
 
 
 // 🔐 Middleware para autenticar token
@@ -119,6 +121,13 @@ router.post("/partitura/upload", authenticateToken, upload.single("file"), async
         usuarioId: req.user.id,
       },
     });
+
+    const adminName = req.user.name || "Admin";
+    await createGroupNotification(
+      req.user.id,
+      "Nova partitura disponível",
+      `${adminName} adicionou uma nova partitura: ${partitura.nome}.`
+    );
 
     res.json(partitura);
   } catch (err) {

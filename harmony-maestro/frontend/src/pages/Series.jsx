@@ -273,7 +273,7 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
     );
   } catch (err) {
     console.error(err);
-    setMessage("Erro ao confirmar presença");
+    setMessage("Erro ao confirmar presença ou o usuário ainda não respondeu ao status de presença.");
   }
 };
 
