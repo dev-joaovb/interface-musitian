@@ -127,5 +127,51 @@ router.delete("/activity/clear", authenticateToken, async (req, res) => {
 });
 
 
+// ✅ Estatísticas de presença — Confirmação dos ensaios
+router.get("/dashboard/presencas", authenticateToken, async (req, res) => {
+  try {
+    // identificar o dono do grupo
+    const loggedUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+    });
+
+    let ownerId = loggedUser.id;
+    if (loggedUser.role === "user") {
+      const invite = await prisma.invite.findFirst({
+        where: { inviteeId: loggedUser.id, status: "accepted", active: true },
+      });
+      if (invite) ownerId = invite.inviterId;
+    }
+
+    // buscar todas as séries (ensaios) do grupo
+    const series = await prisma.series.findMany({
+      where: { userId: ownerId },
+      include: { presenca: true },
+    });
+
+    // Contadores
+    let confirmados = 0;
+    let naoDisponiveis = 0;
+    let aguardando = 0;
+
+    series.forEach((s) => {
+      s.presenca.forEach((p) => {
+        if (p.status === "Confirmou presença") confirmados++;
+        else if (p.status === "Não Disponível") naoDisponiveis++;
+        else aguardando++;
+      });
+    });
+
+    res.json({
+      confirmados,
+      naoDisponiveis,
+      aguardando,
+    });
+  } catch (error) {
+    console.error("Erro ao buscar estatísticas de presença:", error);
+    res.status(500).json({ error: "Erro ao buscar estatísticas" });
+  }
+});
+
 
 export default router;

@@ -10,7 +10,20 @@ import {
   FiUserPlus,
   FiMusic,
 } from "react-icons/fi";
+
 import { Link } from "react-router-dom";
+
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  CartesianGrid
+} from "recharts";
+
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -32,6 +45,30 @@ useEffect(() => {
     })
     .catch((err) => console.error("Erro no fetch do Dashboard:", err));
 }, []);
+
+
+const [presencaData, setPresencaData] = useState(null);
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  fetch("http://localhost:4000/api/dashboard/presencas", {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then((res) => res.json())
+    .then((json) => {
+      // converte os dados para formato de gráfico
+      const data = [
+        { status: "Confirmou Presença", valor: json.confirmados, cor: "#22c55e" },
+        { status: "Não Disponível", valor: json.naoDisponiveis, cor: "#ef4444" },
+        { status: "Aguardando Resposta", valor: json.aguardando, cor: "#facc15" },
+      ];
+      setPresencaData(data);
+    })
+    .catch((err) =>
+      console.error("Erro ao buscar dados de presença:", err)
+    );
+}, []);
+
 
 
   if (!data) return <p>Carregando...</p>;
@@ -165,9 +202,9 @@ useEffect(() => {
       {/* Quick Actions */}
       {role === "admin" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Link to="/series" className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
+          <Link to="/calendar" className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
             <FiPlus className="w-5 h-5 text-teal-600 mr-2" />
-            <span className="font-medium text-gray-700">Novo Ensaio</span>
+            <span className="font-medium text-gray-700">Novo Evento</span>
           </Link>
 
           <Link to="/biblioteca" className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
@@ -188,6 +225,43 @@ useEffect(() => {
       ) : (
         <div className="p-4 mb-6 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-center">
           Você está em um grupo — apenas o administrador pode criar ou editar dados.
+        </div>
+      )}
+
+      {/* Gráfico de Presença */}
+      {presencaData && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Confirmação de Presença nos Ensaios
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={presencaData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="status" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="valor"
+                name="Número de usuários"
+                stroke="#0d9488"
+                strokeWidth={3}
+                activeDot={{ r: 8 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+          <div className="flex justify-center mt-4 space-x-4 text-sm">
+            <span className="flex items-center">
+              <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span> Confirmou Presença
+            </span>
+            <span className="flex items-center">
+              <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span> Não Disponível
+            </span>
+            <span className="flex items-center">
+              <span className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></span> Aguardando Resposta
+            </span>
+          </div>
         </div>
       )}
 
