@@ -85,11 +85,11 @@ router.post("/series", authenticateToken, async (req, res) => {
     });
 
 
-    const adminName = req.user.name || "Admin";
     await createGroupNotification(
       req.user.id,
-      "Nova série de ensaios",
-      `${adminName} criou uma nova série de ensaios para o evento ${event.title}.`
+      "Nova série de ensaios criada",
+      "{admin} criou uma nova série de ensaios, confira os detalhes.",
+      "series"
     );
 
     await logActivity(req.user.id, "series_created", `Série de ensaios para o evento "${event.title}" foi criada por ${req.user.email}`);

@@ -122,19 +122,20 @@ router.post("/calendar", authenticateToken, async (req, res) => {
         userId: req.user.id, // 🔹 Relaciona ao usuário logado
       },
     });
-
-    const adminName = req.user.name || "Admin";
-      await createGroupNotification(
-        req.user.id,
-        "Novo evento criado",
-        `${adminName} adicionou um novo evento, venha conferir.`
-      );
-
+    
     await logActivity(
       req.user.id,
       "event_created",
       `Evento "${title}" foi criado por ${req.user.email}`
     );
+
+    await createGroupNotification(
+      req.user.id,
+      "Novo evento agendado",
+      "{admin} marcou um novo evento no calendário, venha conferir.",
+      "calendar"
+    );
+
 
     res.json(event);
   } catch (err) {

@@ -122,12 +122,13 @@ router.post("/partitura/upload", authenticateToken, upload.single("file"), async
       },
     });
 
-    const adminName = req.user.name || "Admin";
     await createGroupNotification(
       req.user.id,
-      "Nova partitura disponível",
-      `${adminName} adicionou uma nova partitura: ${partitura.nome}.`
+      "Nova partitura adicionada",
+      "{admin} adicionou uma nova partitura, venha conferir.",
+      "partitura"
     );
+
 
     res.json(partitura);
   } catch (err) {

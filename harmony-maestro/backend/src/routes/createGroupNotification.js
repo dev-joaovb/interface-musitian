@@ -1,46 +1,67 @@
+// utils/createGroupNotification.js
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-export async function createGroupNotification(adminId, title, message) {
+/**
+ * Cria notificações para todos os membros do grupo de um admin.
+ * @param {number} adminId - ID do admin (usuário que gerou o evento)
+ * @param {string} title - Título da notificação
+ * @param {string} message - Mensagem exibida (pode conter o nome do admin)
+ * @param {string} route - Caminho de redirecionamento ex: "biblioteca", "partitura"
+ */
+export async function createGroupNotification(adminId, title, message, route) {
   try {
-    // 🔹 Busca o admin (quem está enviando as notificações)
+    // ✅ Busca o admin com nome e ID
     const admin = await prisma.user.findUnique({
-      where: { id: adminId },
-      select: { name: true },
+      where: { id: Number(adminId) },
+      select: { id: true, name: true },
     });
 
     if (!admin) {
-      console.error(`Admin com ID ${adminId} não encontrado.`);
+      console.warn(`⚠️ Admin com ID ${adminId} não encontrado ao criar notificação.`);
       return;
     }
 
-    // 🔹 Busca todos os membros do grupo com convite aceito
-    const groupMembers = await prisma.invite.findMany({
-      where: { inviterId: adminId, status: "accepted" },
-      include: { invitee: true },
+    // ✅ Busca todos os usuários convidados pelo admin com status "accepted"
+    const invites = await prisma.invite.findMany({
+      where: {
+        inviterId: admin.id,
+        status: "accepted",
+      },
+      include: {
+        invitee: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
-    if (groupMembers.length === 0) return;
+    // ✅ Extrai apenas os convidados aceitos
+    const recipients = invites.map((i) => i.invitee);
 
-    // 🔹 Substitui {adminName} na mensagem por nome real do admin
-    const personalizedMessage = message.replace(
-      /\{adminName\}/g,
-      admin.name || "Administrador"
-    );
+    // ✅ Inclui o próprio admin também
+    const allRecipients = [
+      ...recipients,
+      { id: admin.id, name: admin.name || "Administrador" },
+    ];
 
-    // 🔹 Cria as notificações personalizadas
-    const notificationsData = groupMembers.map((m) => ({
-      title,
-      message: personalizedMessage,
-      userId: m.inviteeId,
-      date: new Date(),
-    }));
+    // ✅ Cria notificações individuais
+    for (const user of allRecipients) {
+      await prisma.notification.create({
+        data: {
+          title,
+          message: message.replace("{admin}", admin.name || "Administrador"),
+          userId: user.id,
+        },
+      });
+    }
 
-    await prisma.notification.createMany({ data: notificationsData });
     console.log(
-      `📢 Notificação enviada para ${groupMembers.length} membros do grupo de ${admin.name}.`
+      `🔔 Notificação enviada para ${allRecipients.length} membros (${route}) por ${admin.name}`
     );
   } catch (err) {
-    console.error("Erro ao criar notificações em grupo:", err);
+    console.error("Erro ao criar notificações de grupo:", err);
   }
 }

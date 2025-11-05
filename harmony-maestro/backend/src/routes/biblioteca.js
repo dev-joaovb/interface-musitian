@@ -89,15 +89,16 @@ router.post("/biblioteca", authenticateToken, upload.single("file"), async (req,
     });
 
   
-    const adminName = req.user.name || "Admin";
-      await createGroupNotification(
-        req.user.id,
-        "Nova música no acervo",
-        `${adminName} adicionou uma música nova no acervo musical, venha conferir.`
-      );
-
-
+    
     await logActivity(req.user.id, "song_added", `Música "${title}" foi adicionada por ${req.user.email}`);
+    
+    
+    await createGroupNotification(
+      req.user.id,
+      "Nova música no acervo musical",
+      "{admin} adicionou uma nova música no acervo musical, venha conferir.",
+      "biblioteca"
+    );
 
     res.json(song);
   });

@@ -175,17 +175,51 @@ const Notificacoes = () => {
 
     return limitedNotifs.length > 0 ? (
       limitedNotifs.map((n) => (
-        <div
-          key={n.id}
-          className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
-        >
-          <h3 className="font-semibold text-gray-800">{n.title}</h3>
-          <p className="text-gray-600">{n.message}</p>
-          <p className="text-xs text-gray-400 mt-2">
-            {new Date(n.date).toLocaleString("pt-BR")}
-          </p>
-        </div>
-      ))
+      <div
+        key={n.id}
+        className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
+      >
+        <h3 className="font-semibold text-gray-800">{n.title}</h3>
+        <p className="text-gray-600">{n.message}</p>
+        <p className="text-xs text-gray-400 mt-2">
+          {new Date(n.date).toLocaleString("pt-BR")}
+        </p>
+
+        {/* 🔹 Botão para redirecionamento (quando a notificação tiver rota) */}
+        {n.title.includes("música") && (
+          <a
+            href="/biblioteca"
+            className="mt-2 inline-block text-teal-600 hover:text-teal-800 font-medium"
+          >
+            Ir para Biblioteca →
+          </a>
+        )}
+        {n.title.includes("partitura") && (
+          <a
+            href="/partitura"
+            className="mt-2 inline-block text-teal-600 hover:text-teal-800 font-medium"
+          >
+            Ir para Partituras →
+          </a>
+        )}
+        {n.title.includes("evento") && (
+          <a
+            href="/calendar"
+            className="mt-2 inline-block text-teal-600 hover:text-teal-800 font-medium"
+          >
+            Ir para Calendário →
+          </a>
+        )}
+        {n.title.includes("série") && (
+          <a
+            href="/series"
+            className="mt-2 inline-block text-teal-600 hover:text-teal-800 font-medium"
+          >
+            Ir para Séries →
+          </a>
+        )}
+      </div>
+    ))
     ) : (
       <p className="text-gray-500 text-center">
         Nenhuma notificação encontrada (todas expiraram).
