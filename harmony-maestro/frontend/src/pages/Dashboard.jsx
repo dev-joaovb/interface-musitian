@@ -14,8 +14,8 @@ import {
 import { Link } from "react-router-dom";
 
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -66,6 +66,27 @@ useEffect(() => {
     })
     .catch((err) =>
       console.error("Erro ao buscar dados de presença:", err)
+    );
+}, []);
+
+
+const [faltasData, setFaltasData] = useState(null);
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  fetch("http://localhost:4000/api/dashboard/faltas", {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then((res) => res.json())
+    .then((json) => {
+      const data = [
+        { status: "Presente", valor: json.compareceu },
+        { status: "Falta", valor: json.naoCompareceu },
+      ];
+      setFaltasData(data);
+    })
+    .catch((err) =>
+      console.error("Erro ao buscar dados de faltas:", err)
     );
 }, []);
 
@@ -235,21 +256,20 @@ useEffect(() => {
             Confirmação de Presença nos Ensaios
           </h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={presencaData}>
+            <BarChart data={presencaData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="status" />
               <YAxis allowDecimals={false} />
               <Tooltip />
               <Legend />
-              <Line
-                type="monotone"
+              <Bar
                 dataKey="valor"
                 name="Número de usuários"
-                stroke="#0d9488"
-                strokeWidth={3}
-                activeDot={{ r: 8 }}
+                fill="#0d9488"
+                barSize={60}
+                radius={[8, 8, 0, 0]}
               />
-            </LineChart>
+            </BarChart>
           </ResponsiveContainer>
           <div className="flex justify-center mt-4 space-x-4 text-sm">
             <span className="flex items-center">
@@ -260,6 +280,39 @@ useEffect(() => {
             </span>
             <span className="flex items-center">
               <span className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></span> Aguardando Resposta
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Gráfico de Faltas em Ensaios */}
+      {faltasData && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Faltas em Ensaios (Confirmação pelo Administrador)
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={faltasData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="status" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Legend />
+              <Bar
+                dataKey="valor"
+                name="Número de Participações"
+                fill="#3b82f6"
+                barSize={60}
+                radius={[8, 8, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="flex justify-center mt-4 space-x-4 text-sm">
+            <span className="flex items-center">
+              <span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span> Presente
+            </span>
+            <span className="flex items-center">
+              <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span> Falta
             </span>
           </div>
         </div>

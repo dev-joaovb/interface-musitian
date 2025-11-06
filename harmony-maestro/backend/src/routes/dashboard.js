@@ -173,5 +173,44 @@ router.get("/dashboard/presencas", authenticateToken, async (req, res) => {
   }
 });
 
+// ✅ Estatísticas de faltas — presença confirmada pelo admin
+router.get("/dashboard/faltas", authenticateToken, async (req, res) => {
+  try {
+    // identificar o dono do grupo
+    const loggedUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+    });
+
+    let ownerId = loggedUser.id;
+    if (loggedUser.role === "user") {
+      const invite = await prisma.invite.findFirst({
+        where: { inviteeId: loggedUser.id, status: "accepted", active: true },
+      });
+      if (invite) ownerId = invite.inviterId;
+    }
+
+    // buscar séries com presença vinculada
+    const series = await prisma.series.findMany({
+      where: { userId: ownerId },
+      include: { presenca: true },
+    });
+
+    let compareceu = 0;
+    let naoCompareceu = 0;
+
+    series.forEach((s) => {
+      s.presenca.forEach((p) => {
+        if (p.confirmacaoAdmin === "Compareceu") compareceu++;
+        else if (p.confirmacaoAdmin === "Não Compareceu") naoCompareceu++;
+      });
+    });
+
+    res.json({ compareceu, naoCompareceu });
+  } catch (error) {
+    console.error("Erro ao buscar estatísticas de faltas:", error);
+    res.status(500).json({ error: "Erro ao buscar estatísticas de faltas" });
+  }
+});
+
 
 export default router;
