@@ -213,4 +213,142 @@ router.get("/dashboard/faltas", authenticateToken, async (req, res) => {
 });
 
 
+// 📊 Estatísticas de eventos realizados (por mês e ano)
+router.get("/dashboard/eventos-realizados/:year", authenticateToken, async (req, res) => {
+  try {
+    const year = parseInt(req.params.year, 10);
+    const loggedUser = await prisma.user.findUnique({ where: { id: req.user.id } });
+
+    let ownerId = loggedUser.id;
+    if (loggedUser.role === "user") {
+      const invite = await prisma.invite.findFirst({
+        where: { inviteeId: loggedUser.id, status: "accepted", active: true },
+      });
+      if (invite) ownerId = invite.inviterId;
+    }
+
+    // Buscar todos eventos realizados do ano
+    const events = await prisma.past_events.findMany({
+      where: {
+        userId: ownerId,
+        date: {
+          gte: new Date(`${year}-01-01T00:00:00Z`),
+          lte: new Date(`${year}-12-31T23:59:59Z`),
+        },
+      },
+    });
+
+    // Contar eventos por mês
+    const months = Array.from({ length: 12 }, (_, i) => ({
+      mes: new Date(0, i).toLocaleString("pt-BR", { month: "short" }),
+      eventos: 0,
+    }));
+
+    events.forEach((e) => {
+      const monthIndex = new Date(e.date).getMonth();
+      months[monthIndex].eventos++;
+    });
+
+    res.json(months);
+  } catch (error) {
+    console.error("Erro ao gerar estatísticas de eventos realizados:", error);
+    res.status(500).json({ error: "Erro ao carregar dados de eventos realizados" });
+  }
+});
+
+// 📄 Relatório de eventos realizados por mês e ano
+router.get("/dashboard/relatorio/eventos/:year/:month", authenticateToken, async (req, res) => {
+  try {
+    const { year, month } = req.params;
+    const yearNum = parseInt(year, 10);
+    
+    // Normaliza o nome do mês recebido (remove ponto, deixa minúsculo)
+    const monthNormalized = month.toLowerCase().replace('.', '').trim();
+
+    // Mapeamento de possíveis formas do mês
+    const monthMap = {
+      jan: 0, janeiro: 0,
+      fev: 1, fevereiro: 1,
+      mar: 2, março: 2,
+      abr: 3, abril: 3,
+      mai: 4, maio: 4,
+      jun: 5, junho: 5,
+      jul: 6, julho: 6,
+      ago: 7, agosto: 7,
+      set: 8, setembro: 8,
+      out: 9, outubro: 9,
+      nov: 10, novembro: 10,
+      dez: 11, dezembro: 11
+    };
+
+    const monthIndex = monthMap[monthNormalized];
+
+    if (monthIndex === undefined) {
+      console.error(`Mês inválido recebido: ${month}`);
+      return res.status(400).json({ error: `Mês inválido: ${month}` });
+    }
+
+    // Identifica o usuário logado
+    const loggedUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+    });
+
+    let ownerId = loggedUser.id;
+
+    // Se o usuário for comum, pegar o ID do dono (quem convidou)
+    if (loggedUser.role === "user") {
+      const invite = await prisma.invite.findFirst({
+        where: {
+          inviteeId: loggedUser.id,
+          status: "accepted",
+          active: true,
+        },
+      });
+      if (invite) ownerId = invite.inviterId;
+    }
+
+    // Define intervalo do mês
+    const startDate = new Date(yearNum, monthIndex, 1);
+    const endDate = new Date(yearNum, monthIndex + 1, 1);
+
+    // Busca os eventos realizados dentro do período
+    const eventos = await prisma.past_events.findMany({
+      where: {
+        userId: ownerId,
+        date: {
+          gte: startDate,
+          lt: endDate,
+        },
+      },
+      orderBy: { date: "asc" },
+    });
+
+    // Busca os membros (usuários aceitos nos convites)
+    const membros = await prisma.invite.findMany({
+      where: { status: "accepted", active: true },
+      include: {
+        invitee: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    // Monta os dados detalhados de cada evento
+    const eventosComDetalhes = await Promise.all(
+      eventos.map(async (ev) => {
+        return {
+          ...ev,
+          membros: membros.map((m) => m.invitee),
+          presencasResumo: ev.presencasResumo || { confirmados: 0, naoDisponiveis: 0 },
+          faltasResumo: ev.faltasResumo || { presentes: 0, faltaram: 0 },
+        };
+      })
+    );
+
+    res.json(eventosComDetalhes);
+  } catch (error) {
+    console.error("Erro ao gerar relatório de eventos:", error);
+    res.status(500).json({ error: "Erro ao carregar relatório de eventos" });
+  }
+});
+
+
 export default router;

@@ -294,6 +294,59 @@ router.patch("/series/:serieId/presenca/:userId/confirmar", authenticateToken, a
 });
 
 
+// ✅ Finalizar série e registrar resumo no Past_events
+router.post("/series/:id/finalizar", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ error: "Apenas administradores podem finalizar eventos" });
+    }
+
+    // Busca presenças dessa série
+    const presencas = await prisma.presenca.findMany({
+      where: { serieId: Number(id) },
+    });
+
+    // Monta resumos
+    const presencasResumo = {
+      confirmados: presencas.filter((p) => p.status === "Confirmou presença").length,
+      naoDisponiveis: presencas.filter((p) => p.status === "Não Disponível").length,
+    };
+
+    const faltasResumo = {
+      presentes: presencas.filter((p) => p.confirmacaoAdmin === "Compareceu").length,
+      faltaram: presencas.filter((p) => p.confirmacaoAdmin === "Não Compareceu").length,
+    };
+
+    // Busca a série original (para copiar os dados básicos)
+    const serie = await prisma.series.findUnique({ where: { id: Number(id) } });
+    if (!serie) return res.status(404).json({ error: "Série não encontrada" });
+
+    // Cria registro em Past_events
+    const evento = await prisma.past_events.create({
+      data: {
+        title: serie.title,
+        date: serie.date,
+        location: serie.location,
+        description: serie.description,
+        color: serie.color,
+        status: "realizado",
+        userId: serie.userId,
+        presencasResumo,
+        faltasResumo,
+      },
+    });
+
+    res.json({ message: "Evento finalizado e registrado com sucesso", evento });
+  } catch (err) {
+    console.error("Erro ao finalizar evento:", err);
+    res.status(500).json({ error: "Erro ao finalizar evento" });
+  }
+});
+
+
 
 // 📌 Deletar série
 router.delete("/series/:id", authenticateToken, async (req, res) => {

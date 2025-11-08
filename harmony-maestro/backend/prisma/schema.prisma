@@ -34,6 +34,7 @@ model User {
   updatedAt       DateTime         @updatedAt
   presenca        Presenca[]
   partitura       Partitura[]
+  past_events     Past_events[]
 }
 
 model Invite {
@@ -61,6 +62,24 @@ model Event {
   series      Series?   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   userId      Int
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
+
+model Past_events {
+  id          Int       @id @default(autoincrement())
+  title       String
+  date        DateTime
+  location    String?
+  description String?
+  color       String?   @default("#3b82f6")
+  status      String    @default("pendente")
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 🟢 Novos campos:
+  presencasResumo   Json?      // { confirmados: 10, naoDisponiveis: 2 }
+  faltasResumo      Json?      // { presentes: 8, faltaram: 4 }
+  
   createdAt   DateTime  @default(now())
 }
 

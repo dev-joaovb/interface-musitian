@@ -47,6 +47,7 @@ useEffect(() => {
 }, []);
 
 
+// 🔹 Estatísticas de presença em ensaios
 const [presencaData, setPresencaData] = useState(null);
 
 useEffect(() => {
@@ -70,6 +71,7 @@ useEffect(() => {
 }, []);
 
 
+// 🔹 Estatísticas de faltas em ensaios
 const [faltasData, setFaltasData] = useState(null);
 
 useEffect(() => {
@@ -89,6 +91,21 @@ useEffect(() => {
       console.error("Erro ao buscar dados de faltas:", err)
     );
 }, []);
+
+
+// 🔹 Estatísticas de eventos por ano
+const [eventosData, setEventosData] = useState([]);
+const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  fetch(`http://localhost:4000/api/dashboard/eventos-realizados/${anoSelecionado}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then((res) => res.json())
+    .then(setEventosData)
+    .catch((err) => console.error("Erro ao buscar eventos realizados:", err));
+}, [anoSelecionado]);
 
 
 
@@ -315,6 +332,50 @@ useEffect(() => {
               <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span> Falta
             </span>
           </div>
+        </div>
+      )}
+
+      {/* Gráfico de Eventos Realizados */}
+      {eventosData && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Eventos Realizados — {anoSelecionado}
+            </h2>
+            <select
+              value={anoSelecionado}
+              onChange={(e) => setAnoSelecionado(Number(e.target.value))}
+              className="border border-gray-300 rounded-md p-2 text-sm"
+            >
+              {[2023, 2024, 2025].map((ano) => (
+                <option key={ano} value={ano}>
+                  {ano}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={eventosData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="mes" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Legend />
+              <Bar
+                dataKey="eventos"
+                name="Eventos Realizados"
+                fill="#10b981"
+                barSize={60}
+                radius={[8, 8, 0, 0]}
+                onClick={(data) => {
+                  const mes = data.mes;
+                  window.location.href = `/relatorio/eventos/${anoSelecionado}/${mes}`;
+                }}
+                cursor="pointer"
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       )}
 

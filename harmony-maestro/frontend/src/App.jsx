@@ -18,6 +18,7 @@ import Configuracoes from "./pages/Configuracoes";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Partitura from "./pages/Partitura";
+import RelatorioEventos from "./pages/RelatorioEventos";
 
 // 🔐 Proteção de rotas
 function ProtectedRoute({ children }) {
@@ -98,6 +99,7 @@ export default function App() {
                     <Route path="/membros" element={<Membros />} />
                     <Route path="/notificacoes" element={<Notificacoes />} />
                     <Route path="/configuracoes" element={<Configuracoes />} />
+                    <Route path="/relatorio/eventos/:year/:month" element={<RelatorioEventos />} />
                   </Routes>
                 </MainLayout>
               </ProtectedRoute>
