@@ -17,6 +17,8 @@
     "@fullcalendar/timegrid": "^6.1.19",
     "@tailwindcss/vite": "^4.1.13",
     "axios": "^1.12.2",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.544.0",
     "pdfjs-dist": "^5.4.296",
     "react": "^19.1.1",

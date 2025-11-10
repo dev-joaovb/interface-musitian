@@ -32,62 +32,90 @@ async function moveEventToPast(event) {
       where: { title: event.title, date: event.date, userId: event.userId },
     });
 
-    if (exists) return;
+    if (!exists) {
+      let attendanceResumo = null;
 
-    let attendanceResumo = null;
+      try {
+        // ⚙️ Usa o seriesId do evento
+        if (event.seriesId) {
+          const reports = await prisma.attendance_report.findMany({
+            where: { serieId: event.seriesId },
+            select: {
+              status: true,
+              confirmacaoAdmin: true,
+              user: { select: { name: true } },
+            },
+          });
 
-    try {
-      // ✅ Busca o resumo de presenças baseado no serieId do evento
-      if (event.seriesId) {
-        const reports = await prisma.attendance_report.findMany({
-          where: { serieId: event.seriesId },
-          select: { status: true, confirmacaoAdmin: true },
-        });
+          if (reports.length > 0) {
+            // 🔹 Extrai nomes conforme status
+            const totalParticipantes = reports.length;
+            const nomesParticipantes = reports.map(
+              (r) => r.user?.name || "Desconhecido"
+            );
 
-        if (reports.length > 0) {
-          const totalParticipantes = reports.length;
-          const compareceram = reports.filter(
-            (r) => r.confirmacaoAdmin === "Compareceu"
-          ).length;
-          const faltaram = reports.filter(
-            (r) => r.confirmacaoAdmin === "Não Compareceu"
-          ).length;
-          const aguardando = reports.filter(
-            (r) => r.status === "Aguardando Resposta"
-          ).length;
+            const compareceram = reports.filter(
+              (r) => r.confirmacaoAdmin === "Compareceu"
+            );
+            const nomesCompareceram = compareceram.map(
+              (r) => r.user?.name || "Desconhecido"
+            );
 
-          attendanceResumo = {
-            totalParticipantes,
-            compareceram,
-            faltaram,
-            aguardando,
-          };
+            const faltaram = reports.filter(
+              (r) => r.confirmacaoAdmin === "Não Compareceu"
+            );
+            const nomesFaltaram = faltaram.map(
+              (r) => r.user?.name || "Desconhecido"
+            );
+
+            const aguardando = reports.filter(
+              (r) => r.status === "Aguardando Resposta"
+            );
+            const nomesAguardando = aguardando.map(
+              (r) => r.user?.name || "Desconhecido"
+            );
+
+            // 🔹 Estrutura limpa e fácil de ler no PDF
+            attendanceResumo = {
+              totalParticipantes,
+              compareceram: nomesCompareceram.length,
+              faltaram: nomesFaltaram.length,
+              aguardando: nomesAguardando.length,
+              nomesParticipantes,
+              nomesCompareceram,
+              nomesFaltaram,
+              nomesAguardando,
+            };
+          }
+        } else {
+          console.warn(
+            `⚠️ Evento "${event.title}" não possui seriesId vinculado — pulando coleta de Attendance_report`
+          );
         }
-      } else {
+      } catch (err) {
         console.warn(
-          `⚠️ Evento "${event.title}" não possui seriesId vinculado, não será possível coletar dados de presença.`
+          "⚠️ Erro ao coletar dados de Attendance_report:",
+          err.message
         );
       }
-    } catch (err) {
-      console.warn("⚠️ Erro ao coletar dados de Attendance_report:", err.message);
+
+      // 🧩 Cria registro em Past_events com resumo detalhado
+      await prisma.past_events.create({
+        data: {
+          title: event.title,
+          date: event.date,
+          location: event.location,
+          description: event.description,
+          color: event.color,
+          status: "realizado",
+          userId: event.userId,
+          attendanceResumo,
+        },
+      });
+
+      console.log(`✅ Evento "${event.title}" movido para Past_events.`);
     }
-
-    // 🧩 Criar registro em Past_events com resumo atualizado
-    await prisma.past_events.create({
-      data: {
-        title: event.title,
-        date: event.date,
-        location: event.location,
-        description: event.description,
-        color: event.color,
-        status: "realizado",
-        userId: event.userId,
-        attendanceResumo,
-      },
-    });
-
-    console.log(`✅ Evento "${event.title}" movido para Past_events.`);
-  } catch (err) { 
+  } catch (err) {
     console.error("Erro ao mover evento para Past_events:", err);
   }
 }

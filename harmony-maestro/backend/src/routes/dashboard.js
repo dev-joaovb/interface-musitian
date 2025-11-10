@@ -306,6 +306,12 @@ router.get("/dashboard/relatorio/eventos/:year/:month", authenticateToken, async
       if (invite) ownerId = invite.inviterId;
     }
 
+    // 🔹 Busca o responsável (admin/dono do grupo)
+    const responsavel = await prisma.user.findUnique({
+      where: { id: ownerId },
+      select: { id: true, name: true, email: true },
+    });
+
     // Define intervalo do mês
     const startDate = new Date(yearNum, monthIndex, 1);
     const endDate = new Date(yearNum, monthIndex + 1, 1);
@@ -346,6 +352,7 @@ router.get("/dashboard/relatorio/eventos/:year/:month", authenticateToken, async
             ? JSON.parse(JSON.stringify(ev.attendanceResumo))
             : null,
           attendanceReport: attendance, // 👈 Inclui todos os registros de presença/ausência
+          responsavel, // 👈 Inclui dados do responsável pelo grupo
         };
       })
     );
