@@ -256,12 +256,12 @@ router.get("/dashboard/eventos-realizados/:year", authenticateToken, async (req,
   }
 });
 
-// 📄 Relatório de eventos realizados por mês e ano
+// 📄 Relatório de eventos realizados por mês e ano (com presença dos participantes)
 router.get("/dashboard/relatorio/eventos/:year/:month", authenticateToken, async (req, res) => {
   try {
     const { year, month } = req.params;
     const yearNum = parseInt(year, 10);
-    
+
     // Normaliza o nome do mês recebido (remove ponto, deixa minúsculo)
     const monthNormalized = month.toLowerCase().replace('.', '').trim();
 
@@ -282,7 +282,6 @@ router.get("/dashboard/relatorio/eventos/:year/:month", authenticateToken, async
     };
 
     const monthIndex = monthMap[monthNormalized];
-
     if (monthIndex === undefined) {
       console.error(`Mês inválido recebido: ${month}`);
       return res.status(400).json({ error: `Mês inválido: ${month}` });
@@ -334,11 +333,19 @@ router.get("/dashboard/relatorio/eventos/:year/:month", authenticateToken, async
     // Monta os dados detalhados de cada evento
     const eventosComDetalhes = await Promise.all(
       eventos.map(async (ev) => {
+        // Busca os relatórios de presença associados ao evento (serieId = id do evento)
+        const attendance = await prisma.attendance_report.findMany({
+          where: { serieId: ev.id },
+          orderBy: { id: "asc" },
+        });
+
         return {
           ...ev,
           membros: membros.map((m) => m.invitee),
-          presencasResumo: ev.presencasResumo || { confirmados: 0, naoDisponiveis: 0 },
-          faltasResumo: ev.faltasResumo || { presentes: 0, faltaram: 0 },
+          attendanceResumo: ev.attendanceResumo
+            ? JSON.parse(JSON.stringify(ev.attendanceResumo))
+            : null,
+          attendanceReport: attendance, // 👈 Inclui todos os registros de presença/ausência
         };
       })
     );
@@ -349,6 +356,7 @@ router.get("/dashboard/relatorio/eventos/:year/:month", authenticateToken, async
     res.status(500).json({ error: "Erro ao carregar relatório de eventos" });
   }
 });
+
 
 
 export default router;

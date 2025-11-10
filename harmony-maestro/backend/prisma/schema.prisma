@@ -35,6 +35,7 @@ model User {
   presenca        Presenca[]
   partitura       Partitura[]
   past_events     Past_events[]
+  attendance_report Attendance_report[]
 }
 
 model Invite {
@@ -75,12 +76,29 @@ model Past_events {
   status      String    @default("pendente")
   userId      Int
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // 🟢 Novos campos:
-  presencasResumo   Json?      // { confirmados: 10, naoDisponiveis: 2 }
-  faltasResumo      Json?      // { presentes: 8, faltaram: 4 }
-  
   createdAt   DateTime  @default(now())
+
+  attendanceResumo Json?
+}
+
+model Attendance_report {
+  id               Int      @id @default(autoincrement())
+  serieId          Int
+  userId           Int
+  userName         String?
+  userEmail        String?
+  status           String   // "Confirmou presença" | "Não Disponível" | "Aguardando Resposta"
+  confirmacaoAdmin String?  // "Compareceu" | "Não Compareceu" | null
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  serie Series @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // garante unicidade por par (serieId, userId) para facilitar upsert
+  @@unique([serieId, userId])
 }
 
 model Song {
@@ -115,6 +133,7 @@ model Series {
   updatedAt DateTime  @updatedAt
   status_presenca String    @default("Aguardando Resposta") // "Confirmou presença", "Não Disponível", "Aguardando Resposta"
   presenca Presenca[]
+  attendance_report Attendance_report[]
 }
 
 model Presenca {

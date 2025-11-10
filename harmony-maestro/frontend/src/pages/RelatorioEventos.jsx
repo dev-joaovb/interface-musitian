@@ -32,33 +32,83 @@ export default function RelatorioEventos() {
                 📅 {new Date(ev.date).toLocaleString("pt-BR")}
               </p>
               {ev.location && <p className="text-sm">📍 {ev.location}</p>}
-              {ev.description && <p className="mt-2 text-gray-700">{ev.description}</p>}
-              {ev.presencasResumo && (
+              {ev.description && (
+                <p className="mt-2 text-gray-700">{ev.description}</p>
+              )}
+
+              {ev.attendanceResumo && (
                 <div className="mt-3 text-sm text-gray-700">
-                    <p>✅ Confirmaram presença: {ev.presencasResumo.confirmados}</p>
-                    <p>❌ Não disponíveis: {ev.presencasResumo.naoDisponiveis}</p>
+                  <p>👥 Total de Participantes: {ev.attendanceResumo.totalParticipantes}</p>
+                  <p>✅ Compareceram: {ev.attendanceResumo.compareceram}</p>
+                  <p>🚫 Faltaram: {ev.attendanceResumo.faltaram}</p>
+                  <p>⌛ Aguardando Resposta: {ev.attendanceResumo.aguardando}</p>
                 </div>
-                )}
+              )}
 
-                {ev.faltasResumo && (
-                <div className="mt-2 text-sm text-gray-700">
-                    <p>👥 Presentes: {ev.faltasResumo.presentes}</p>
-                    <p>🚫 Faltaram: {ev.faltasResumo.faltaram}</p>
+              {/* 👇 NOVO BLOCO — lista detalhada de presenças/ausências */}
+              {ev.attendanceReport && ev.attendanceReport.length > 0 && (
+                <div className="mt-4 border-t pt-3">
+                  <h3 className="text-sm font-medium text-gray-600 mb-2">
+                    📋 Relatório de Presenças:
+                  </h3>
+                  <table className="w-full text-sm border">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border px-2 py-1 text-left">Nome</th>
+                        <th className="border px-2 py-1 text-left">E-mail</th>
+                        <th className="border px-2 py-1 text-center">Status</th>
+                        <th className="border px-2 py-1 text-center">Confirmação Admin</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ev.attendanceReport.map((r) => (
+                        <tr key={r.id} className="odd:bg-white even:bg-gray-50">
+                          <td className="border px-2 py-1">{r.userName}</td>
+                          <td className="border px-2 py-1">{r.userEmail}</td>
+                          <td
+                            className={`border px-2 py-1 text-center ${
+                              r.status === "Confirmou presença"
+                                ? "text-green-600"
+                                : r.status === "Não Disponível"
+                                ? "text-red-600"
+                                : "text-gray-600"
+                            }`}
+                          >
+                            {r.status}
+                          </td>
+                          <td
+                            className={`border px-2 py-1 text-center ${
+                              r.confirmacaoAdmin === "Compareceu"
+                                ? "text-green-600"
+                                : r.confirmacaoAdmin === "Não Compareceu"
+                                ? "text-red-600"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {r.confirmacaoAdmin || "-"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                )}
+              )}
 
-                {ev.membros && ev.membros.length > 0 && (
+              {ev.membros && ev.membros.length > 0 && (
                 <div className="mt-3">
-                    <h3 className="text-sm font-medium text-gray-600">Membros participantes:</h3>
-                    <ul className="list-disc list-inside text-sm text-gray-700">
+                  <h3 className="text-sm font-medium text-gray-600">
+                    Membros participantes:
+                  </h3>
+                  <ul className="list-disc list-inside text-sm text-gray-700">
                     {ev.membros.map((m) => (
-                        <li key={m.id}>{m.name}</li>
+                      <li key={m.id}>{m.name}</li>
                     ))}
-                    </ul>
+                  </ul>
                 </div>
-                )}
+              )}
+
               <span
-                className={`inline-block mt-2 px-3 py-1 rounded text-white text-xs`}
+                className="inline-block mt-3 px-3 py-1 rounded text-white text-xs"
                 style={{ backgroundColor: ev.color || "#3b82f6" }}
               >
                 {ev.status}

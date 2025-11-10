@@ -252,6 +252,46 @@ router.get("/series/:id/presenca", authenticateToken, async (req, res) => {
       };
     });
 
+    // ===============================
+    // 🔁 Sincronizar Attendance_report (create / update)
+    // ===============================
+    try {
+      await Promise.all(
+        listaFinal.map(async (row) => {
+          const whereKey = {
+            serieId_userId: {
+              serieId: Number(id),
+              userId: Number(row.id),
+            },
+          };
+
+          const dataPayload = {
+            serieId: Number(id),
+            userId: Number(row.id),
+            userName: row.nome ?? null,
+            userEmail: row.email ?? null,
+            status: row.status ?? "Aguardando Resposta",
+            confirmacaoAdmin: row.confirmacaoAdmin ?? null,
+          };
+
+          await prisma.attendance_report.upsert({
+            where: whereKey,
+            update: {
+              userName: dataPayload.userName,
+              userEmail: dataPayload.userEmail,
+              status: dataPayload.status,
+              confirmacaoAdmin: dataPayload.confirmacaoAdmin,
+            },
+            create: dataPayload,
+          });
+        })
+      );
+    } catch (syncErr) {
+      console.error("Erro ao sincronizar Attendance_report:", syncErr);
+      // não interrompe o fluxo de resposta ao client
+    }
+    // ===============================
+
     // ✅ 4️⃣ Retorna a lista unificada
     res.json(listaFinal);
   } catch (err) {
