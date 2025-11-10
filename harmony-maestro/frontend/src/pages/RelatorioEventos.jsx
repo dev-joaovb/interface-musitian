@@ -19,9 +19,15 @@ export default function RelatorioEventos() {
 
   // 📄 Função para gerar o PDF do relatório completo
   const gerarPDF = () => {
+    if (!eventos.length) return;
+
     const doc = new jsPDF();
     const logoUrl = "/logo-vide.png"; // coloque o logo da VIDE na pasta public
-    const userName = localStorage.getItem("userName") || "Usuário Responsável";
+
+    // Pega o responsável do primeiro evento (todos são do mesmo grupo)
+    const responsavel = eventos[0]?.responsavel;
+    const nomeResponsavel = responsavel?.name || "Usuário Responsável";
+    const emailResponsavel = responsavel?.email || "";
 
     // Adiciona logo no topo (x, y, largura, altura)
     doc.addImage(logoUrl, "PNG", 14, 10, 25, 25);
@@ -32,9 +38,10 @@ export default function RelatorioEventos() {
     doc.text(`Relatório de Eventos — ${month.toUpperCase()} / ${year}`, 45, 20);
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Responsável: ${userName}`, 45, 28);
+    doc.text(`Responsável: ${nomeResponsavel}`, 45, 28);
+    if (emailResponsavel) doc.text(`E-mail: ${emailResponsavel}`, 45, 34);
 
-    let y = 40; // inicia o conteúdo abaixo do cabeçalho
+    let y = 45; // inicia o conteúdo abaixo do cabeçalho
 
     eventos.forEach((ev, index) => {
       // Título do evento
@@ -61,7 +68,6 @@ export default function RelatorioEventos() {
       // Resumo de presença com nomes
       if (ev.attendanceResumo) {
         y += 4;
-
         const {
           totalParticipantes,
           compareceram,
@@ -182,17 +188,17 @@ export default function RelatorioEventos() {
 
               {ev.attendanceResumo && (
                 <div className="mt-4 text-sm text-gray-700 space-y-1">
-                  <p>👥 Total de Participantes: {ev.attendanceResumo.totalParticipantes}</p>
-                  <p>✅ Compareceram: {ev.attendanceResumo.compareceram}</p>
-                  <p>🚫 Faltaram: {ev.attendanceResumo.faltaram}</p>
-                  <p>⌛ Aguardando Resposta: {ev.attendanceResumo.aguardando}</p>
+                  <p>Total de Participantes: {ev.attendanceResumo.totalParticipantes}</p>
+                  <p>Compareceram: {ev.attendanceResumo.compareceram}</p>
+                  <p>Faltaram: {ev.attendanceResumo.faltaram}</p>
+                  <p>Aguardando Resposta: {ev.attendanceResumo.aguardando}</p>
                 </div>
               )}
 
               {ev.attendanceReport && ev.attendanceReport.length > 0 && (
                 <div className="mt-5 border-t pt-3">
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    📋 Relatório de Presenças
+                    Relatório de Presenças
                   </h3>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm border-collapse">
