@@ -79,6 +79,7 @@ model Past_events {
   createdAt   DateTime  @default(now())
 
   attendanceResumo Json?
+  presencas Json?
 }
 
 model Attendance_report {

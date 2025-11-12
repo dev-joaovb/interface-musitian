@@ -14,6 +14,8 @@
     "tailwindcss": "^4.1.13"
   },
   "dependencies": {
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "pdfjs-dist": "^5.4.296",
     "recharts": "^3.3.0"
   }

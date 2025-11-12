@@ -358,62 +358,18 @@ router.get("/dashboard/relatorio/eventos/:year/:month", authenticateToken, async
     });
 
     // Monta os dados detalhados de cada evento
-    const eventosComDetalhes = await Promise.all(
-      eventos.map(async (ev) => {
-        // 🔹 Busca todas as séries associadas a este evento
-        const series = await prisma.series.findMany({
-          where: { userId: ownerId },
-          include: {
-            attendance_report: {
-              include: {
-                user: { select: { id: true, name: true, email: true } },
-              },
-            },
-          },
-        });
-
-        // 🔹 Filtra séries que pertençam a este evento (relacionadas por título ou lógica de vínculo)
-        const seriesRelacionadas = series.filter((s) =>
-          s.title?.toLowerCase().includes(ev.title.toLowerCase())
-        );
-
-        // 🔹 Une todos os relatórios de presença de todas as séries deste evento
-        const attendance = seriesRelacionadas.flatMap(
-          (s) => s.attendance_report || []
-        );
-
-        // 🔹 Monta lista única de membros
-        const membros = await prisma.invite.findMany({
-          where: { status: "accepted", active: true },
-          include: {
-            invitee: { select: { id: true, name: true, email: true } },
-          },
-        });
-
-        return {
-          ...ev,
-          membros: membros.map((m) => m.invitee),
-          attendanceResumo: ev.attendanceResumo
-            ? JSON.parse(JSON.stringify(ev.attendanceResumo))
-            : null,
-          attendanceReport: attendance, // 👈 Agora inclui TODAS as séries
-          series: seriesRelacionadas.map((s) => ({
-            id: s.id,
-            title: s.title,
-            startDate: s.startDate,
-            reports: s.attendance_report.map((r) => ({
-              id: r.id,
-              userId: r.userId,
-              userName: r.user?.name,
-              userEmail: r.user?.email,
-              status: r.status,
-              confirmacaoAdmin: r.confirmacaoAdmin,
-            })),
-          })),
-          responsavel, // 👈 Mantém o campo do responsável
-        };
-      })
-    );
+const eventosComDetalhes = await Promise.all(
+  eventos.map(async (ev) => {
+    return {
+      ...ev,
+      responsavel,
+      presencas: ev.presencas ? JSON.parse(JSON.stringify(ev.presencas)) : [],
+      attendanceResumo: ev.attendanceResumo
+        ? JSON.parse(JSON.stringify(ev.attendanceResumo))
+        : null,
+    };
+  })
+);
 
     res.json(eventosComDetalhes);
   } catch (error) {

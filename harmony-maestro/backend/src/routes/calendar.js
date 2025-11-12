@@ -25,96 +25,124 @@ function authenticateToken(req, res, next) {
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// 🧩 Função para mover um evento para Past_events
+// 🧩 Função para mover um evento para Past_events (versão robusta)
 async function moveEventToPast(event) {
   try {
     const exists = await prisma.past_events.findFirst({
       where: { title: event.title, date: event.date, userId: event.userId },
     });
 
-    if (!exists) {
-      let attendanceResumo = null;
-
-      try {
-        // ⚙️ Usa o seriesId do evento
-        if (event.seriesId) {
-          const reports = await prisma.attendance_report.findMany({
-            where: { serieId: event.seriesId },
-            select: {
-              status: true,
-              confirmacaoAdmin: true,
-              user: { select: { name: true } },
-            },
-          });
-
-          if (reports.length > 0) {
-            // 🔹 Extrai nomes conforme status
-            const totalParticipantes = reports.length;
-            const nomesParticipantes = reports.map(
-              (r) => r.user?.name || "Desconhecido"
-            );
-
-            const compareceram = reports.filter(
-              (r) => r.confirmacaoAdmin === "Compareceu"
-            );
-            const nomesCompareceram = compareceram.map(
-              (r) => r.user?.name || "Desconhecido"
-            );
-
-            const faltaram = reports.filter(
-              (r) => r.confirmacaoAdmin === "Não Compareceu"
-            );
-            const nomesFaltaram = faltaram.map(
-              (r) => r.user?.name || "Desconhecido"
-            );
-
-            const aguardando = reports.filter(
-              (r) => r.status === "Aguardando Resposta"
-            );
-            const nomesAguardando = aguardando.map(
-              (r) => r.user?.name || "Desconhecido"
-            );
-
-            // 🔹 Estrutura limpa e fácil de ler no PDF
-            attendanceResumo = {
-              totalParticipantes,
-              compareceram: nomesCompareceram.length,
-              faltaram: nomesFaltaram.length,
-              aguardando: nomesAguardando.length,
-              nomesParticipantes,
-              nomesCompareceram,
-              nomesFaltaram,
-              nomesAguardando,
-            };
-          }
-        } else {
-          console.warn(
-            `⚠️ Evento "${event.title}" não possui seriesId vinculado — pulando coleta de Attendance_report`
-          );
-        }
-      } catch (err) {
-        console.warn(
-          "⚠️ Erro ao coletar dados de Attendance_report:",
-          err.message
-        );
-      }
-
-      // 🧩 Cria registro em Past_events com resumo detalhado
-      await prisma.past_events.create({
-        data: {
-          title: event.title,
-          date: event.date,
-          location: event.location,
-          description: event.description,
-          color: event.color,
-          status: "realizado",
-          userId: event.userId,
-          attendanceResumo,
-        },
-      });
-
-      console.log(`✅ Evento "${event.title}" movido para Past_events.`);
+    if (exists) {
+      console.log(`ℹ️ Past_events já possui registro para "${event.title}" (${event.id}) — pulando.`);
+      return;
     }
+
+    let attendanceResumo = null;
+    let presencasDetalhadas = [];
+
+    try {
+      // 🔎 1) Busca séries diretamente vinculadas pelo campo seriesId
+const seriesBySeriesId = event.seriesId
+  ? await prisma.series.findMany({
+      where: { id: event.seriesId },
+      include: {
+        presenca: {
+          include: { user: { select: { id: true, name: true, email: true } } },
+        },
+      },
+    })
+  : [];
+
+// 🔎 2) Busca séries conectadas via relation many-to-many (events.some)
+const seriesByEventRelation = await prisma.series.findMany({
+  where: { events: { some: { id: event.id } } },
+  include: {
+    presenca: {
+      include: { user: { select: { id: true, name: true, email: true } } },
+    },
+  },
+});
+
+// 🔎 3) Busca séries do mesmo userId e mesmo "prefixo" de título (fallback)
+const seriesByTitleAndUser = await prisma.series.findMany({
+  where: {
+    userId: event.userId,
+    title: { contains: event.title.split(" ")[0] },
+  },
+  include: {
+    presenca: {
+      include: { user: { select: { id: true, name: true, email: true } } },
+    },
+  },
+});
+
+// 🔎 4) Junta todas e remove duplicatas por id
+const seriesMap = new Map();
+for (const s of [
+  ...seriesBySeriesId,
+  ...seriesByEventRelation,
+  ...seriesByTitleAndUser,
+]) {
+  if (s && !seriesMap.has(s.id)) seriesMap.set(s.id, s);
+}
+const seriesList = Array.from(seriesMap.values());
+
+      // 🔹 Monta estrutura completa para guardar no JSON (presencasDetalhadas)
+      presencasDetalhadas = seriesList.map((serie) => ({
+        serieId: serie.id,
+        serieTitulo: serie.title || null,
+        serieData: serie.startDate ? new Date(serie.startDate).toISOString() : null,
+        presencas: (serie.presenca || []).map((p) => ({
+          nome: p.user?.name || null,
+          email: p.user?.email || null,
+          status: p.status || null,
+          confirmacaoAdmin: p.confirmacaoAdmin || null,
+        })),
+      }));
+
+      // 🔹 Cria resumo simples para contagem (opcional)
+      const todos = seriesList.flatMap((s) => s.presenca || []);
+      if (todos.length > 0) {
+        const totalParticipantes = todos.length;
+        const compareceram = todos.filter((p) => p.confirmacaoAdmin === "Compareceu");
+        const faltaram = todos.filter((p) => p.confirmacaoAdmin === "Não Compareceu");
+        const aguardando = todos.filter((p) => p.status === "Aguardando Resposta" && !p.confirmacaoAdmin);
+
+        attendanceResumo = {
+          totalParticipantes,
+          compareceram: compareceram.length,
+          faltaram: faltaram.length,
+          aguardando: aguardando.length,
+          nomesCompareceram: compareceram.map((p) => p.user?.name || null),
+          nomesFaltaram: faltaram.map((p) => p.user?.name || null),
+          nomesAguardando: aguardando.map((p) => p.user?.name || null),
+        };
+      } else {
+        // deixa como array vazio e resumo nulo — você pode preferir salvar [] em vez de null
+        attendanceResumo = attendanceResumo || null;
+      }
+    } catch (err) {
+      console.warn("⚠️ Erro ao coletar dados de presença:", err);
+      // continua e cria o past_events mesmo sem os detalhes
+    }
+
+    // 🧩 Cria o registro no histórico (com dados completos)
+    const created = await prisma.past_events.create({
+      data: {
+        title: event.title,
+        date: event.date,
+        location: event.location ?? null,
+        description: event.description ?? null,
+        color: event.color ?? null,
+        status: "realizado",
+        userId: event.userId,
+        // campos Json — certifique-se de que Past_events.schema contém esses campos
+        attendanceResumo,
+        presencas: presencasDetalhadas,
+      },
+    });
+
+    console.log(`✅ Evento "${event.title}" (id=${event.id}) movido para Past_events (id=${created.id}).`);
   } catch (err) {
     console.error("Erro ao mover evento para Past_events:", err);
   }
@@ -188,6 +216,7 @@ router.get("/calendar", authenticateToken, async (req, res) => {
 
       if (eventDate < noww) {
         await moveEventToPast(event);
+
       }
     }
 
@@ -338,42 +367,95 @@ router.delete("/calendar/:id", authenticateToken, async (req, res) => {
 
 
 // 🧹 Limpar eventos passados automaticamente - executa a cada hora
+// const deletePastEvents = async () => {
+//   try {
+//     const now = new Date(); // horário atual (remove tudo que já passou)
+
+//     // 1) Deleta eventos cuja data já passou
+//     const deletedEvents = await prisma.event.deleteMany({
+//       where: {
+//         date: {
+//           lt: now,
+//         },
+//       },
+//     });
+
+//     if (deletedEvents.count > 0) {
+//       console.log(`🧹 ${deletedEvents.count} eventos passados removidos automaticamente.`);
+
+//       // 2) Após remover eventos, procura por séries órfãs (sem nenhum evento)
+//       const orphanSeries = await prisma.series.findMany({
+//         where: { events: { none: {} } },
+//         select: { id: true },
+//       });
+
+//       const orphanIds = orphanSeries.map((s) => s.id);
+
+//       let deletedSeriesCount = 0;
+//       if (orphanIds.length > 0) {
+//         const result = await prisma.series.deleteMany({
+//           where: { id: { in: orphanIds } },
+//         });
+//         deletedSeriesCount = result.count ?? 0;
+//         console.log(`🧹 ${deletedSeriesCount} séries órfãs removidas automaticamente.`);
+//       }
+
+//       // (opcional) se quiser mais informação:
+//       if (orphanIds.length > 0) {
+//         console.log("🧹 IDs de séries removidas:", orphanIds);
+//       }
+//     }
+//   } catch (err) {
+//     console.error("Erro ao limpar eventos passados:", err);
+//   }
+// };
+
+// // mantém a execução periódica (cada hora) e a execução imediata no boot
+// setInterval(deletePastEvents, 60 * 60 * 1000);
+// deletePastEvents(); 
+
 const deletePastEvents = async () => {
   try {
-    const now = new Date(); // horário atual (remove tudo que já passou)
+    const now = new Date();
 
-    // 1) Deleta eventos cuja data já passou
+    // 1) Buscar eventos do tipo Event que já passaram
+    const pastEventsToMove = await prisma.event.findMany({
+      where: {
+        date: { lt: now },
+      },
+    });
+
+    // 2) Move cada evento para Past_events (cria a cópia independente)
+    for (const ev of pastEventsToMove) {
+      try {
+        await moveEventToPast(ev);
+      } catch (err) {
+        console.warn(`Erro ao mover evento ${ev.id} -> Past_events:`, err.message);
+      }
+    }
+
+    // 3) Deleta os eventos originais que já passaram
     const deletedEvents = await prisma.event.deleteMany({
       where: {
-        date: {
-          lt: now,
-        },
+        date: { lt: now },
       },
     });
 
     if (deletedEvents.count > 0) {
       console.log(`🧹 ${deletedEvents.count} eventos passados removidos automaticamente.`);
 
-      // 2) Após remover eventos, procura por séries órfãs (sem nenhum evento)
+      // remover séries órfãs (sem eventos)
       const orphanSeries = await prisma.series.findMany({
         where: { events: { none: {} } },
         select: { id: true },
       });
-
       const orphanIds = orphanSeries.map((s) => s.id);
 
-      let deletedSeriesCount = 0;
       if (orphanIds.length > 0) {
         const result = await prisma.series.deleteMany({
           where: { id: { in: orphanIds } },
         });
-        deletedSeriesCount = result.count ?? 0;
-        console.log(`🧹 ${deletedSeriesCount} séries órfãs removidas automaticamente.`);
-      }
-
-      // (opcional) se quiser mais informação:
-      if (orphanIds.length > 0) {
-        console.log("🧹 IDs de séries removidas:", orphanIds);
+        console.log(`🧹 ${result.count ?? 0} séries órfãs removidas automaticamente.`);
       }
     }
   } catch (err) {
@@ -381,10 +463,8 @@ const deletePastEvents = async () => {
   }
 };
 
-// mantém a execução periódica (cada hora) e a execução imediata no boot
+// manter execução periódica
 setInterval(deletePastEvents, 60 * 60 * 1000);
 deletePastEvents();
-
-
 
 export default router;
