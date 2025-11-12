@@ -71,8 +71,8 @@ useEffect(() => {
 }, []);
 
 
-// 🔹 Estatísticas de faltas em ensaios
-const [faltasData, setFaltasData] = useState(null);
+// 🔹 Médias mensais de presença e falta
+const [mediasMensais, setMediasMensais] = useState(null);
 
 useEffect(() => {
   const token = localStorage.getItem("token");
@@ -80,15 +80,9 @@ useEffect(() => {
     headers: { Authorization: `Bearer ${token}` },
   })
     .then((res) => res.json())
-    .then((json) => {
-      const data = [
-        { status: "Presente", valor: json.compareceu },
-        { status: "Falta", valor: json.naoCompareceu },
-      ];
-      setFaltasData(data);
-    })
+    .then((json) => setMediasMensais(json))
     .catch((err) =>
-      console.error("Erro ao buscar dados de faltas:", err)
+      console.error("Erro ao buscar médias mensais:", err)
     );
 }, []);
 
@@ -303,33 +297,40 @@ useEffect(() => {
       )}
 
       {/* Gráfico de Faltas em Ensaios */}
-      {faltasData && (
+      {mediasMensais && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            Faltas em Ensaios (Confirmação pelo Administrador)
+            Média de Presença e Falta por Mês
           </h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={faltasData}>
+            <BarChart data={mediasMensais}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="status" />
-              <YAxis allowDecimals={false} />
+              <XAxis dataKey="mes" />
+              <YAxis allowDecimals />
               <Tooltip />
               <Legend />
               <Bar
-                dataKey="valor"
-                name="Número de Participações"
-                fill="#3b82f6"
-                barSize={60}
-                radius={[8, 8, 0, 0]}
+                dataKey="presencaMedia"
+                name="Presença Média"
+                fill="#22c55e" // verde
+                barSize={30}
+                radius={[6, 6, 0, 0]}
+              />
+              <Bar
+                dataKey="faltaMedia"
+                name="Falta Média"
+                fill="#ef4444" // vermelho
+                barSize={30}
+                radius={[6, 6, 0, 0]}
               />
             </BarChart>
           </ResponsiveContainer>
           <div className="flex justify-center mt-4 space-x-4 text-sm">
             <span className="flex items-center">
-              <span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span> Presente
+              <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span> Presença Média
             </span>
             <span className="flex items-center">
-              <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span> Falta
+              <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span> Falta Média
             </span>
           </div>
         </div>

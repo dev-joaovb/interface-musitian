@@ -22,17 +22,15 @@ export default function RelatorioEventos() {
     if (!eventos.length) return;
 
     const doc = new jsPDF();
-    const logoUrl = "/logo-vide.png"; // coloque o logo da VIDE na pasta public
+    const logoUrl = "/logo-vide.png"; // logo na pasta public
 
     // Pega o responsável do primeiro evento (todos são do mesmo grupo)
     const responsavel = eventos[0]?.responsavel;
     const nomeResponsavel = responsavel?.name || "Usuário Responsável";
     const emailResponsavel = responsavel?.email || "";
 
-    // Adiciona logo no topo (x, y, largura, altura)
+    // Cabeçalho
     doc.addImage(logoUrl, "PNG", 14, 10, 25, 25);
-
-    // Cabeçalho com título e usuário
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text(`Relatório de Eventos — ${month.toUpperCase()} / ${year}`, 45, 20);
@@ -41,22 +39,24 @@ export default function RelatorioEventos() {
     doc.text(`Responsável: ${nomeResponsavel}`, 45, 28);
     if (emailResponsavel) doc.text(`E-mail: ${emailResponsavel}`, 45, 34);
 
-    let y = 45; // inicia o conteúdo abaixo do cabeçalho
+    let y = 45;
 
     eventos.forEach((ev, index) => {
-      // Título do evento
+      // 🔹 Título do evento
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.text(`${index + 1}. ${ev.title}`, 14, y);
+      doc.setFontSize(14);
+      doc.text(`${ev.title}`, 14, y);
       y += 6;
 
-      // Data, local e descrição
+      // 🔹 Status, data, local e descrição
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      doc.text(`Data: ${new Date(ev.date).toLocaleString("pt-BR")}`, 14, y);
+      doc.text(`${ev.status}`, 14, y);
+      y += 6;
+      doc.text(`📅 ${new Date(ev.date).toLocaleString("pt-BR")}`, 14, y);
       y += 6;
       if (ev.location) {
-        doc.text(`Local: ${ev.location}`, 14, y);
+        doc.text(`📍 ${ev.location}`, 14, y);
         y += 6;
       }
       if (ev.description) {
@@ -65,49 +65,38 @@ export default function RelatorioEventos() {
         y += descLines.length * 6;
       }
 
-      // Resumo de presença com nomes
-      if (ev.attendanceResumo) {
-        y += 4;
-        const {
-          totalParticipantes,
-          compareceram,
-          faltaram,
-          aguardando,
-          nomesParticipantes,
-          nomesCompareceram,
-          nomesFaltaram,
-          nomesAguardando,
-        } = ev.attendanceResumo;
+      // 🔹 Linha separadora
+      y += 4;
+      doc.setDrawColor(180, 180, 180);
+      doc.line(14, y, 196, y);
+      y += 8;
 
-        doc.text(
-          `Total de Participantes: ${totalParticipantes} (${nomesParticipantes?.join(", ") || "-"})`,
-          14,
-          y
-        );
-        y += 6;
-        doc.text(
-          `Compareceram: ${compareceram} (${nomesCompareceram?.join(", ") || "-"})`,
-          14,
-          y
-        );
-        y += 6;
-        doc.text(
-          `Faltaram: ${faltaram} (${nomesFaltaram?.join(", ") || "-"})`,
-          14,
-          y
-        );
-        y += 6;
-        doc.text(
-          `Aguardando Resposta: ${aguardando} (${nomesAguardando?.join(", ") || "-"})`,
-          14,
-          y
-        );
-        y += 8;
-      }
+      // 🔹 Cabeçalho da tabela geral de presenças
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("📋 Relatório de Presenças", 14, y);
+      y += 8;
 
-      // Tabela de presenças
-      if (ev.attendanceReport?.length) {
-        const tableData = ev.attendanceReport.map((r) => [
+      // 🔹 Itera pelas séries do evento
+      ev.series.forEach((serie, serieIndex) => {
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+
+        // Título da série
+        const dataSerie = new Date(serie.startDate).toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text(`🎵 Série de ensaio do dia ${dataSerie}`, 14, y);
+        y += 6;
+
+        // Dados da série
+        const tableData = serie.reports.map((r) => [
           r.userName || "",
           r.userEmail || "",
           r.status || "",
@@ -123,14 +112,15 @@ export default function RelatorioEventos() {
           headStyles: { fillColor: [59, 130, 246] },
         });
 
-        y = doc.lastAutoTable.finalY + 10;
-      } else {
-        y += 8;
-      }
+        y = doc.lastAutoTable.finalY + 8;
+      });
 
-      if (y > 260) {
-        doc.addPage();
-        y = 20;
+      // Adiciona separação entre eventos
+      y += 5;
+      if (index < eventos.length - 1) {
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, y, 196, y);
+        y += 10;
       }
     });
 
@@ -195,58 +185,85 @@ export default function RelatorioEventos() {
                 </div>
               )}
 
-              {ev.attendanceReport && ev.attendanceReport.length > 0 && (
+              {ev.series && ev.series.length > 0 && (
                 <div className="mt-5 border-t pt-3">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Relatório de Presenças
+                  <h3 className="text-sm font-semibold text-gray-700 mb-4">
+                    📋 Relatório de Presenças
                   </h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm border-collapse">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="border px-3 py-2 text-left">Nome</th>
-                          <th className="border px-3 py-2 text-left">E-mail</th>
-                          <th className="border px-3 py-2 text-center">Status</th>
-                          <th className="border px-3 py-2 text-center">
-                            Confirmação Admin
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ev.attendanceReport.map((r) => (
-                          <tr
-                            key={r.id}
-                            className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-all"
-                          >
-                            <td className="border px-3 py-2">{r.userName}</td>
-                            <td className="border px-3 py-2">{r.userEmail}</td>
-                            <td
-                              className={`border px-3 py-2 text-center ${
-                                r.status === "Confirmou presença"
-                                  ? "text-green-600"
-                                  : r.status === "Não Disponível"
-                                  ? "text-red-600"
-                                  : "text-gray-600"
-                              }`}
-                            >
-                              {r.status}
-                            </td>
-                            <td
-                              className={`border px-3 py-2 text-center ${
-                                r.confirmacaoAdmin === "Compareceu"
-                                  ? "text-green-600"
-                                  : r.confirmacaoAdmin === "Não Compareceu"
-                                  ? "text-red-600"
-                                  : "text-gray-500"
-                              }`}
-                            >
-                              {r.confirmacaoAdmin || "-"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+
+                  {ev.series.map((serie, idx) => (
+                    <div key={serie.id} className="mb-6">
+                      {/* Título da série */}
+                      <h4 className="text-gray-800 font-medium text-sm mb-2">
+                        🎵 Série de ensaio do dia{" "}
+                        {new Date(serie.startDate).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </h4>
+
+                      {/* Tabela da série */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border-collapse">
+                          <thead className="bg-gray-100">
+                            <tr>
+                              <th className="border px-3 py-2 text-left">Nome</th>
+                              <th className="border px-3 py-2 text-left">E-mail</th>
+                              <th className="border px-3 py-2 text-center">Status</th>
+                              <th className="border px-3 py-2 text-center">
+                                Confirmação Admin
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {serie.reports && serie.reports.length > 0 ? (
+                              serie.reports.map((r) => (
+                                <tr
+                                  key={r.id}
+                                  className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-all"
+                                >
+                                  <td className="border px-3 py-2">{r.userName}</td>
+                                  <td className="border px-3 py-2">{r.userEmail}</td>
+                                  <td
+                                    className={`border px-3 py-2 text-center ${
+                                      r.status === "Confirmou presença"
+                                        ? "text-green-600"
+                                        : r.status === "Não Disponível"
+                                        ? "text-red-600"
+                                        : "text-gray-600"
+                                    }`}
+                                  >
+                                    {r.status}
+                                  </td>
+                                  <td
+                                    className={`border px-3 py-2 text-center ${
+                                      r.confirmacaoAdmin === "Compareceu"
+                                        ? "text-green-600"
+                                        : r.confirmacaoAdmin === "Não Compareceu"
+                                        ? "text-red-600"
+                                        : "text-gray-500"
+                                    }`}
+                                  >
+                                    {r.confirmacaoAdmin || "-"}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td
+                                  colSpan="4"
+                                  className="border px-3 py-2 text-center text-gray-500"
+                                >
+                                  Nenhum registro de presença nesta série.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

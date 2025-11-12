@@ -173,10 +173,10 @@ router.get("/dashboard/presencas", authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ Estatísticas de faltas — presença confirmada pelo admin
+// ✅ Estatísticas mensais de presença e falta
 router.get("/dashboard/faltas", authenticateToken, async (req, res) => {
   try {
-    // identificar o dono do grupo
+    // Identificar o dono do grupo
     const loggedUser = await prisma.user.findUnique({
       where: { id: req.user.id },
     });
@@ -189,26 +189,47 @@ router.get("/dashboard/faltas", authenticateToken, async (req, res) => {
       if (invite) ownerId = invite.inviterId;
     }
 
-    // buscar séries com presença vinculada
-    const series = await prisma.series.findMany({
+    // Buscar todos os eventos finalizados (Past_events) do dono
+    const eventos = await prisma.past_events.findMany({
       where: { userId: ownerId },
-      include: { presenca: true },
+      select: {
+        date: true,
+        attendanceResumo: true,
+      },
     });
 
-    let compareceu = 0;
-    let naoCompareceu = 0;
+    // Estrutura para acumular dados por mês
+    const dadosPorMes = {};
 
-    series.forEach((s) => {
-      s.presenca.forEach((p) => {
-        if (p.confirmacaoAdmin === "Compareceu") compareceu++;
-        else if (p.confirmacaoAdmin === "Não Compareceu") naoCompareceu++;
-      });
+    eventos.forEach((ev) => {
+      if (!ev.attendanceResumo) return;
+
+      const mes = new Date(ev.date).toLocaleString("pt-BR", { month: "short" });
+      const { compareceram = 0, faltaram = 0, totalParticipantes = 0 } = ev.attendanceResumo;
+
+      if (!dadosPorMes[mes]) {
+        dadosPorMes[mes] = { presenca: 0, falta: 0, eventos: 0 };
+      }
+
+      dadosPorMes[mes].presenca += compareceram;
+      dadosPorMes[mes].falta += faltaram;
+      dadosPorMes[mes].eventos += 1;
     });
 
-    res.json({ compareceu, naoCompareceu });
+    // Calcular médias
+    const resultado = Object.keys(dadosPorMes).map((mes) => {
+      const { presenca, falta, eventos } = dadosPorMes[mes];
+      return {
+        mes: mes.toUpperCase(),
+        presencaMedia: parseFloat((presenca / eventos).toFixed(2)),
+        faltaMedia: parseFloat((falta / eventos).toFixed(2)),
+      };
+    });
+
+    res.json(resultado);
   } catch (error) {
-    console.error("Erro ao buscar estatísticas de faltas:", error);
-    res.status(500).json({ error: "Erro ao buscar estatísticas de faltas" });
+    console.error("Erro ao gerar médias mensais:", error);
+    res.status(500).json({ error: "Erro ao gerar médias mensais" });
   }
 });
 
@@ -339,10 +360,34 @@ router.get("/dashboard/relatorio/eventos/:year/:month", authenticateToken, async
     // Monta os dados detalhados de cada evento
     const eventosComDetalhes = await Promise.all(
       eventos.map(async (ev) => {
-        // Busca os relatórios de presença associados ao evento (serieId = id do evento)
-        const attendance = await prisma.attendance_report.findMany({
-          where: { serieId: ev.id },
-          orderBy: { id: "asc" },
+        // 🔹 Busca todas as séries associadas a este evento
+        const series = await prisma.series.findMany({
+          where: { userId: ownerId },
+          include: {
+            attendance_report: {
+              include: {
+                user: { select: { id: true, name: true, email: true } },
+              },
+            },
+          },
+        });
+
+        // 🔹 Filtra séries que pertençam a este evento (relacionadas por título ou lógica de vínculo)
+        const seriesRelacionadas = series.filter((s) =>
+          s.title?.toLowerCase().includes(ev.title.toLowerCase())
+        );
+
+        // 🔹 Une todos os relatórios de presença de todas as séries deste evento
+        const attendance = seriesRelacionadas.flatMap(
+          (s) => s.attendance_report || []
+        );
+
+        // 🔹 Monta lista única de membros
+        const membros = await prisma.invite.findMany({
+          where: { status: "accepted", active: true },
+          include: {
+            invitee: { select: { id: true, name: true, email: true } },
+          },
         });
 
         return {
@@ -351,8 +396,21 @@ router.get("/dashboard/relatorio/eventos/:year/:month", authenticateToken, async
           attendanceResumo: ev.attendanceResumo
             ? JSON.parse(JSON.stringify(ev.attendanceResumo))
             : null,
-          attendanceReport: attendance, // 👈 Inclui todos os registros de presença/ausência
-          responsavel, // 👈 Inclui dados do responsável pelo grupo
+          attendanceReport: attendance, // 👈 Agora inclui TODAS as séries
+          series: seriesRelacionadas.map((s) => ({
+            id: s.id,
+            title: s.title,
+            startDate: s.startDate,
+            reports: s.attendance_report.map((r) => ({
+              id: r.id,
+              userId: r.userId,
+              userName: r.user?.name,
+              userEmail: r.user?.email,
+              status: r.status,
+              confirmacaoAdmin: r.confirmacaoAdmin,
+            })),
+          })),
+          responsavel, // 👈 Mantém o campo do responsável
         };
       })
     );
