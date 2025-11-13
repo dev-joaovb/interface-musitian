@@ -123,7 +123,7 @@ useEffect(() => {
               <FiCalendar className="w-5 h-5" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Próximo Ensaio</p>
+              <p className="text-sm font-medium text-gray-500">Próximo Evento</p>
               <p className="text-xl font-semibold text-gray-800">
                 {data.stats.nextEvent
                   ? new Date(data.stats.nextEvent.date).toLocaleDateString(
@@ -187,7 +187,7 @@ useEffect(() => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-6">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800">
-            Próximos Ensaios
+            Próximos Eventos
           </h2>
         </div>
         <div className="divide-y divide-gray-200">

@@ -173,7 +173,7 @@ router.get("/dashboard/presencas", authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ Estatísticas mensais de presença e falta
+// ✅ Estatísticas mensais de presença e falta (por série)
 router.get("/dashboard/faltas", authenticateToken, async (req, res) => {
   try {
     // Identificar o dono do grupo
@@ -189,47 +189,67 @@ router.get("/dashboard/faltas", authenticateToken, async (req, res) => {
       if (invite) ownerId = invite.inviterId;
     }
 
-    // Buscar todos os eventos finalizados (Past_events) do dono
+    // Buscar eventos finalizados (Past_events) com presenças
     const eventos = await prisma.past_events.findMany({
       where: { userId: ownerId },
       select: {
         date: true,
-        attendanceResumo: true,
+        presencas: true, // 👈 pegar o campo presencas completo
       },
     });
 
-    // Estrutura para acumular dados por mês
     const dadosPorMes = {};
 
     eventos.forEach((ev) => {
-      if (!ev.attendanceResumo) return;
+      if (!ev.presencas) return;
 
       const mes = new Date(ev.date).toLocaleString("pt-BR", { month: "short" });
-      const { compareceram = 0, faltaram = 0, totalParticipantes = 0 } = ev.attendanceResumo;
 
+      // Inicializar estrutura
       if (!dadosPorMes[mes]) {
-        dadosPorMes[mes] = { presenca: 0, falta: 0, eventos: 0 };
+        dadosPorMes[mes] = {
+          presencaTotal: 0,
+          faltaTotal: 0,
+          totalSeries: 0,
+        };
       }
 
-      dadosPorMes[mes].presenca += compareceram;
-      dadosPorMes[mes].falta += faltaram;
-      dadosPorMes[mes].eventos += 1;
+      // Parse do JSON armazenado em presencas
+      const series = Array.isArray(ev.presencas)
+        ? ev.presencas
+        : JSON.parse(ev.presencas);
+
+      // Contar por série
+      series.forEach((serie) => {
+        let compareceu = 0;
+        let faltou = 0;
+
+        serie.presencas.forEach((p) => {
+          if (p.confirmacaoAdmin === "Compareceu") compareceu++;
+          else if (p.confirmacaoAdmin === "Não Compareceu") faltou++;
+        });
+
+        // Soma total por série
+        dadosPorMes[mes].presencaTotal += compareceu;
+        dadosPorMes[mes].faltaTotal += faltou;
+        dadosPorMes[mes].totalSeries += 1;
+      });
     });
 
-    // Calcular médias
+    // Calcular médias por mês
     const resultado = Object.keys(dadosPorMes).map((mes) => {
-      const { presenca, falta, eventos } = dadosPorMes[mes];
+      const { presencaTotal, faltaTotal, totalSeries } = dadosPorMes[mes];
       return {
         mes: mes.toUpperCase(),
-        presencaMedia: parseFloat((presenca / eventos).toFixed(2)),
-        faltaMedia: parseFloat((falta / eventos).toFixed(2)),
+        presencaMedia: parseFloat((presencaTotal / totalSeries).toFixed(2)),
+        faltaMedia: parseFloat((faltaTotal / totalSeries).toFixed(2)),
       };
     });
 
     res.json(resultado);
   } catch (error) {
-    console.error("Erro ao gerar médias mensais:", error);
-    res.status(500).json({ error: "Erro ao gerar médias mensais" });
+    console.error("Erro ao gerar médias por série:", error);
+    res.status(500).json({ error: "Erro ao gerar médias por série" });
   }
 });
 
