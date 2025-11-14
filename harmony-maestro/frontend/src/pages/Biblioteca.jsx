@@ -10,6 +10,12 @@ import {
 
 export default function Biblioteca() {
   const [musicas, setMusicas] = useState([]);
+  const [pastas, setPastas] = useState([]);
+  const [novaPasta, setNovaPasta] = useState("");
+  const [dragOver, setDragOver] = useState(null);
+  const [pastaAberta, setPastaAberta] = useState(null);
+  const [editarPastaData, setEditarPastaData] = useState(null);
+
   const [showModal, setShowModal] = useState(false);
   const [editingMusic, setEditingMusic] = useState(null);
   const [userRole, setUserRole] = useState("admin"); // padrão
@@ -39,6 +45,16 @@ export default function Biblioteca() {
           } else {
             const musicasJson = await musicasRes.json();
             setMusicas(musicasJson);
+          }
+
+          // 📁 Buscar pastas
+          const pastasRes = await fetch("http://localhost:4000/api/biblioteca/pastas", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (pastasRes.ok) {
+            const pastasJson = await pastasRes.json();
+            setPastas(pastasJson);
           }
 
           // 📦 Buscar perfil do usuário
@@ -163,11 +179,177 @@ export default function Biblioteca() {
     }
   };
 
+  /// FOLDERS MANAGEMENT ///
+
+  
+  // 📁 Criar nova pasta
+  const criarPasta = async (nome) => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("http://localhost:4000/api/biblioteca/pastas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: nome }),
+      });
+
+      if (res.ok) {
+        const nova = await res.json();
+        setPastas((prev) => [nova, ...prev]);
+
+        // 🔁 Recarrega a página após criar com sucesso
+        window.location.reload();
+      } else {
+        console.error("Erro ao criar pasta:", await res.text());
+      }
+    } catch (err) {
+      console.error("Erro ao criar pasta:", err);
+    }
+  };
+
+
+  // Drag and Drop
+  const handleDragStart = (e, songId) => {
+    e.dataTransfer.setData("songId", songId);
+  };
+
+  const handleDrop = async (e, folderId) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+
+    const songId = Number(e.dataTransfer.getData("songId"));
+    const folder = Number(folderId);
+
+    if (!songId || !folder) return;
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/biblioteca/mover/${songId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ folderId: folder }),
+      });
+
+      if (!res.ok) {
+        console.error("Erro ao mover música:", await res.text());
+        return;
+      }
+
+      const moved = await res.json();
+
+      // Remove da lista principal (músicas sem pasta)
+      setMusicas((prev) => prev.filter((m) => m.id !== songId));
+
+      // Adiciona dentro da pasta correta
+      setPastas((prev) =>
+        prev.map((p) =>
+          p.id === folder
+            ? { ...p, songs: [...p.songs, moved] }
+            : p
+        )
+      );
+
+    } catch (err) {
+      console.error("Erro ao mover música:", err);
+    }
+  };
+
+  // 🗑️ Excluir pasta (e tudo dentro)
+  const excluirPasta = async (id) => {
+    const confirmar = window.confirm(
+      "Tem certeza que deseja excluir esta pasta e todas as músicas dentro dela?"
+    );
+    if (!confirmar) return;
+
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`http://localhost:4000/api/biblioteca/pastas/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        setPastas((prev) => prev.filter((p) => p.id !== id));
+
+        // 🔁 Recarrega a página após exclusão
+        window.location.reload();
+      } else {
+        console.error("Erro ao excluir pasta:", await res.text());
+      }
+    } catch (err) {
+      console.error("Erro ao excluir pasta:", err);
+    }
+  };
+
+  // ✏️ Editar pasta
+  const editarPasta = async (id, novoNome) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/biblioteca/pastas/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: novoNome }),
+      });
+
+      if (res.ok) {
+        const atualizado = await res.json();
+        setPastas((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, name: atualizado.name } : p))
+        );
+
+        // Fecha modal
+        setEditarPastaData(null);
+
+        // Recarrega página
+        window.location.reload();
+      } else {
+        console.error("Erro ao editar pasta:", await res.text());
+      }
+    } catch (err) {
+      console.error("Erro ao editar pasta:", err);
+    }
+  };
+
+  const openMusicInFolder = (music) => {
+    openModal(music); 
+  };
+
+  const abrirPasta = async (folderId) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/biblioteca/pastas/${folderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        console.error("Erro ao abrir pasta:", await res.text());
+        return;
+      }
+
+      const folder = await res.json();
+      setPastaAberta(folder);
+    } catch (error) {
+      console.error("Erro ao abrir pasta:", error);
+    }
+  };
+
+
+
   return (
     <div className="p-4 md:p-6">
 
       {/* Botões de navegação entre Biblioteca e Partituras */}
       <div className="flex justify-center items-center mb-6 space-x-4">
+
         <button
           onClick={() => (window.location.href = "/biblioteca")}
           className="bg-teal-600 hover:bg-teal-700 text-white font-bold w-12 h-10 rounded-full flex items-center justify-center shadow-md transition"
@@ -175,6 +357,7 @@ export default function Biblioteca() {
         >
           &lt;
         </button>
+
         <button
           onClick={() => (window.location.href = "/partitura")}
           className="bg-teal-600 hover:bg-teal-700 text-white w-12 h-10 font-bold rounded-full flex items-center justify-center shadow-md transition"
@@ -184,118 +367,375 @@ export default function Biblioteca() {
         </button>
       </div>
 
-      {/* Header */}
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Biblioteca Musical</h1>
-          <p className="text-gray-600">Gerencie seu acervo de músicas</p>
+      {/* HEADER */}
+      <div className="flex justify-center items-center space-x-4 mb-10">
+
+        {/* Parte superior — título + descrição */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Biblioteca Musical</h1>
         </div>
-        <button
-  onClick={() => openModal()}
-  disabled={userRole === "user"}
-  className={`${
-    userRole === "user"
-      ? "bg-gray-300 cursor-not-allowed"
-      : "bg-teal-600 hover:bg-teal-700"
-  } text-white px-4 py-2 rounded-lg flex items-center`}
->
-  <FiPlus className="w-4 h-4 mr-2" />
-  Adicionar Música
-</button>
+
+        
       </div>
 
-      {/* Grid de músicas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-        {musicas.map((music) => {
-          // Se backend já manda URL completa, usa direto. Se não, concatena.
-          const fileUrl =
-            music.fileUrl?.startsWith("http")
-              ? music.fileUrl
-              : `http://localhost:4000${music.fileUrl || ""}`;
+      <div className="mb-10">
 
-          return (
-            <div
-              key={music.id}
-              className="music-card bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+        {/* Parte superior — título + descrição */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Gerencie seu acervo de músicas</h1>
+          
+        </div>
+
+        
+      </div>
+
+      {/* BOTÕES SUPERIORES */}
+      <div className="mb-10 flex flex-wrap gap-6">
+
+        <button
+          onClick={() => openModal()}
+          disabled={userRole === "user"}
+          className={`${
+            userRole === "user"
+              ? "bg-gray-300 cursor-not-allowed"
+              : "bg-teal-600 hover:bg-teal-700"
+          } text-white px-6 py-3 rounded-lg flex items-center text-base shadow`}
+        >
+          <FiPlus className="w-5 h-5 mr-2" />
+          Adicionar Música
+        </button>
+
+        {userRole === "admin" && (
+          <>
+            <button
+              onClick={() => setNovaPasta(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center text-base shadow"
             >
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-gray-800">{music.title}</h3>
-                  {/* <button className="text-gray-400 hover:text-gray-600">
-                    <FiMoreVertical className="w-4 h-4" />
-                  </button> */}
-                </div>
-                <p className="text-sm text-gray-500 mb-3">
-                  Compositor: {music.artist}
-                </p>
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>{music.tipo || "MP3"}</span>
-                  <span>
-                    Adicionada:{" "}
-                    {new Date(music.createdAt).toLocaleDateString("pt-BR")}
-                  </span>
-                </div>
+              <FiPlus className="w-5 h-5 mr-2" /> Criar Pasta
+            </button>
 
-                {/* 🎵 Player embutido */}
-                {fileUrl && (
-                  <div className="mt-4">
-                    {music.tipo === "MP4" ? (
-                      <video
-                        controls
-                        className="w-full rounded-lg border border-gray-200"
-                      >
-                        <source src={fileUrl} type="video/mp4" />
-                        Seu navegador não suporta vídeo.
-                      </video>
-                    ) : (
-                      <audio
-                        controls
-                        className="w-full rounded-lg "
-                      >
-                        <source src={fileUrl} type="audio/mpeg" />
-                        Seu navegador não suporta áudio.
-                      </audio>
-                    )}
+            {/* Modal de Nova Pasta */}
+            {novaPasta && (
+              <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-fadeIn">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
+                    Criar Nova Pasta
+                  </h2>
+
+                  <input
+                    type="text"
+                    id="nomePasta"
+                    placeholder="Digite o nome da pasta"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
+                  />
+
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      onClick={() => setNovaPasta(false)}
+                      className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                    >
+                      Cancelar
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        const nome = document
+                          .getElementById("nomePasta")
+                          .value.trim();
+
+                        if (nome) {
+                          criarPasta(nome);
+                          setNovaPasta(false);
+                          window.location.reload();
+                        }
+                      }}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                    >
+                      Criar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ✏️ Modal de Editar Pasta */}
+            {editarPastaData && (
+              <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-fadeIn">
+
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
+                    Editar Pasta
+                  </h2>
+
+                  <input
+                    type="text"
+                    id="editarNomePasta"
+                    defaultValue={editarPastaData.name}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
+                  />
+
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      onClick={() => setEditarPastaData(null)}
+                      className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                    >
+                      Cancelar
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        const novoNome = document
+                          .getElementById("editarNomePasta")
+                          .value.trim();
+
+                        if (novoNome) {
+                          editarPasta(editarPastaData.id, novoNome);
+                        }
+                      }}
+                      className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg"
+                    >
+                      Salvar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </>
+        )}
+      </div>
+
+      <div>
+        {/* 🔥 Breadcrumb — movido para baixo e mais destacado */}
+        {pastaAberta && (
+          <div className="mb-8 text-gray-700 flex items-center space-x-3 text-lg">
+            <span
+              className="cursor-pointer hover:text-teal-600 font-medium"
+              onClick={() => setPastaAberta(null)}
+            >
+              Biblioteca
+            </span>
+            <span className="text-gray-500">›</span>
+            <span className="font-semibold text-teal-700">{pastaAberta.name}</span>
+          </div>
+        )}
+      </div>
+
+      {/* 📁 Pastas */}
+      {!pastaAberta && pastas.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-700 mb-3">Pastas</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {pastas.map((p) => (
+              <div
+                key={p.id}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(p.id);
+                }}
+                onDragLeave={() => setDragOver(null)}
+                onDrop={(e) => {
+                  handleDrop(e, p.id);
+                  setDragOver(null);
+                  window.location.reload();
+                }}
+                className={`pasta-card rounded-lg border p-4 transition-colors ${
+                  dragOver === p.id ? "bg-blue-50 border-blue-300" : "bg-gray-50 border-gray-200"
+                }`}
+              >
+                <h3 className="font-semibold text-gray-800 mb-3">{p.name}</h3>
+
+                {p.songs.length === 0 ? (
+                  <p className="text-sm text-gray-500">Sem músicas ainda</p>
+                ) : (
+                  p.songs.map((s) => (
+                    <div
+                      key={s.id}
+                      className="p-3 bg-white rounded-md shadow hover:shadow-md transition cursor-pointer flex items-center justify-between mb-3"
+                      draggable={userRole === "admin"}
+                      onDragStart={(e) => handleDragStart(e, s.id)}
+                      onClick={() => abrirPasta(p.id)}
+                    >
+                      🎵 <span className="font-medium text-gray-700">{s.title}</span>
+                    </div>
+                  ))
+                )}
+
+                {userRole === "admin" && (
+                  <div className="flex justify-between mt-4 pt-3 border-t border-gray-200">
+                    <button onClick={() => setEditarPastaData({ id: p.id, name: p.name })} className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium">
+                      <FiEdit className="mr-1" /> Editar
+                    </button>
+                    <button onClick={() => excluirPasta(p.id)} className="flex items-center text-red-600 hover:text-red-800 text-sm font-medium">
+                      <FiTrash2 className="mr-1" /> Excluir
+                    </button>
                   </div>
                 )}
               </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-              {/* Ações */}
-              <div className="border-t border-gray-100 flex">
-                {/* <button className="w-1/3 py-3 bg-teal-50 text-teal-600 hover:bg-teal-100 flex items-center justify-center transition-colors">
-                  <FiPlay className="w-4 h-4 mr-2" />
-                  Reproduzir
-                </button> */}
-                <button
-  onClick={() => openModal(music)}
-  disabled={userRole === "user"}
-  className={`w-1/2 py-3 flex items-center justify-center transition-colors rounded-bl-lg ${
-    userRole === "user"
-      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-      : "bg-blue-50 text-blue-600 hover:bg-blue-100"
-  }`}
->
-  <FiEdit className="w-4 h-4 mr-2" />
-  Editar
-</button>
+      {/* 🔥 Conteúdo da pasta aberta */}
+      {pastaAberta && (
+        <div className="mt-6">
+          <h2 className="text-xl font-bold mb-4">
+            {pastaAberta.name} — {pastaAberta.songs.length} músicas
+          </h2>
 
-                <button
-  onClick={() => handleDelete(music.id)}
-  disabled={userRole === "user"}
-  className={`w-1/2 py-3 flex items-center justify-center transition-colors rounded-br-lg ${
-    userRole === "user"
-      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-      : "bg-red-50 text-red-600 hover:bg-red-100"
-  }`}
->
-  <FiTrash2 className="w-4 h-4 mr-2" />
-  Excluir
-</button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pastaAberta.songs.map((music) => (
+              <div key={music.id} className="bg-white border rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">{music.title}</h3>
+                    <p className="text-gray-500 text-sm">{music.artist}</p>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+
+                    {/* ▶ Reproduzir */}
+                    <button
+                      onClick={() => new Audio(music.fileUrl).play()}
+                      className="text-green-600 hover:text-green-800"
+                    >
+                      <FiPlay size={20} />
+                    </button>
+
+                    {/* Editar */}
+                    {userRole === "admin" && (
+                      <button onClick={() => openModal(music)} className="text-blue-600 hover:text-blue-800">
+                        <FiEdit size={20} />
+                      </button>
+                    )}
+
+                    {/* Mover
+                    {userRole === "admin" && (
+                      <button
+                        onClick={() => {
+                          const destino = Number(prompt("Mover para qual pasta? ID:"));
+                          if (destino) {
+                            handleDrop({ dataTransfer: { getData: () => music.id } }, destino);
+                            window.location.reload();
+                          }
+                        }}
+                        className="text-yellow-600 hover:text-yellow-800"
+                      >
+                        📁
+                      </button>
+                    )} */}
+
+                    {/* Excluir */}
+                    {userRole === "admin" && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm("Excluir esta música?")) {
+                            handleDelete(music.id);
+                            window.location.reload();
+                          }
+                        }}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <FiTrash2 size={20} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {music.fileUrl && (
+                  <audio controls className="mt-3 w-full">
+                    <source src={music.fileUrl} type="audio/mp3" />
+                  </audio>
+                )}
               </div>
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 🎵 Grid de músicas principais (somente se nenhuma pasta está aberta) */}
+      {!pastaAberta && (
+        <div className="mb-8">
+          
+          {/* 🔥 Título "Músicas sem pasta" */}
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Músicas sem pasta
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {musicas.map((music) => {
+              const fileUrl =
+                music.fileUrl?.startsWith("http")
+                  ? music.fileUrl
+                  : `http://localhost:4000${music.fileUrl || ""}`;
+
+              return (
+                <div
+                  key={music.id}
+                  className="music-card bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, music.id)}
+                >
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-800">{music.title}</h3>
+                    <p className="text-sm text-gray-500 mb-3">
+                      Compositor: {music.artist}
+                    </p>
+
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                      <span>{music.tipo || "MP3"}</span>
+                      <span>{new Date(music.createdAt).toLocaleDateString("pt-BR")}</span>
+                    </div>
+
+                    {fileUrl && (
+                      <div className="mt-4">
+                        {music.tipo === "MP4" ? (
+                          <video controls className="w-full rounded-lg border border-gray-200">
+                            <source src={fileUrl} type="video/mp4" />
+                          </video>
+                        ) : (
+                          <audio controls className="w-full">
+                            <source src={fileUrl} type="audio/mpeg" />
+                          </audio>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-gray-100 flex">
+                    <button
+                      onClick={() => openModal(music)}
+                      disabled={userRole === "user"}
+                      className={`w-1/2 py-3 flex items-center justify-center ${
+                        userRole === "user"
+                          ? "bg-gray-100 text-gray-400"
+                          : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      }`}
+                    >
+                      <FiEdit className="w-4 h-4 mr-2" /> Editar
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(music.id)}
+                      disabled={userRole === "user"}
+                      className={`w-1/2 py-3 flex items-center justify-center ${
+                        userRole === "user"
+                          ? "bg-gray-100 text-gray-400"
+                          : "bg-red-50 text-red-600 hover:bg-red-100"
+                      }`}
+                    >
+                      <FiTrash2 className="w-4 h-4 mr-2" /> Excluir
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
 
       {/* Modal */}
       {showModal && userRole !== "user" && (
@@ -305,110 +745,51 @@ export default function Biblioteca() {
               <h3 className="text-lg font-semibold text-gray-800">
                 {editingMusic ? "Editar Música" : "Adicionar Nova Música"}
               </h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
+
             <form onSubmit={handleSave} className="p-6 space-y-6">
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Título da Música
-                  </label>
-                  <input
-                    type="text"
-                    value={form.titulo}
-                    onChange={(e) =>
-                      setForm({ ...form, titulo: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    required
-                  />
+                  <label className="block text-sm font-medium">Título</label>
+                  <input type="text" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} className="w-full border rounded-lg px-3 py-2" required />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Compositor
-                  </label>
-                  <input
-                    type="text"
-                    value={form.compositor}
-                    onChange={(e) =>
-                      setForm({ ...form, compositor: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    required
-                  />
+                  <label className="block text-sm font-medium">Compositor</label>
+                  <input type="text" value={form.compositor} onChange={(e) => setForm({ ...form, compositor: e.target.value })} className="w-full border rounded-lg px-3 py-2" required />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tipo de Arquivo
-                  </label>
-                  <select
-                    value={form.tipo}
-                    onChange={(e) => setForm({ ...form, tipo: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
+                  <label className="block text-sm font-medium">Tipo</label>
+                  <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} className="w-full border rounded-lg px-3 py-2">
                     <option value="MP3">MP3</option>
                     <option value="MP4">MP4</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Upload de Arquivo
-                  </label>
-                  <label className="flex flex-col items-center justify-center w-full h-32 px-4 py-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 transition">
-                    <FiMusic className="w-8 h-8 text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-500">
-                      Arraste e solte ou{" "}
-                      <span className="text-teal-600 font-medium">clique</span>{" "}
-                      para enviar
-                    </span>
-                    <input
-                      type="file"
-                      accept=".mp3,.mp4"
-                      onChange={(e) =>
-                        setForm({ ...form, arquivo: e.target.files[0] })
-                      }
-                      className="hidden"
-                    />
-                    {form.arquivo && (
-                      <p className="mt-2 text-xs text-gray-600">
-                        Arquivo selecionado:{" "}
-                        <span className="font-medium">
-                          {form.arquivo.name}
-                        </span>
-                      </p>
-                    )}
-                  </label>
+                  <label className="block text-sm font-medium">Arquivo</label>
+                  <input type="file" accept=".mp3,.mp4" onChange={(e) => setForm({ ...form, arquivo: e.target.files[0] })} className="w-full" />
                 </div>
               </div>
 
               <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
-                >
+                <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-600 hover:text-gray-800">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
                   {editingMusic ? "Salvar Alterações" : "Adicionar Música"}
                 </button>
               </div>
+
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
+
 }

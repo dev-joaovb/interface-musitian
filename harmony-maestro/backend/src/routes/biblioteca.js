@@ -45,20 +45,22 @@ router.get("/biblioteca", authenticateToken, async (req, res) => {
   try {
     let targetUserId = req.user.id;
 
-    // 🔹 Se for "user", busca o admin que o convidou (correção: campo correto é inviteeId)
     if (req.user.role === "user") {
       const invite = await prisma.invite.findFirst({
-        where: { inviteeId: req.user.id }, // <-- corrigido de invitedUserId para inviteeId
+        where: { inviteeId: req.user.id },
         select: { inviterId: true },
       });
-
       if (invite && invite.inviterId) {
         targetUserId = invite.inviterId;
       }
     }
 
+    // 🔥 Agora só traz músicas que NÃO estão em pasta
     const songs = await prisma.song.findMany({
-      where: { userId: targetUserId },
+      where: { 
+        userId: targetUserId,
+        folderId: null
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -68,6 +70,7 @@ router.get("/biblioteca", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Erro ao carregar músicas" });
   }
 });
+
 
 // POST /api/biblioteca
 router.post("/biblioteca", authenticateToken, upload.single("file"), async (req, res) => {
@@ -140,6 +143,151 @@ router.delete("/biblioteca/:id", authenticateToken, async (req, res) => {
 
   await logActivity(req.user.id, "song_deleted", `Música "${song.title}" foi excluída por ${req.user.email}`);
   res.json({ message: "Música excluída com sucesso" });
+});
+
+
+/// Folder Routes
+
+// 📁 Criar pasta
+router.post("/biblioteca/pastas", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas administradores podem criar pastas." });
+
+    const { name } = req.body;
+    const folder = await prisma.folder.create({
+      data: {
+        name,
+        userId: req.user.id,
+      },
+    });
+
+    res.json(folder);
+  } catch (error) {
+    console.error("Erro ao criar pasta:", error);
+    res.status(500).json({ error: "Erro ao criar pasta" });
+  }
+});
+
+// 📂 Buscar pastas com músicas dentro
+router.get("/biblioteca/pastas", authenticateToken, async (req, res) => {
+  try {
+    let targetUserId = req.user.id;
+
+    if (req.user.role === "user") {
+      const invite = await prisma.invite.findFirst({
+        where: { inviteeId: req.user.id },
+        select: { inviterId: true },
+      });
+      if (invite && invite.inviterId) targetUserId = invite.inviterId;
+    }
+
+    const pastas = await prisma.folder.findMany({
+      where: { userId: targetUserId },
+      include: {
+        songs: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json(pastas);
+  } catch (error) {
+    console.error("Erro ao buscar pastas:", error);
+    res.status(500).json({ error: "Erro ao carregar pastas" });
+  }
+});
+
+// 📂 Buscar músicas dentro de uma única pasta
+router.get("/biblioteca/pastas/:id", authenticateToken, async (req, res) => {
+  try {
+    const folderId = Number(req.params.id);
+
+    const folder = await prisma.folder.findUnique({
+      where: { id: folderId },
+      include: { songs: true },
+    });
+
+    if (!folder) return res.status(404).json({ error: "Pasta não encontrada" });
+
+    res.json(folder);
+  } catch (error) {
+    console.error("Erro ao carregar pasta:", error);
+    res.status(500).json({ error: "Erro ao carregar pasta" });
+  }
+});
+
+// 📦 Mover música para uma pasta
+router.put("/biblioteca/mover/:songId", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ error: "Apenas administradores podem mover músicas." });
+    }
+
+    const { folderId } = req.body;
+    const songId = Number(req.params.songId);
+
+    // ✔ valida se música existe
+    const song = await prisma.song.findUnique({ where: { id: songId } });
+    if (!song) return res.status(404).json({ error: "Música não encontrada" });
+
+    // ✔ valida se pasta existe
+    const folder = await prisma.folder.findUnique({ where: { id: Number(folderId) } });
+    if (!folder) return res.status(404).json({ error: "Pasta não encontrada" });
+
+    // ✔ move
+    const moved = await prisma.song.update({
+      where: { id: songId },
+      data: { folderId: Number(folderId) },
+    });
+
+    res.json(moved);
+  } catch (error) {
+    console.error("Erro ao mover música:", error);
+    res.status(500).json({ error: "Erro ao mover música" });
+  }
+});
+
+// 🗑️ Excluir pasta (e músicas dentro dela)
+router.delete("/biblioteca/pastas/:id", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas administradores podem excluir pastas." });
+
+    const folderId = Number(req.params.id);
+
+    // 🔥 Deleta todas as músicas da pasta antes (para evitar órfãos, embora já tenha onDelete: Cascade)
+    await prisma.song.deleteMany({
+      where: { folderId },
+    });
+
+    // 🔥 Deleta a pasta
+    await prisma.folder.delete({
+      where: { id: folderId },
+    });
+
+    res.json({ success: true, message: "Pasta e músicas deletadas com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao excluir pasta:", error);
+    res.status(500).json({ error: "Erro ao excluir pasta" });
+  }
+});
+
+// ✏️ Editar nome da pasta
+router.put("/biblioteca/pastas/:id", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas administradores podem editar pastas." });
+
+    const folderId = Number(req.params.id);
+    const { name } = req.body;
+
+    const folder = await prisma.folder.update({
+      where: { id: folderId },
+      data: { name },
+    });
+
+    res.json(folder);
+  } catch (error) {
+    console.error("Erro ao editar pasta:", error);
+    res.status(500).json({ error: "Erro ao editar pasta" });
+  }
 });
 
 export default router;
