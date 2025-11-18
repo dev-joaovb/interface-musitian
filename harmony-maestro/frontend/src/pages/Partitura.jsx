@@ -19,6 +19,11 @@ export default function Partitura() {
   const [showPdf, setShowPdf] = useState(false);
   const [thumbnailsGenerated, setThumbnailsGenerated] = useState(false);
 
+  const [pastas, setPastas] = useState([]);
+  const [pastaAberta, setPastaAberta] = useState(null);
+  const [novaPastaNome, setNovaPastaNome] = useState("");
+  const [editarPastaData, setEditarPastaData] = useState(null);
+
 
   const navigate = useNavigate();
 
@@ -35,13 +40,35 @@ export default function Partitura() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        setPartituras(data);
+        
+        // setPartituras(data);
+        
+        // Filtra apenas partituras sem pasta
+        setPartituras(data.filter((p) => !p.folderId));
+
       } catch {
         console.error("Erro ao buscar partituras");
       }
     };
 
+    const fetchPastas = async () => {
+      try {
+        const res = await fetch("http://localhost:4000/api/partitura/pastas", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPastas(data);
+        } else {
+          console.error("Erro ao carregar pastas:", await res.text());
+        }
+      } catch (err) {
+        console.error("Erro ao carregar pastas", err);
+      }
+    };
+
     fetchPartituras();
+    fetchPastas();
   }, [navigate]);
 
     // 🔹 Gera miniaturas das partituras ao carregar
@@ -138,6 +165,12 @@ export default function Partitura() {
 
       setThumbnailsGenerated(false); // Reseta para gerar miniatura da nova partitura
 
+      // Atualiza lista de pastas (caso backend crie algo relacionado)
+      const pastasRes = await fetch("http://localhost:4000/api/partitura/pastas", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (pastasRes.ok) setPastas(await pastasRes.json());
+
     } else {
       alert("Erro ao enviar partitura");
     }
@@ -154,10 +187,208 @@ export default function Partitura() {
 
     if (res.ok) {
       setPartituras(partituras.filter((p) => p.id !== id));
+
+      // Atualiza também pasta aberta se necessário
+      if (pastaAberta) {
+        setPastaAberta({
+          ...pastaAberta,
+          partituras: pastaAberta.partituras.filter((p) => p.id !== id),
+        });
+      }
     } else {
       alert("Erro ao excluir partitura");
     }
   };
+
+    // ----------------------
+  // PASTAS: criar / editar / excluir / abrir
+  // ----------------------
+  const criarPasta = async (nomePasta) => {
+    if (!nomePasta) {
+      alert("Nome da pasta obrigatório");
+      return;
+    }
+    const token = localStorage.getItem("userToken");
+    try {
+      const res = await fetch("http://localhost:4000/api/partitura/pastas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: nomePasta }),
+      });
+
+      if (res.ok) {
+        const nova = await res.json();
+        setPastas((prev) => [nova, ...prev]);
+        setNovaPastaNome("");
+        // opcional forçar reload para manter consistência com backend
+        window.location.reload();
+      } else {
+        console.error("Erro ao criar pasta:", await res.text());
+      }
+    } catch (err) {
+      console.error("Erro ao criar pasta:", err);
+    }
+  };
+
+  const abrirPasta = (folder) => {
+    setPastaAberta(folder);
+  };
+
+  const excluirPasta = async (id) => {
+    const token = localStorage.getItem("userToken");
+    if (!window.confirm("Tem certeza que deseja excluir esta pasta e desassociar as partituras?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/partitura/pastas/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        setPastas((prev) => prev.filter((p) => p.id !== id));
+        if (pastaAberta && pastaAberta.id === id) setPastaAberta(null);
+        window.location.reload();
+      } else {
+        console.error("Erro ao excluir pasta:", await res.text());
+      }
+    } catch (err) {
+      console.error("Erro ao excluir pasta:", err);
+    }
+  };
+
+  const editarPasta = async (id, novoNome) => {
+    const token = localStorage.getItem("userToken");
+    try {
+      const res = await fetch(`http://localhost:4000/api/partitura/pastas/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: novoNome }),
+      });
+
+      if (res.ok) {
+        const atualizado = await res.json();
+        setPastas((prev) => prev.map((p) => (p.id === id ? atualizado : p)));
+        setEditarPastaData(null);
+        window.location.reload();
+      } else {
+        console.error("Erro ao editar pasta:", await res.text());
+      }
+    } catch (err) {
+      console.error("Erro ao editar pasta:", err);
+    }
+  };
+
+  // ----------------------
+  // Drag & Drop (mover partituras para pastas)
+  // ----------------------
+  const handleDragStart = (e, id) => {
+    e.dataTransfer.setData("partituraId", id);
+  };
+
+  const handleDrop = async (e, folderId) => {
+    e.preventDefault();
+    const token = localStorage.getItem("userToken");
+    const partituraId = Number(e.dataTransfer.getData("partituraId"));
+
+    if (!partituraId) return;
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/partitura/mover/${partituraId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ folderId }), // se quiser remover da pasta envie null (backend precisa aceitar)
+      });
+
+      if (!res.ok) {
+        console.error("Erro ao mover partitura:", await res.text());
+        return;
+      }
+
+      const moved = await res.json();
+
+      // Remove da lista principal (partituras sem pasta)
+      setPartituras((prev) => prev.filter((p) => p.id !== partituraId));
+
+      // Atualiza pastas localmente: adiciona a partitura movida na pasta correta
+      setPastas((prev) =>
+        prev.map((p) => (p.id === folderId ? { ...p, partituras: [...(p.partituras || []), moved] } : p))
+      );
+
+      // Se pastaAberta for a pasta destino, atualiza essa também
+      if (pastaAberta && pastaAberta.id === folderId) {
+        setPastaAberta((prev) => ({ ...prev, partituras: [...(prev.partituras || []), moved] }));
+      }
+
+      // Se a partitura estava dentro de uma pasta aberta, remova dela
+      setPastas((prev) =>
+        prev.map((p) => ({
+          ...p,
+          partituras: p.partituras ? p.partituras.filter((pt) => pt.id !== partituraId) : p.partituras,
+        }))
+      );
+      window.location.reload();
+    } catch (err) {
+      console.error("Erro ao mover partitura:", err);
+    }
+  };
+
+  // Permitir dropar na área sem pasta (desassociar)
+  const handleDropNoFolder = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("userToken");
+    const partituraId = Number(e.dataTransfer.getData("partituraId"));
+    if (!partituraId) return;
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/partitura/mover/${partituraId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ folderId: null }), // backend deve aceitar null para remover associação
+      });
+
+      if (!res.ok) {
+        console.error("Erro ao remover partitura da pasta:", await res.text());
+        return;
+      }
+
+      const updated = await res.json();
+
+      // Atualiza listas locais
+      // adiciona à lista principal
+      setPartituras((prev) => [updated, ...prev]);
+
+      // remove de todas as pastas
+      setPastas((prev) =>
+        prev.map((p) => ({
+          ...p,
+          partituras: p.partituras ? p.partituras.filter((pt) => pt.id !== partituraId) : p.partituras,
+        }))
+      );
+
+      if (pastaAberta) {
+        setPastaAberta({
+          ...pastaAberta,
+          partituras: pastaAberta.partituras.filter((pt) => pt.id !== partituraId),
+        });
+      }
+      window.location.reload();
+    } catch (err) {
+      console.error("Erro ao desassociar partitura:", err);
+    }
+  }; 
+
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -183,161 +414,361 @@ export default function Partitura() {
         Biblioteca de Partituras
       </h1>
 
-      {/* Upload */}
+      {/* Upload (admins) */}
       {user?.role === "admin" && (
         <form
-            onSubmit={handleUpload}
-            className="bg-white p-4 rounded-lg shadow-md mb-14 flex flex-col md:flex-row items-center gap-4"
+          onSubmit={handleUpload}
+          className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col md:flex-row items-center gap-4"
         >
-            <input
+          <input
             type="text"
             placeholder="Nome da partitura"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             className="border p-2 rounded w-full md:w-1/4"
             required
-            />
-            <input
+          />
+          <input
             type="text"
             placeholder="Descrição"
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
             className="border p-2 rounded w-full md:w-1/3"
-            />
-            <input
+          />
+          <input
             type="file"
             accept="application/pdf"
             onChange={(e) => setFile(e.target.files[0])}
             className="border p-2 rounded w-full md:w-1/4"
             required
-            />
-            <button
-            type="submit"
-            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded shadow-md"
-            >
+          />
+          <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded shadow-md">
             Enviar
-            </button>
+          </button>
         </form>
       )}
 
-
-      {/* Lista de partituras */}
-      <div className="grid gap-8 justify-center md:grid-cols-4 lg:grid-cols-4">
-        {partituras.length === 0 ? (
-            <p className="text-gray-500 text-center col-span-full">
-            Nenhuma partitura enviada ainda.
-            </p>
-        ) : (
-            partituras.map((p) => {
-            const fileUrl = p.arquivoUrl?.startsWith("http")
-                ? p.arquivoUrl
-                : `http://localhost:4000${p.arquivoUrl || ""}`;
-
-            return (
-                <div
-                key={p.id}
-                className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer w-70 transform transition duration-300 hover:scale-105 hover:brightness-90 hover:shadow-xl"
-                onClick={() => {
-                    setPdfUrl(fileUrl);
-                    setShowPdf(true);
-                }}
+      {/* PASTAS + CRIAR PASTA */}
+      <div className="flex flex-col md:flex-row gap-6 mb-8">
+        <div className="w-full bg-white rounded-lg shadow p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-gray-700">Pastas</h2>
+            {user?.role === "admin" && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Nova pasta..."
+                  value={novaPastaNome}
+                  onChange={(e) => setNovaPastaNome(e.target.value)}
+                  className="border px-2 py-1 rounded"
+                />
+                <button
+                  onClick={() => criarPasta(novaPastaNome)}
+                  className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 rounded"
                 >
-                {/* Miniatura */}
-                <div className="relative w-full h-95 bg-gray-100 flex items-center justify-center">
-                    {p.thumbnail ? (
-                    <img
-                        src={p.thumbnail}
-                        alt={p.nome}
-                        className="w-full h-full object-cover"
-                    />
+                  Criar
+                </button>
+              </div>
+            )}
+          </div>
+
+          {pastas.length === 0 ? (
+            <p className="text-gray-500">Nenhuma pasta criada.</p>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-5">
+              {pastas.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-gray-50 p-5 rounded-xl border flex flex-col justify-between cursor-pointer group hover:bg-gray-100 transition relative"
+                  onClick={() => abrirPasta(p)}
+                  onDrop={(e) => handleDrop(e, p.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                >
+                  {/* Cabeçalho */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-base">{p.name}</h3>
+                      <p className="text-xs text-gray-500">
+                        {(p.partituras || []).length} partituras
+                      </p>
+                    </div>
+
+                    {/* Placeholder "Abrir" */}
+                    <span className="text-xs text-teal-700 opacity-0 group-hover:opacity-100 transition">
+                      Abrir
+                    </span>
+                  </div>
+
+                  {/* Apenas nomes quando a pasta está fechada */}
+                  <div className="mb-4 text-xs text-gray-600">
+                    {(p.partituras || []).length > 0 ? (
+                      p.partituras.slice(0, 6).map((pt) => (
+                        <p key={pt.id} className="truncate">{pt.nome}</p>
+                      ))
                     ) : (
-                    <span className="text-gray-400">Prévia indisponível</span>
+                      <p className="text-gray-400 text-xs">Nenhum arquivo</p>
                     )}
-                </div>
+                  </div>
 
-                {/* Detalhes */}
-                <div className="p-3">
-                    <h3 className="text-base font-semibold text-gray-800 truncate">{p.nome}</h3>
-                    <p className="text-xs text-gray-500 mb-2 line-clamp-2">
-                    {p.descricao || "Sem descrição"}
-                    </p>
-
-                    {user?.role === "admin" && (
-                    <button
-                        onClick={(e) => {
-                        e.stopPropagation(); // impede abrir o PDF ao clicar em excluir
-                        handleDelete(p.id);
-                        }}
-                        className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded"
+                  {/* Rodapé - botões fora do card clicável */}
+                  {user?.role === "admin" && (
+                    <div
+                      className="flex gap-2 pt-3 border-t"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                        Excluir
-                    </button>
-                    )}
+                      <button
+                        title="Editar"
+                        onClick={() => setEditarPastaData(p)}
+                        className="flex-1 text-sm px-3 py-1 rounded bg-white border hover:bg-gray-200 transition"
+                      >
+                        ✏️ Editar
+                      </button>
+
+                      <button
+                        title="Excluir"
+                        onClick={() => excluirPasta(p.id)}
+                        className="flex-1 text-sm px-3 py-1 rounded bg-red-100 text-red-600 border hover:bg-red-200 transition"
+                      >
+                        🗑️ Excluir
+                      </button>
+                    </div>
+                  )}
                 </div>
-                </div>
-            );
-            })
-        )}
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Show Modal */}
-        {showPdf && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg shadow-lg w-11/12 md:w-3/4 lg:w-2/3 h-[90vh] flex flex-col">
-                {/* Cabeçalho */}
-                <div className="flex justify-between items-center p-4 border-b">
-                    <h2 className="text-lg font-semibold text-gray-800">Visualizar Partitura</h2>
-                    <div className="flex items-center gap-2">
-                    <a
-                        href={pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-teal-600 hover:underline"
-                        title="Abrir em nova aba / fazer download"
-                    >
-                        Abrir em nova aba
-                    </a>
-                    <button
-                        onClick={() => {
-                        setShowPdf(false);
-                        setPdfUrl(null);
-                        }}
-                        className="text-gray-500 hover:text-gray-800 text-xl font-bold px-3"
-                        aria-label="Fechar visualizador"
-                    >
-                        ×
-                    </button>
-                    
-                    </div>
-                </div>
+      </div>
 
-                {/* Visualização do PDF usando <iframe> */}
-                <div className="flex-1 overflow-hidden">
-                <iframe
-                    src={pdfUrl}
-                    title="Visualizador de Partitura"
-                    className="w-full h-full"
-                    allow="fullscreen"
-                />
-                {/* Fallback se o navegador não suportar iframe/pdf */}
-                <noscript>
-                    <div className="p-6 text-center">
-                    <p className="mb-4">Ative o JavaScript para visualizar o PDF.</p>
-                    <a
-                        href={pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-teal-600 hover:underline"
-                    >
-                        Clique aqui para abrir a partitura.
-                    </a>
-                    </div>
-                </noscript>
-                </div>
-                </div>
+      {/* Se uma pasta estiver aberta, mostra seu conteúdo */}
+      {pastaAberta ? (
+        <div className="bg-white p-4 rounded-lg shadow mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">{pastaAberta.name}</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPastaAberta(null)}
+                className="px-3 py-1 bg-gray-100 rounded"
+              >
+                Fechar
+              </button>
             </div>
-            )}
+          </div>
 
+          {(!pastaAberta.partituras || pastaAberta.partituras.length === 0) ? (
+            <p className="text-gray-500">Nenhuma partitura nesta pasta.</p>
+          ) : (
+            <div className="grid gap-8 md:grid-cols-4 lg:grid-cols-4">
+              {pastaAberta.partituras.map((p) => {
+                const fileUrl = p.arquivoUrl?.startsWith("http")
+                  ? p.arquivoUrl
+                  : `http://localhost:4000${p.arquivoUrl || ""}`;
+
+                return (
+                  <div
+                    key={p.id}
+                    className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer w-70 transform transition duration-300 hover:scale-105 hover:brightness-90 hover:shadow-xl"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, p.id)}
+                    onClick={() => {
+                      setPdfUrl(fileUrl);
+                      setShowPdf(true);
+                    }}
+                  >
+                    <div className="relative w-full h-95 bg-gray-100 flex items-center justify-center">
+                      {p.thumbnail ? (
+                        <img
+                          src={p.thumbnail}
+                          alt={p.nome}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-gray-400">Prévia indisponível</span>
+                      )}
+                    </div>
+
+                    <div className="p-3">
+                      <h3 className="text-base font-semibold text-gray-800 truncate">{p.nome}</h3>
+                      <p className="text-xs text-gray-500 mb-2 line-clamp-2">{p.descricao || "Sem descrição"}</p>
+
+                      {user?.role === "admin" && (
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(p.id);
+                              window.location.reload();
+                            }}
+                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded"
+                          >
+                            Excluir
+                          </button>
+
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await handleDropNoFolder({ preventDefault: () => {}, dataTransfer: { getData: () => p.id } });
+                              window.location.reload();
+                            }}
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs px-3 py-1 rounded"
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* Lista principal de partituras (sem pasta) */}
+      {!pastaAberta && (
+        <div className="bg-white p-4 rounded-lg shadow mb-8">
+          <h2 className="text-lg font-semibold mb-4">Partituras (Sem pasta)</h2>
+
+          <p className="text-1x1 font-medium mb-4">
+            Arraste o arquivo para a pasta que criar, se desejar organizar suas partituras
+          </p>
+
+          <div className="grid gap-8 md:grid-cols-4 lg:grid-cols-4">
+            {partituras.length === 0 ? (
+              // 🔍 Se não há partituras sem pasta, verificar se existem partituras em pastas
+              pastas.some((p) => p.partituras && p.partituras.length > 0) ? (
+                <p className="text-gray-500 text-center col-span-full">
+                  Nenhum arquivo sem pasta no momento.
+                </p>
+              ) : (
+                <p className="text-gray-500 text-center col-span-full">
+                  Nenhuma partitura enviada ainda.
+                </p>
+              )
+            ) : (
+              partituras.map((p) => {
+                const fileUrl = p.arquivoUrl?.startsWith("http")
+                  ? p.arquivoUrl
+                  : `http://localhost:4000${p.arquivoUrl || ""}`;
+
+                return (
+                  <div
+                    key={p.id}
+                    className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer w-70 transform transition duration-300 hover:scale-105 hover:brightness-90 hover:shadow-xl"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, p.id)}
+                    onClick={() => {
+                      setPdfUrl(fileUrl);
+                      setShowPdf(true);
+                    }}
+                  >
+                    <div className="relative w-full h-95 bg-gray-100 flex items-center justify-center">
+                      {p.thumbnail ? (
+                        <img src={p.thumbnail} alt={p.nome} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-gray-400">Prévia indisponível</span>
+                      )}
+                    </div>
+
+                    <div className="p-3">
+                      <h3 className="text-base font-semibold text-gray-800 truncate">{p.nome}</h3>
+                      <p className="text-xs text-gray-500 mb-2 line-clamp-2">
+                        {p.descricao || "Sem descrição"}
+                      </p>
+
+                      {user?.role === "admin" && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(p.id);
+                            }}
+                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded"
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Show Modal PDF */}
+      {showPdf && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-11/12 md:w-3/4 lg:w-2/3 h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-800">Visualizar Partitura</h2>
+              <div className="flex items-center gap-2">
+                <a
+                  href={pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-teal-600 hover:underline"
+                  title="Abrir em nova aba / fazer download"
+                >
+                  Abrir em nova aba
+                </a>
+                <button
+                  onClick={() => {
+                    setShowPdf(false);
+                    setPdfUrl(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-800 text-xl font-bold px-3"
+                  aria-label="Fechar visualizador"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-hidden">
+              <iframe src={pdfUrl} title="Visualizador de Partitura" className="w-full h-full" allow="fullscreen" />
+              <noscript>
+                <div className="p-6 text-center">
+                  <p className="mb-4">Ative o JavaScript para visualizar o PDF.</p>
+                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">
+                    Clique aqui para abrir a partitura.
+                  </a>
+                </div>
+              </noscript>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal editar pasta */}
+      {editarPastaData && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-1/3">
+            <h3 className="text-lg font-semibold mb-3">Editar Pasta</h3>
+            <input
+              type="text"
+              value={editarPastaData.name}
+              onChange={(e) => setEditarPastaData({ ...editarPastaData, name: e.target.value })}
+              className="border p-2 rounded w-full mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setEditarPastaData(null)} className="px-3 py-1 rounded border">
+                Cancelar
+              </button>
+              <button
+                onClick={() => editarPasta(editarPastaData.id, editarPastaData.name)}
+                className="px-3 py-1 rounded bg-teal-600 text-white"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

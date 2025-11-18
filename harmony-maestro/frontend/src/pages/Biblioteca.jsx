@@ -375,19 +375,33 @@ export default function Biblioteca() {
           <h1 className="text-3xl font-bold text-gray-800">Biblioteca Musical</h1>
         </div>
 
-        
       </div>
 
-      <div className="mb-10">
+      {/* Admin */}
+      {userRole === "admin" && (
+        <div className="mb-10">
 
-        {/* Parte superior — título + descrição */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Gerencie seu acervo de músicas</h1>
+          {/* Parte superior — título + descrição */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-800">Gerencie seu acervo de músicas</h1>
+            
+          </div>
           
         </div>
+      )}
 
-        
-      </div>
+      {/* User */}
+      {userRole === "user" && (
+        <div className="mb-10">
+
+          {/* Parte superior — título + descrição */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-800">Acervo musical</h1>
+            
+          </div>
+          
+        </div>
+      )}
 
       {/* BOTÕES SUPERIORES */}
       <div className="mb-10 flex flex-wrap gap-6">

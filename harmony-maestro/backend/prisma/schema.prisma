@@ -37,6 +37,7 @@ model User {
   past_events     Past_events[]
   attendance_report Attendance_report[]
   folder Folder[]
+  folderPartitura FolderPartitura[]
 }
 
 model Invite {
@@ -123,6 +124,8 @@ model Partitura {
   criadoEm    DateTime @default(now())
   usuario     User     @relation(fields: [usuarioId], references: [id])
   usuarioId   Int
+  folderId   Int?
+  folder     FolderPartitura? @relation("FolderPartituraRelation", fields: [folderId], references: [id])
 }
 
 model Folder {
@@ -132,6 +135,15 @@ model Folder {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   songs     Song[]   @relation("FolderSongs")
   createdAt DateTime @default(now())
+}
+
+model FolderPartitura {
+  id        Int          @id @default(autoincrement())
+  name      String
+  userId    Int
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partituras Partitura[] @relation("FolderPartituraRelation")
+  createdAt DateTime     @default(now())
 }
 
 

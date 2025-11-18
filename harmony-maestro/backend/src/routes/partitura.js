@@ -162,4 +162,123 @@ router.delete("/partitura/:id", authenticateToken, async (req, res) => {
   }
 });
 
+// FolderPartitura routes could be added here
+
+// 📁 Criar pasta de partituras
+router.post("/partitura/pastas", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin")
+      return res.status(403).json({ error: "Apenas administradores podem criar pastas." });
+
+    const { name } = req.body;
+
+    const folder = await prisma.folderPartitura.create({
+      data: { name, userId: req.user.id }
+    });
+
+    res.json(folder);
+  } catch (error) {
+    console.error("Erro ao criar pasta:", error);
+    res.status(500).json({ error: "Erro ao criar pasta" });
+  }
+});
+
+
+// 📁 Listar pastas de partituras do usuário logado
+router.get("/partitura/pastas", authenticateToken, async (req, res) => {
+  try {
+    let targetUserId = req.user.id;
+
+    if (req.user.role === "user") {
+      const invite = await prisma.invite.findFirst({
+        where: { inviteeId: req.user.id },
+        select: { inviterId: true },
+      });
+      if (invite) targetUserId = invite.inviterId;
+    }
+
+    const pastas = await prisma.folderPartitura.findMany({
+      where: { userId: targetUserId },
+      include: { partituras: true },
+      orderBy: { createdAt: "desc" }
+    });
+
+    res.json(pastas);
+  } catch (error) {
+    console.error("Erro ao buscar pastas:", error);
+    res.status(500).json({ error: "Erro ao buscar pastas" });
+  }
+});
+
+// 📁 Mover pasta de partituras
+router.put("/partitura/mover/:id", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin")
+      return res.status(403).json({ error: "Apenas administradores podem mover partituras." });
+
+    const partituraId = Number(req.params.id);
+    const { folderId } = req.body;
+
+    const find = await prisma.partitura.findUnique({ where: { id: partituraId } });
+    if (!find) return res.status(404).json({ error: "Partitura não encontrada" });
+
+    const moved = await prisma.partitura.update({
+      where: { id: partituraId },
+      data: { folderId: folderId === null ? null : Number(folderId) },
+    });
+
+    res.json(moved);
+  } catch (error) {
+    console.error("Erro ao mover partitura:", error);
+    res.status(500).json({ error: "Erro ao mover partitura" });
+  }
+});
+
+
+// 🗑️ Deletar pasta de partituras
+router.delete("/partitura/pastas/:id", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin")
+      return res.status(403).json({ error: "Apenas administradores podem excluir pastas." });
+
+    const folderId = Number(req.params.id);
+
+    await prisma.partitura.updateMany({
+      where: { folderId },
+      data: { folderId: null }
+    });
+
+    await prisma.folderPartitura.delete({
+      where: { id: folderId }
+    });
+
+    res.json({ message: "Pasta excluída com sucesso!" });
+  } catch (err) {
+    console.error("Erro ao excluir pasta:", err);
+    res.status(500).json({ error: "Erro ao excluir pasta" });
+  }
+});
+
+// ✏️ Editar pasta de partituras
+router.put("/partitura/pastas/:id", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin")
+      return res.status(403).json({ error: "Apenas administradores podem editar pastas." });
+
+    const { name } = req.body;
+    const folderId = Number(req.params.id);
+
+    const folder = await prisma.folderPartitura.update({
+      where: { id: folderId },
+      data: { name }
+    });
+
+    res.json(folder);
+  } catch (err) {
+    console.error("Erro ao editar pasta:", err);
+    res.status(500).json({ error: "Erro ao editar pasta" });
+  }
+});
+
+
 export default router;
