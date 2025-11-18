@@ -229,22 +229,34 @@ router.put("/biblioteca/mover/:songId", authenticateToken, async (req, res) => {
     const song = await prisma.song.findUnique({ where: { id: songId } });
     if (!song) return res.status(404).json({ error: "Música não encontrada" });
 
-    // ✔ valida se pasta existe
+    // 👉 SE folderId for null → mover para a raiz
+    if (folderId === null) {
+      const moved = await prisma.song.update({
+        where: { id: songId },
+        data: { folderId: null },
+      });
+
+      return res.json(moved);
+    }
+
+    // ✔ valida se pasta existe apenas se folderId NÃO for null
     const folder = await prisma.folder.findUnique({ where: { id: Number(folderId) } });
     if (!folder) return res.status(404).json({ error: "Pasta não encontrada" });
 
-    // ✔ move
+    // ✔ move para outra pasta
     const moved = await prisma.song.update({
       where: { id: songId },
       data: { folderId: Number(folderId) },
     });
 
     res.json(moved);
+
   } catch (error) {
     console.error("Erro ao mover música:", error);
     res.status(500).json({ error: "Erro ao mover música" });
   }
 });
+
 
 // 🗑️ Excluir pasta (e músicas dentro dela)
 router.delete("/biblioteca/pastas/:id", authenticateToken, async (req, res) => {

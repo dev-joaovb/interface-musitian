@@ -6,6 +6,7 @@ import {
   FiEdit,
   FiTrash2,
   FiMusic,
+  FiFolder,
 } from "react-icons/fi";
 
 export default function Biblioteca() {
@@ -258,6 +259,43 @@ export default function Biblioteca() {
     }
   };
 
+
+  // 🔄 Remover música da pasta (voltar para a raiz)
+  const removerDaPasta = async (songId) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/biblioteca/mover/${songId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ folderId: null }), // ← volta a música para a raiz
+      });
+
+      if (!res.ok) {
+        console.error("Erro ao remover música da pasta:", await res.text());
+        return;
+      }
+
+      const updated = await res.json();
+
+      // Remove da pasta atual
+      setPastaAberta((prev) => ({
+        ...prev,
+        songs: prev.songs.filter((s) => s.id !== songId),
+      }));
+
+      // Adiciona na biblioteca principal
+      setMusicas((prev) => [...prev, updated]);
+
+    } catch (error) {
+      console.error("Erro ao remover música:", error);
+    }
+  };
+
+
   // 🗑️ Excluir pasta (e tudo dentro)
   const excluirPasta = async (id) => {
     const confirmar = window.confirm(
@@ -377,378 +415,424 @@ export default function Biblioteca() {
 
       </div>
 
-      {/* Admin */}
+      {/* Texto de apresentação — Admin */}
       {userRole === "admin" && (
-        <div className="mb-10">
-
-          {/* Parte superior — título + descrição */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Gerencie seu acervo de músicas</h1>
-            
-          </div>
-          
+        <div className="mb-10 max-w-3xl mx-auto text-center">
+          <p className="text-gray-700 text-base leading-relaxed">
+            Bem-vindo ao painel de gerenciamento da <strong>Biblioteca Musical</strong>.  
+            Aqui você pode organizar todo o acervo, criando pastas, adicionando músicas,
+            movendo arquivos e mantendo tudo sempre acessível e estruturado para a equipe
+            e para os usuários.
+          </p>
         </div>
       )}
 
-      {/* User */}
-      {userRole === "user" && (
-        <div className="mb-10">
-
-          {/* Parte superior — título + descrição */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Acervo musical</h1>
-            
-          </div>
-          
+      {/* Texto de apresentação — Usuário comum */}
+      {userRole !== "admin" && (
+        <div className="mb-10 max-w-3xl mx-auto text-center">
+          <p className="text-gray-700 text-base leading-relaxed">
+            Aqui você pode visualizar e acessar as músicas disponibilizadas na 
+            <strong> Biblioteca Musical</strong>.  
+            As pastas e arquivos são organizados pelos administradores para facilitar sua navegação e consulta.
+          </p>
         </div>
       )}
 
-      {/* BOTÕES SUPERIORES */}
-      <div className="mb-10 flex flex-wrap gap-6">
+      {/* CARD GERAL — envolve desde Gerencie seu acervo até Músicas sem pasta */}
+      <div className="bg-white shadow-lg rounded-2xl p-8 border border-gray-100 mb-10">
 
-        <button
-          onClick={() => openModal()}
-          disabled={userRole === "user"}
-          className={`${
-            userRole === "user"
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-teal-600 hover:bg-teal-700"
-          } text-white px-6 py-3 rounded-lg flex items-center text-base shadow`}
-        >
-          <FiPlus className="w-5 h-5 mr-2" />
-          Adicionar Música
-        </button>
-
+        {/* Admin */}
         {userRole === "admin" && (
-          <>
-            <button
-              onClick={() => setNovaPasta(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center text-base shadow"
-            >
-              <FiPlus className="w-5 h-5 mr-2" /> Criar Pasta
-            </button>
+          <div className="mb-10">
 
-            {/* Modal de Nova Pasta */}
-            {novaPasta && (
-              <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-fadeIn">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
-                    Criar Nova Pasta
-                  </h2>
-
-                  <input
-                    type="text"
-                    id="nomePasta"
-                    placeholder="Digite o nome da pasta"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
-                  />
-
-                  <div className="flex justify-end space-x-3">
-                    <button
-                      onClick={() => setNovaPasta(false)}
-                      className="px-4 py-2 text-gray-500 hover:text-gray-700"
-                    >
-                      Cancelar
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        const nome = document
-                          .getElementById("nomePasta")
-                          .value.trim();
-
-                        if (nome) {
-                          criarPasta(nome);
-                          setNovaPasta(false);
-                          window.location.reload();
-                        }
-                      }}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                    >
-                      Criar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ✏️ Modal de Editar Pasta */}
-            {editarPastaData && (
-              <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-fadeIn">
-
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
-                    Editar Pasta
-                  </h2>
-
-                  <input
-                    type="text"
-                    id="editarNomePasta"
-                    defaultValue={editarPastaData.name}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
-                  />
-
-                  <div className="flex justify-end space-x-3">
-                    <button
-                      onClick={() => setEditarPastaData(null)}
-                      className="px-4 py-2 text-gray-500 hover:text-gray-700"
-                    >
-                      Cancelar
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        const novoNome = document
-                          .getElementById("editarNomePasta")
-                          .value.trim();
-
-                        if (novoNome) {
-                          editarPasta(editarPastaData.id, novoNome);
-                        }
-                      }}
-                      className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg"
-                    >
-                      Salvar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-          </>
-        )}
-      </div>
-
-      <div>
-        {/* 🔥 Breadcrumb — movido para baixo e mais destacado */}
-        {pastaAberta && (
-          <div className="mb-8 text-gray-700 flex items-center space-x-3 text-lg">
-            <span
-              className="cursor-pointer hover:text-teal-600 font-medium"
-              onClick={() => setPastaAberta(null)}
-            >
-              Biblioteca
-            </span>
-            <span className="text-gray-500">›</span>
-            <span className="font-semibold text-teal-700">{pastaAberta.name}</span>
+            {/* Parte superior — título + descrição */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-800">Gerencie seu acervo de músicas</h1>
+              
+            </div>
+            
           </div>
         )}
-      </div>
 
-      {/* 📁 Pastas */}
-      {!pastaAberta && pastas.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-3">Pastas</h2>
+        {/* User */}
+        {userRole === "user" && (
+          <div className="mb-10">
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {pastas.map((p) => (
-              <div
-                key={p.id}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOver(p.id);
-                }}
-                onDragLeave={() => setDragOver(null)}
-                onDrop={(e) => {
-                  handleDrop(e, p.id);
-                  setDragOver(null);
-                  window.location.reload();
-                }}
-                className={`pasta-card rounded-lg border p-4 transition-colors ${
-                  dragOver === p.id ? "bg-blue-50 border-blue-300" : "bg-gray-50 border-gray-200"
-                }`}
+            {/* Parte superior — título + descrição */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-800">Acervo musical</h1>
+              
+            </div>
+            
+          </div>
+        )}
+
+        {/* BOTÕES SUPERIORES */}
+        <div className="mb-10 flex flex-wrap gap-6">
+
+          <button
+            onClick={() => openModal()}
+            disabled={userRole === "user"}
+            className={`${
+              userRole === "user"
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-teal-600 hover:bg-teal-700"
+            } text-white px-6 py-3 rounded-lg flex items-center text-base shadow`}
+          >
+            <FiPlus className="w-5 h-5 mr-2" />
+            Adicionar Música
+          </button>
+
+          {userRole === "admin" && (
+            <>
+              <button
+                onClick={() => setNovaPasta(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center text-base shadow"
               >
-                <h3 className="font-semibold text-gray-800 mb-3">{p.name}</h3>
+                <FiPlus className="w-5 h-5 mr-2" /> Criar Pasta
+              </button>
 
-                {p.songs.length === 0 ? (
-                  <p className="text-sm text-gray-500">Sem músicas ainda</p>
-                ) : (
-                  p.songs.map((s) => (
-                    <div
-                      key={s.id}
-                      className="p-3 bg-white rounded-md shadow hover:shadow-md transition cursor-pointer flex items-center justify-between mb-3"
-                      draggable={userRole === "admin"}
-                      onDragStart={(e) => handleDragStart(e, s.id)}
-                      onClick={() => abrirPasta(p.id)}
-                    >
-                      🎵 <span className="font-medium text-gray-700">{s.title}</span>
+              {/* Modal de Nova Pasta */}
+              {novaPasta && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-fadeIn">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
+                      Criar Nova Pasta
+                    </h2>
+
+                    <input
+                      type="text"
+                      id="nomePasta"
+                      placeholder="Digite o nome da pasta"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
+                    />
+
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => setNovaPasta(false)}
+                        className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                      >
+                        Cancelar
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const nome = document
+                            .getElementById("nomePasta")
+                            .value.trim();
+
+                          if (nome) {
+                            criarPasta(nome);
+                            setNovaPasta(false);
+                            window.location.reload();
+                          }
+                        }}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                      >
+                        Criar
+                      </button>
                     </div>
-                  ))
-                )}
-
-                {userRole === "admin" && (
-                  <div className="flex justify-between mt-4 pt-3 border-t border-gray-200">
-                    <button onClick={() => setEditarPastaData({ id: p.id, name: p.name })} className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium">
-                      <FiEdit className="mr-1" /> Editar
-                    </button>
-                    <button onClick={() => excluirPasta(p.id)} className="flex items-center text-red-600 hover:text-red-800 text-sm font-medium">
-                      <FiTrash2 className="mr-1" /> Excluir
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 🔥 Conteúdo da pasta aberta */}
-      {pastaAberta && (
-        <div className="mt-6">
-          <h2 className="text-xl font-bold mb-4">
-            {pastaAberta.name} — {pastaAberta.songs.length} músicas
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pastaAberta.songs.map((music) => (
-              <div key={music.id} className="bg-white border rounded-lg p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">{music.title}</h3>
-                    <p className="text-gray-500 text-sm">{music.artist}</p>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-
-                    {/* ▶ Reproduzir */}
-                    <button
-                      onClick={() => new Audio(music.fileUrl).play()}
-                      className="text-green-600 hover:text-green-800"
-                    >
-                      <FiPlay size={20} />
-                    </button>
-
-                    {/* Editar */}
-                    {userRole === "admin" && (
-                      <button onClick={() => openModal(music)} className="text-blue-600 hover:text-blue-800">
-                        <FiEdit size={20} />
-                      </button>
-                    )}
-
-                    {/* Mover
-                    {userRole === "admin" && (
-                      <button
-                        onClick={() => {
-                          const destino = Number(prompt("Mover para qual pasta? ID:"));
-                          if (destino) {
-                            handleDrop({ dataTransfer: { getData: () => music.id } }, destino);
-                            window.location.reload();
-                          }
-                        }}
-                        className="text-yellow-600 hover:text-yellow-800"
-                      >
-                        📁
-                      </button>
-                    )} */}
-
-                    {/* Excluir */}
-                    {userRole === "admin" && (
-                      <button
-                        onClick={() => {
-                          if (window.confirm("Excluir esta música?")) {
-                            handleDelete(music.id);
-                            window.location.reload();
-                          }
-                        }}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <FiTrash2 size={20} />
-                      </button>
-                    )}
                   </div>
                 </div>
+              )}
 
-                {music.fileUrl && (
-                  <audio controls className="mt-3 w-full">
-                    <source src={music.fileUrl} type="audio/mp3" />
-                  </audio>
-                )}
-              </div>
-            ))}
-          </div>
+              {/* ✏️ Modal de Editar Pasta */}
+              {editarPastaData && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-fadeIn">
+
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
+                      Editar Pasta
+                    </h2>
+
+                    <input
+                      type="text"
+                      id="editarNomePasta"
+                      defaultValue={editarPastaData.name}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
+                    />
+
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => setEditarPastaData(null)}
+                        className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                      >
+                        Cancelar
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const novoNome = document
+                            .getElementById("editarNomePasta")
+                            .value.trim();
+
+                          if (novoNome) {
+                            editarPasta(editarPastaData.id, novoNome);
+                          }
+                        }}
+                        className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg"
+                      >
+                        Salvar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </>
+          )}
         </div>
-      )}
 
-      {/* 🎵 Grid de músicas principais (somente se nenhuma pasta está aberta) */}
-      {!pastaAberta && (
-        <div className="mb-8">
-          
-          {/* 🔥 Título "Músicas sem pasta" */}
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Músicas sem pasta
-          </h2>
+        <div>
+          {/* 🔥 Breadcrumb — movido para baixo e mais destacado */}
+          {pastaAberta && (
+            <div className="mb-8 text-gray-700 flex items-center space-x-3 text-lg">
+              <span
+                className="cursor-pointer hover:text-teal-600 font-medium"
+                onClick={() => setPastaAberta(null)}
+              >
+                Biblioteca
+              </span>
+              <span className="text-gray-500">›</span>
+              <span className="font-semibold text-teal-700">{pastaAberta.name}</span>
+            </div>
+          )}
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {musicas.map((music) => {
-              const fileUrl =
-                music.fileUrl?.startsWith("http")
-                  ? music.fileUrl
-                  : `http://localhost:4000${music.fileUrl || ""}`;
+        {/* 📁 Pastas */}
+        {!pastaAberta && pastas.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-gray-700 mb-3">Pastas</h2>
 
-              return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {pastas.map((p) => (
+                <div
+                  key={p.id}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(p.id);
+                  }}
+                  onDragLeave={() => setDragOver(null)}
+                  onDrop={(e) => {
+                    handleDrop(e, p.id);
+                    setDragOver(null);
+                    window.location.reload();
+                  }}
+                  className={`rounded-xl p-5 border shadow-sm transition-all flex flex-col h-full ${
+                    dragOver === p.id
+                      ? "bg-blue-50 border-blue-300 shadow-md"
+                      : "bg-gray-50 border-gray-200 hover:shadow-md hover:border-gray-300"
+                  }`}
+                >
+                  <h3 className="font-semibold text-gray-800 mb-3">
+                    {p.name}{" "}
+                    <span className="text-gray-600 text-sm">
+                      ({p.songs.length} {p.songs.length === 1 ? "música" : "músicas"})
+                    </span>
+                  </h3>
+
+                  {p.songs.length === 0 ? (
+                    <p className="text-sm text-gray-500">Sem músicas ainda</p>
+                  ) : (
+                    p.songs.map((s) => (
+                      <div
+                        key={s.id}
+                        className="p-3 bg-white rounded-md shadow-sm hover:shadow-md border border-gray-200 transition cursor-pointer flex items-center justify-between mb-3"
+                        draggable={userRole === "admin"}
+                        onDragStart={(e) => handleDragStart(e, s.id)}
+                        onClick={() => abrirPasta(p.id)}
+                      >
+                        🎵 <span className="font-medium text-gray-700">{s.title}</span>
+                      </div>
+                    ))
+                  )}
+
+                  {userRole === "admin" && (
+                    <div className="mt-auto flex justify-between pt-3 border-t border-gray-200">
+                      <button
+                        onClick={() => setEditarPastaData({ id: p.id, name: p.name })}
+                        className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        <FiEdit className="mr-1" /> Editar
+                      </button>
+                      <button
+                        onClick={() => excluirPasta(p.id)}
+                        className="flex items-center text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        <FiTrash2 className="mr-1" /> Excluir
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 🔥 Conteúdo da pasta aberta */}
+        {pastaAberta && (
+          <div className="mt-6">
+            <h2 className="text-xl font-bold mb-4">
+              {pastaAberta.name} — {pastaAberta.songs.length} músicas
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {pastaAberta.songs.map((music) => (
                 <div
                   key={music.id}
-                  className="music-card bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1"
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, music.id)}
+                  className="bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
                 >
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-800">{music.title}</h3>
-                    <p className="text-sm text-gray-500 mb-3">
-                      Compositor: {music.artist}
-                    </p>
-
-                    <div className="flex items-center justify-between text-xs text-gray-400">
-                      <span>{music.tipo || "MP3"}</span>
-                      <span>{new Date(music.createdAt).toLocaleDateString("pt-BR")}</span>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{music.title}</h3>
+                      <p className="text-gray-500 text-sm">{music.artist}</p>
                     </div>
 
-                    {fileUrl && (
-                      <div className="mt-4">
-                        {music.tipo === "MP4" ? (
-                          <video controls className="w-full rounded-lg border border-gray-200">
-                            <source src={fileUrl} type="video/mp4" />
-                          </video>
-                        ) : (
-                          <audio controls className="w-full">
-                            <source src={fileUrl} type="audio/mpeg" />
-                          </audio>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex items-center space-x-3">
+
+                      {/* ▶ Reproduzir */}
+                      <button
+                        onClick={() => new Audio(music.fileUrl).play()}
+                        className="text-green-600 hover:text-green-800"
+                      >
+                        <FiPlay size={20} />
+                      </button>
+
+                      {/* Editar */}
+                      {userRole === "admin" && (
+                        <button
+                          onClick={() => openModal(music)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <FiEdit size={20} />
+                        </button>
+                      )}
+
+                      {/* Remover da pasta */}
+                      {userRole === "admin" && (
+                        <button
+                          onClick={() => removerDaPasta(music.id)}
+                          className="text-yellow-600 hover:text-yellow-800"
+                        >
+                          <FiFolder size={20} />
+                        </button>
+                      )}
+
+                      {/* Excluir */}
+                      {userRole === "admin" && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm("Excluir esta música?")) {
+                              handleDelete(music.id);
+                              window.location.reload();
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <FiTrash2 size={20} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="border-t border-gray-100 flex">
-                    <button
-                      onClick={() => openModal(music)}
-                      disabled={userRole === "user"}
-                      className={`w-1/2 py-3 flex items-center justify-center ${
-                        userRole === "user"
-                          ? "bg-gray-100 text-gray-400"
-                          : "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                      }`}
-                    >
-                      <FiEdit className="w-4 h-4 mr-2" /> Editar
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(music.id)}
-                      disabled={userRole === "user"}
-                      className={`w-1/2 py-3 flex items-center justify-center ${
-                        userRole === "user"
-                          ? "bg-gray-100 text-gray-400"
-                          : "bg-red-50 text-red-600 hover:bg-red-100"
-                      }`}
-                    >
-                      <FiTrash2 className="w-4 h-4 mr-2" /> Excluir
-                    </button>
-                  </div>
+                  {music.fileUrl && (
+                    <audio controls className="mt-4 w-full">
+                      <source src={music.fileUrl} type="audio/mp3" />
+                    </audio>
+                  )}
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* 🎵 Grid de músicas principais (somente se nenhuma pasta está aberta) */}
+        {!pastaAberta && (
+          <div className="mb-8">
+            
+            {/* 🔥 Título "Músicas sem pasta" */}
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              Músicas sem pasta
+            </h2>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Você pode arrastar as músicas para as pastas que desejar, assim que criar uma.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {musicas.map((music) => {
+                const fileUrl =
+                  music.fileUrl?.startsWith("http")
+                    ? music.fileUrl
+                    : `http://localhost:4000${music.fileUrl || ""}`;
+
+                return (
+                  <div
+                    key={music.id}
+                    className="bg-gray-50 rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-300 overflow-hidden cursor-grab active:cursor-grabbing"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, music.id)}
+                  >
+                    <div className="p-5">
+                      <h3 className="font-semibold text-gray-800">{music.title}</h3>
+                      <p className="text-sm text-gray-500 mb-3">
+                        Compositor: {music.artist}
+                      </p>
+
+                      <div className="flex items-center justify-between text-xs text-gray-400">
+                        <span>{music.tipo || "MP3"}</span>
+                        <span>{new Date(music.createdAt).toLocaleDateString("pt-BR")}</span>
+                      </div>
+
+                      {fileUrl && (
+                        <div className="mt-4">
+                          {music.tipo === "MP4" ? (
+                            <video controls className="w-full rounded-lg border border-gray-200">
+                              <source src={fileUrl} type="video/mp4" />
+                            </video>
+                          ) : (
+                            <audio controls className="w-full">
+                              <source src={fileUrl} type="audio/mpeg" />
+                            </audio>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Ações */}
+                    <div className="border-t border-gray-200 flex">
+                      <button
+                        onClick={() => openModal(music)}
+                        disabled={userRole === "user"}
+                        className={`w-1/2 py-3 flex items-center justify-center text-sm ${
+                          userRole === "user"
+                            ? "bg-gray-100 text-gray-400"
+                            : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                        }`}
+                      >
+                        <FiEdit className="w-4 h-4 mr-2" /> Editar
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(music.id)}
+                        disabled={userRole === "user"}
+                        className={`w-1/2 py-3 flex items-center justify-center text-sm ${
+                          userRole === "user"
+                            ? "bg-gray-100 text-gray-400"
+                            : "bg-red-50 text-red-600 hover:bg-red-100"
+                        }`}
+                      >
+                        <FiTrash2 className="w-4 h-4 mr-2" /> Excluir
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+      </div>
 
 
       {/* Modal */}

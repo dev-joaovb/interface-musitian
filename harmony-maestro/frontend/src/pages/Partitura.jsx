@@ -410,42 +410,79 @@ export default function Partitura() {
         </button>
       </div>
 
-      <h1 className="text-3xl font-semibold text-gray-800 mb-4 text-center">
+      <h1 className="text-3xl font-semibold text-gray-800 mb-16 text-center">
         Biblioteca de Partituras
       </h1>
 
+      {/* Texto para ADMIN */}
+      {user?.role === "admin" && (
+        <div className="mb-10 text-center">
+          
+          <p className="text-gray-600 text-base leading-relaxed max-w-2xl mx-auto">
+            Aqui em <strong> Biblioteca de Partituras</strong> você pode cadastrar novas partituras (em PDF), organizar em pastas,
+            editar informações, remover arquivos e manter todo o acervo musical
+            sempre atualizado. Arraste partituras para as pastas, mova, renomeie
+            e mantenha tudo organizado com facilidade.
+          </p>
+        </div>
+      )}
+
+      {/* Texto para USER */}
+      {user?.role === "user" && (
+        <div className="mb-10 text-center">
+          
+          <p className="text-gray-600 text-base leading-relaxed max-w-2xl mx-auto">
+            Aqui em <strong> Biblioteca de Partituras</strong> você pode visualizar e acessar todas as partituras
+            disponíveis para estudo e uso nos cultos e apresentações.
+            A organização em pastas facilita a navegação, permitindo que você
+            encontre rapidamente o material necessário.
+          </p>
+        </div>
+      )}
+
       {/* Upload (admins) */}
       {user?.role === "admin" && (
-        <form
-          onSubmit={handleUpload}
-          className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col md:flex-row items-center gap-4"
-        >
-          <input
-            type="text"
-            placeholder="Nome da partitura"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            className="border p-2 rounded w-full md:w-1/4"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Descrição"
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
-            className="border p-2 rounded w-full md:w-1/3"
-          />
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={(e) => setFile(e.target.files[0])}
-            className="border p-2 rounded w-full md:w-1/4"
-            required
-          />
-          <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded shadow-md">
-            Enviar
-          </button>
-        </form>
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+          
+          <h2 className="text-lg font-semibold mb-4">Adicionar Partitura</h2>
+
+          <form
+            onSubmit={handleUpload}
+            className="flex flex-col md:flex-row items-center gap-4"
+          >
+            <input
+              type="text"
+              placeholder="Nome da partitura"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              className="border p-2 rounded w-full md:w-1/4"
+              required
+            />
+
+            <input
+              type="text"
+              placeholder="Descrição"
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              className="border p-2 rounded w-full md:w-1/3"
+            />
+
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setFile(e.target.files[0])}
+              className="border p-2 rounded w-full md:w-1/4"
+              required
+            />
+
+            <button
+              type="submit"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded shadow-md"
+            >
+              Enviar
+            </button>
+          </form>
+        </div>
       )}
 
       {/* PASTAS + CRIAR PASTA */}
@@ -631,8 +668,8 @@ export default function Partitura() {
         <div className="bg-white p-4 rounded-lg shadow mb-8">
           <h2 className="text-lg font-semibold mb-4">Partituras (Sem pasta)</h2>
 
-          <p className="text-1x1 font-medium mb-4">
-            Arraste o arquivo para a pasta que criar, se desejar organizar suas partituras
+          <p className="text-sm text-gray-600 mb-4">
+            Para organizar suas partituras, arraste e solte os arquivos nas pastas desejadas.
           </p>
 
           <div className="grid gap-8 md:grid-cols-4 lg:grid-cols-4">
