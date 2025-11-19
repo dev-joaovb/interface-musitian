@@ -72,19 +72,21 @@ useEffect(() => {
 
 
 // 🔹 Médias mensais de presença e falta
-const [mediasMensais, setMediasMensais] = useState(null);
+const [ano_Selecionado, setAno_Selecionado] = useState(new Date().getFullYear());
+const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth() + 1);
+
+const [dadosFaltas, setDadosFaltas] = useState(null);
 
 useEffect(() => {
   const token = localStorage.getItem("token");
-  fetch("http://localhost:4000/api/dashboard/faltas", {
+
+  fetch(`http://localhost:4000/api/dashboard/faltas/${ano_Selecionado}/${mesSelecionado}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
     .then((res) => res.json())
-    .then((json) => setMediasMensais(json))
-    .catch((err) =>
-      console.error("Erro ao buscar médias mensais:", err)
-    );
-}, []);
+    .then((json) => setDadosFaltas(json))
+    .catch((err) => console.error("Erro ao buscar faltas:", err));
+}, [ano_Selecionado, mesSelecionado]);
 
 
 // 🔹 Estatísticas de eventos por ano
@@ -186,39 +188,46 @@ useEffect(() => {
       {/* Próximos Ensaios */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-6">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Próximos Eventos
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-800">Próximos Eventos</h2>
         </div>
+
         <div className="divide-y divide-gray-200">
-          {data.upcomingEvents.map((event) => (
-            <div
-              key={event.id}
-              className="p-6 hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-gray-800">{event.title}</h3>
-                  <p className="text-sm text-gray-500">
-                    {new Date(event.date).toLocaleDateString("pt-BR")} -{" "}
-                    {new Date(event.date).toLocaleTimeString("pt-BR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    | {event.location}
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <span className="px-2 py-1 text-xs font-medium bg-teal-100 text-teal-800 rounded-full">
-                    {event.status}
-                  </span>
-                  <button className="p-1 text-gray-400 hover:text-gray-600">
-                    <FiChevronRight className="w-5 h-5" />
-                  </button>
+          {data.upcomingEvents.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">
+              Nenhum evento agendado até o momento
+            </div>
+          ) : (
+            data.upcomingEvents.map((event) => (
+              <div
+                key={event.id}
+                className="p-6 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-gray-800">{event.title}</h3>
+                    <p className="text-sm text-gray-500">
+                      {new Date(event.date).toLocaleDateString("pt-BR")} -{" "}
+                      {new Date(event.date).toLocaleTimeString("pt-BR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}{" "}
+                      | {event.location}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <span className="px-2 py-1 text-xs font-medium bg-teal-100 text-teal-800 rounded-full">
+                      {event.status}
+                    </span>
+                    <button className="p-1 text-gray-400 hover:text-gray-600"
+                      onClick={() => window.location.href = `/series`}
+                    >
+                      <FiChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <div className="px-6 py-3 border-t border-gray-200 text-center">
@@ -297,43 +306,58 @@ useEffect(() => {
       )}
 
       {/* Gráfico de Faltas em Ensaios */}
-      {mediasMensais && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            Média de Presença e Falta por Mês
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={mediasMensais}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis allowDecimals />
-              <Tooltip />
-              <Legend />
-              <Bar
-                dataKey="presencaMedia"
-                name="Presença Média"
-                fill="#22c55e" // verde
-                barSize={30}
-                radius={[6, 6, 0, 0]}
-              />
-              <Bar
-                dataKey="faltaMedia"
-                name="Falta Média"
-                fill="#ef4444" // vermelho
-                barSize={30}
-                radius={[6, 6, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-          <div className="flex justify-center mt-4 space-x-4 text-sm">
-            <span className="flex items-center">
-              <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span> Presença Média
-            </span>
-            <span className="flex items-center">
-              <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span> Falta Média
-            </span>
-          </div>
-        </div>
+      <div className="flex justify-center gap-4 mb-4">
+
+        {/* Selecionar Ano */}
+        <select
+          className="border px-3 py-2 rounded"
+          value={ano_Selecionado}
+          onChange={(e) => setAno_Selecionado(e.target.value)}
+        >
+          {Array.from({ length: 5 }).map((_, i) => {
+            const year = new Date().getFullYear() - i;
+            return <option key={year} value={year}>{year}</option>;
+          })}
+        </select>
+
+        {/* Selecionar Mês */}
+        <select
+          className="border px-3 py-2 rounded"
+          value={mesSelecionado}
+          onChange={(e) => setMesSelecionado(e.target.value)}
+        >
+          {[
+            "01 - Janeiro","02 - Fevereiro","03 - Março","04 - Abril",
+            "05 - Maio","06 - Junho","07 - Julho","08 - Agosto",
+            "09 - Setembro","10 - Outubro","11 - Novembro","12 - Dezembro",
+          ].map((m, index) => (
+            <option key={index} value={index + 1}>{m}</option>
+          ))}
+        </select>
+
+      </div>
+
+      {dadosFaltas && (
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            data={[
+              {
+                name: "Mês Selecionado",
+                Falta: Number(dadosFaltas.mediaFaltas.toFixed(2)),
+                Presença: Number(dadosFaltas.mediaPresencas.toFixed(2)),
+              },
+            ]}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip formatter={(valor) => `${valor}%`} />
+            <Legend />
+
+            <Bar dataKey="Falta" fill="#ef4444" barSize={40} />
+            <Bar dataKey="Presença" fill="#22c55e" barSize={40} />
+          </BarChart>
+        </ResponsiveContainer>
       )}
 
       {/* Gráfico de Eventos Realizados */}
