@@ -279,9 +279,34 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">
+      <h1 className="text-3xl font-bold text-gray-800 mb-4">
         Séries de Ensaios
       </h1>
+
+      {/* Texto para ADMIN */}
+      {role === "admin" && (
+        <p className="text-balance text-gray-600 max-w-6xl mx-left mb-10">
+          Esta página permite criar e gerenciar séries de ensaios relacionados a um
+          evento agendado. Quando um evento estiver disponível, você poderá registrar
+          novos ensaios até a data do evento, organizando a preparação do grupo de
+          forma prática e eficiente.  
+          Além disso, você poderá acompanhar a participação dos membros, marcando
+          quem <strong>Compareceu</strong> ou <strong>Não compareceu</strong> em cada
+          ensaio, facilitando o controle de presença e o planejamento do grupo.
+        </p>
+      )}
+
+      {/* Texto para USER */}
+      {role === "user" && (
+        <p className="text-balance text-gray-600 max-w-6xl mx-left mb-10">
+          Nesta página você pode visualizar os eventos e as séries de ensaios
+          agendados pelo administrador. Aqui você verá as datas, horários e
+          informações dos ensaios que foram programados.  
+          Sua única ação nesta tela será confirmar sua disponibilidade, clicando em
+          <strong> Confirmar presença</strong> ou <strong> Não disponível</strong>
+          para cada ensaio.
+        </p>
+      )}
 
       {/* 📅 Próximos eventos */}
       {events.length > 0 ? (
@@ -450,7 +475,7 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
                         setEditingHour(serie.hour);
                       }}
                       className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
-                    >
+                    > 
                       Editar
                     </button>
                     <button
@@ -461,13 +486,13 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
                     </button>
 
                     {role === "admin" && (
-  <button
-    onClick={() => handleViewPresences(serie.id)}
-    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-  >
-    Ver Lista de Confirmados
-  </button>
-)}
+                      <button
+                        onClick={() => handleViewPresences(serie.id)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                      >
+                        Ver Lista de Confirmados
+                      </button>
+                    )}
 
                   </div>
                 )}
