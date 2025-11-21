@@ -163,6 +163,28 @@ useEffect(() => {
   <div className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 min-h-screen">
     <h1 className="text-3xl font-bold text-gray-800 mb-6">Membros</h1>
 
+    {/* Texto para ADMIN */}
+    {user.role === "admin" && (
+      <p className="text-balance text-gray-600 max-w-6xl mx-left mb-10">
+        Esta página permite gerenciar os membros da banda. Aqui você pode convidar
+        novos integrantes utilizando a barra de pesquisa, buscando pelo e-mail do
+        usuário para localizar seu perfil e enviar o convite.  
+        Também é possível visualizar as informações dos membros convidados e
+        remover integrantes do grupo quando necessário.  
+        Os convites enviados precisam ser aceitos pelos usuários e aparecerão nas
+        notificações deles até que sejam aprovados ou recusados.
+      </p>
+    )}
+
+    {/* Texto para USER */}
+    {user.role === "user" && (
+      <p className="text-sm text-gray-600 max-w-6xl mx-left mb-10">
+        Nesta página você pode visualizar todos os membros que fazem parte da
+        banda. É possível acessar as informações de cada integrante e, caso
+        necessário, sair do grupo utilizando a opção disponível.
+      </p>
+    )}
+
     {/* 🔍 Campo de busca visível apenas para administradores */}
     {user.role === "admin" && (
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">

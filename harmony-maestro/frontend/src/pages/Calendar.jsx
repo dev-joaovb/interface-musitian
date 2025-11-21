@@ -215,18 +215,35 @@ export default function Calendar() {
     <div className="flex-1 overflow-auto p-4 md:p-6">
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Calendário</h1>
-          <p className="text-gray-600">Gerencie seus ensaios e eventos</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-5">Calendário</h1>
+          {/* Texto para ADMIN */}
+          {userRole === "admin" && (
+            <p className="text-balance text-gray-600 max-w-6xl mx-left mb-10">
+              Nesta tela você pode agendar novos eventos e ensaios diretamente no
+              calendário, clicando sobre a data desejada. É possível visualizar,
+              editar e organizar os compromissos da banda, definindo local, horário e
+              detalhes de cada evento de forma prática e rápida.
+            </p>
+          )}
+
+          {/* Texto para USER */}
+          {userRole === "user" && (
+            <p className="text-balance text-gray-600 max-w-6xl mx-left mb-10">
+              Aqui você pode visualizar o calendário com as datas dos eventos e
+              ensaios já agendados. Quando houver um evento marcado, ele aparecerá no
+              calendário para que você possa acompanhar a programação da banda.
+            </p>
+          )}
         </div>
         {userRole === "admin" && (
-  <button
-    onClick={() => openModal("new")}
-    className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center"
-  >
-    <span className="mr-2">＋</span>
-    Novo Evento
-  </button>
-)}
+          <button
+            onClick={() => openModal("new")}
+            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center"
+          >
+            <span className="mr-2">＋</span>
+            Novo Evento
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
