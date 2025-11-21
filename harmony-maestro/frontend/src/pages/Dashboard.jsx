@@ -306,7 +306,8 @@ useEffect(() => {
       )}
 
       {/* Gráfico de Faltas em Ensaios */}
-      <div className="flex justify-center gap-4 mb-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="flex justify-center gap-4 mb-4">
 
         {/* Selecionar Ano */}
         <select
@@ -321,44 +322,45 @@ useEffect(() => {
         </select>
 
         {/* Selecionar Mês */}
-        <select
-          className="border px-3 py-2 rounded"
-          value={mesSelecionado}
-          onChange={(e) => setMesSelecionado(e.target.value)}
-        >
-          {[
-            "01 - Janeiro","02 - Fevereiro","03 - Março","04 - Abril",
-            "05 - Maio","06 - Junho","07 - Julho","08 - Agosto",
-            "09 - Setembro","10 - Outubro","11 - Novembro","12 - Dezembro",
-          ].map((m, index) => (
-            <option key={index} value={index + 1}>{m}</option>
-          ))}
-        </select>
-
-      </div>
-
-      {dadosFaltas && (
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            data={[
-              {
-                name: "Mês Selecionado",
-                Falta: Number(dadosFaltas.mediaFaltas.toFixed(2)),
-                Presença: Number(dadosFaltas.mediaPresencas.toFixed(2)),
-              },
-            ]}
+          <select
+            className="border px-3 py-2 rounded"
+            value={mesSelecionado}
+            onChange={(e) => setMesSelecionado(e.target.value)}
           >
-            <CartesianGrid strokeDasharray="3 3" />  
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip formatter={(valor) => `${valor}%`} />
-            <Legend />
+            {[
+              "01 - Janeiro","02 - Fevereiro","03 - Março","04 - Abril",
+              "05 - Maio","06 - Junho","07 - Julho","08 - Agosto",
+              "09 - Setembro","10 - Outubro","11 - Novembro","12 - Dezembro",
+            ].map((m, index) => (
+              <option key={index} value={index + 1}>{m}</option>
+            ))}
+          </select>
 
-            <Bar dataKey="Falta" fill="#ef4444" barSize={40} />
-            <Bar dataKey="Presença" fill="#22c55e" barSize={40} />
-          </BarChart>
-        </ResponsiveContainer>
-      )}
+        </div>
+
+        {dadosFaltas && (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              data={[
+                {
+                  name: "Mês Selecionado",
+                  Falta: Number(dadosFaltas.mediaFaltas.toFixed(2)),
+                  Presença: Number(dadosFaltas.mediaPresencas.toFixed(2)),
+                },
+              ]}
+            >
+              <CartesianGrid strokeDasharray="3 3" />  
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip formatter={(valor) => `${valor}%`} />
+              <Legend />
+
+              <Bar dataKey="Falta" fill="#ef4444" barSize={40} />
+              <Bar dataKey="Presença" fill="#22c55e" barSize={40} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
 
       {/* Gráfico de Eventos Realizados */}
       {eventosData && (
