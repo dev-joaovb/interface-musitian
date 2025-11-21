@@ -11,7 +11,7 @@ import InputMask from "react-input-mask";
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// ✅ Registro de usuário
+// ✅ Registro de usuário  
 router.post("/register", async (req, res) => {
   try {
     const {

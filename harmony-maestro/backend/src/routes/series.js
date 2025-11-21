@@ -334,7 +334,7 @@ router.patch("/series/:serieId/presenca/:userId/confirmar", authenticateToken, a
 });
 
 
-// ✅ Finalizar série e registrar resumo no Past_events
+// ✅ Finalizar série e registrar resumo no Past_events   
 router.post("/series/:id/finalizar", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
