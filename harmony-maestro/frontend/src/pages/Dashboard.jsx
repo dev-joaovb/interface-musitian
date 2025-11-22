@@ -110,9 +110,9 @@ useEffect(() => {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-600">
+      <div className="mb-4">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
+        <p className="text-base text-gray-600">
           Visão geral dos seus ensaios e atividades
         </p>
       </div>

@@ -279,13 +279,13 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">
         Séries de Ensaios
       </h1>
 
       {/* Texto para ADMIN */}
       {role === "admin" && (
-        <p className="text-balance text-gray-600 max-w-6xl mx-left mb-10">
+        <p className="text-base text-gray-600 max-w-6xl mx-left mb-10">
           Esta página permite criar e gerenciar séries de ensaios relacionados a um
           evento agendado. Quando um evento estiver disponível, você poderá registrar
           novos ensaios até a data do evento, organizando a preparação do grupo de
@@ -298,7 +298,7 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
 
       {/* Texto para USER */}
       {role === "user" && (
-        <p className="text-balance text-gray-600 max-w-6xl mx-left mb-10">
+        <p className="text-base text-gray-600 max-w-6xl mx-left mb-10">
           Nesta página você pode visualizar os eventos e as séries de ensaios
           agendados pelo administrador. Aqui você verá as datas, horários e
           informações dos ensaios que foram programados.  

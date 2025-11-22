@@ -410,7 +410,7 @@ export default function Partitura() {
         </button>
       </div>
 
-      <h1 className="text-3xl font-semibold text-gray-800 mb-16 text-center">
+      <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">
         Biblioteca de Partituras
       </h1>
 
@@ -418,7 +418,7 @@ export default function Partitura() {
       {user?.role === "admin" && (
         <div className="mb-10 text-center">
           
-          <p className="text-gray-600 text-base leading-relaxed max-w-2xl mx-auto">
+          <p className="text-gray-600 text-base leading-relaxed max-w-4xl mx-auto">
             Aqui em <strong> Biblioteca de Partituras</strong> você pode cadastrar novas partituras (em PDF), organizar em pastas,
             editar informações, remover arquivos e manter todo o acervo musical
             sempre atualizado. Arraste partituras para as pastas, mova, renomeie
@@ -431,7 +431,7 @@ export default function Partitura() {
       {user?.role === "user" && (
         <div className="mb-10 text-center">
           
-          <p className="text-gray-600 text-base leading-relaxed max-w-2xl mx-auto">
+          <p className="text-gray-600 text-base leading-relaxed max-w-4xl mx-auto">
             Aqui em <strong> Biblioteca de Partituras</strong> você pode visualizar e acessar todas as partituras
             disponíveis para estudo e uso nos cultos e apresentações.
             A organização em pastas facilita a navegação, permitindo que você

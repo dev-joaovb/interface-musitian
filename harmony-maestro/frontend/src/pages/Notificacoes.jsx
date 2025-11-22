@@ -107,10 +107,15 @@ const Notificacoes = () => {
 
   return (
     <div className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
         <Bell className="w-6 h-6 text-teal-600" />
         Minhas Notificações
       </h1>
+      <p className="text-base text-gray-600  mb-10 max-w-4xl mx-letf">
+        Aqui você receberá notificações sobre novidades, convites, eventos,
+        alterações de agenda e outras atualizações importantes, permitindo que você
+        acompanhe tudo o que acontece no grupo em tempo real.
+      </p>
 
       {loading ? (
         <div className="flex justify-center items-center h-40">

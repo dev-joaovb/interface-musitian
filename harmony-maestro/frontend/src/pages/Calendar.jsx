@@ -215,10 +215,10 @@ export default function Calendar() {
     <div className="flex-1 overflow-auto p-4 md:p-6">
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-5">Calendário</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-6">Calendário</h1>
           {/* Texto para ADMIN */}
           {userRole === "admin" && (
-            <p className="text-balance text-gray-600 max-w-6xl mx-left mb-10">
+            <p className="text-base text-gray-600 max-w-6xl mx-left mb-10">
               Nesta tela você pode agendar novos eventos e ensaios diretamente no
               calendário, clicando sobre a data desejada. É possível visualizar,
               editar e organizar os compromissos da banda, definindo local, horário e
@@ -228,7 +228,7 @@ export default function Calendar() {
 
           {/* Texto para USER */}
           {userRole === "user" && (
-            <p className="text-balance text-gray-600 max-w-6xl mx-left mb-10">
+            <p className="text-base text-gray-600 max-w-6xl mx-left mb-10">
               Aqui você pode visualizar o calendário com as datas dos eventos e
               ensaios já agendados. Quando houver um evento marcado, ele aparecerá no
               calendário para que você possa acompanhar a programação da banda.

@@ -406,7 +406,7 @@ export default function Biblioteca() {
       </div>
 
       {/* HEADER */}
-      <div className="flex justify-center items-center space-x-4 mb-10">
+      <div className="flex justify-center items-center space-x-4">
 
         {/* Parte superior — título + descrição */}
         <div className="mb-6">
@@ -417,8 +417,8 @@ export default function Biblioteca() {
 
       {/* Texto de apresentação — Admin */}
       {userRole === "admin" && (
-        <div className="mb-10 max-w-3xl mx-auto text-center">
-          <p className="text-gray-700 text-base leading-relaxed">
+        <div className="mb-10 max-w-4xl mx-auto text-center">
+          <p className="text-gray-600 text-base leading-relaxed">
             Bem-vindo ao painel de gerenciamento da <strong>Biblioteca Musical</strong>.  
             Aqui você pode organizar todo o acervo, criando pastas, adicionando músicas,
             movendo arquivos e mantendo tudo sempre acessível e estruturado para a equipe

@@ -165,7 +165,7 @@ useEffect(() => {
 
     {/* Texto para ADMIN */}
     {user.role === "admin" && (
-      <p className="text-balance text-gray-600 max-w-6xl mx-left mb-10">
+      <p className="text-base text-gray-600 max-w-6xl mx-left mb-10">
         Esta página permite gerenciar os membros da banda. Aqui você pode convidar
         novos integrantes utilizando a barra de pesquisa, buscando pelo e-mail do
         usuário para localizar seu perfil e enviar o convite.  
@@ -178,7 +178,7 @@ useEffect(() => {
 
     {/* Texto para USER */}
     {user.role === "user" && (
-      <p className="text-sm text-gray-600 max-w-6xl mx-left mb-10">
+      <p className="text-base text-gray-600 max-w-6xl mx-left mb-10">
         Nesta página você pode visualizar todos os membros que fazem parte da
         banda. É possível acessar as informações de cada integrante e, caso
         necessário, sair do grupo utilizando a opção disponível.
