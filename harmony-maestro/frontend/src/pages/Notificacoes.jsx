@@ -106,9 +106,9 @@ const Notificacoes = () => {
   };
 
   return (
-    <div className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <Bell className="w-6 h-6 text-teal-600" />
+    <div className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 dark:bg-transparent min-h-screen">
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
+        <Bell className="w-6 h-6 text-teal-600 dark:text-teal-400" />
         Minhas Notificações
       </h1>
       <p className="text-base text-gray-600  mb-10 max-w-4xl mx-letf">
@@ -119,14 +119,14 @@ const Notificacoes = () => {
 
       {loading ? (
         <div className="flex justify-center items-center h-40">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-gray-500 dark:text-gray-400" />
         </div>
       ) : (
         <>
           {/* Convites */}
           {convites.length > 0 && (
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-700 mb-3">
+              <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3">
                 Convites Pendentes
               </h2>
               {convites.map((c) => (
@@ -135,10 +135,10 @@ const Notificacoes = () => {
                   className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center mb-3"
                 >
                   <div>
-                    <p className="font-semibold text-gray-800">
+                    <p className="font-semibold text-gray-800 dark:text-white">
                       Convite de {c.inviter.name}
                     </p>
-                    <p className="text-sm text-gray-500 mb-1">{c.inviter.email}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{c.inviter.email}</p>
                     <p className="text-xs text-gray-400">
                       Você foi convidado por <strong>{c.inviter.name}</strong> para participar do grupo dele.
                     </p>
@@ -184,9 +184,9 @@ const Notificacoes = () => {
         key={n.id}
         className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
       >
-        <h3 className="font-semibold text-gray-800">{n.title}</h3>
-        <p className="text-gray-600">{n.message}</p>
-        <p className="text-xs text-gray-400 mt-2">
+        <h3 className="font-semibold text-gray-800 dark:text-white">{n.title}</h3>
+        <p className="text-gray-600 dark:text-gray-300">{n.message}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
           {new Date(n.date).toLocaleString("pt-BR")}
         </p>
 
@@ -194,7 +194,7 @@ const Notificacoes = () => {
         {n.title.includes("música") && (
           <a
             href="/biblioteca"
-            className="mt-2 inline-block text-teal-600 hover:text-teal-800 font-medium"
+            className="mt-2 inline-block text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 font-medium"
           >
             Ir para Biblioteca →
           </a>
@@ -202,7 +202,7 @@ const Notificacoes = () => {
         {n.title.includes("partitura") && (
           <a
             href="/partitura"
-            className="mt-2 inline-block text-teal-600 hover:text-teal-800 font-medium"
+            className="mt-2 inline-block text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 font-medium"
           >
             Ir para Partituras →
           </a>
@@ -210,7 +210,7 @@ const Notificacoes = () => {
         {n.title.includes("evento") && (
           <a
             href="/calendar"
-            className="mt-2 inline-block text-teal-600 hover:text-teal-800 font-medium"
+            className="mt-2 inline-block text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 font-medium"
           >
             Ir para Calendário →
           </a>
@@ -218,7 +218,7 @@ const Notificacoes = () => {
         {n.title.includes("série") && (
           <a
             href="/series"
-            className="mt-2 inline-block text-teal-600 hover:text-teal-800 font-medium"
+            className="mt-2 inline-block text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 font-medium"
           >
             Ir para Séries →
           </a>
@@ -226,7 +226,7 @@ const Notificacoes = () => {
       </div>
     ))
     ) : (
-      <p className="text-gray-500 text-center">
+      <p className="text-gray-500 dark:text-gray-400 text-center">
         Nenhuma notificação encontrada (todas expiraram).
       </p>
     );
