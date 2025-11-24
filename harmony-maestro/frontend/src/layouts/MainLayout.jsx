@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import Footer from "../components/Footer";
+import { useTheme } from "../context/ThemeContext";
 import * as THREE from "three";
 
 export default function MainLayout({ children }) {
@@ -37,7 +38,7 @@ export default function MainLayout({ children }) {
 
   return (
     // aplicamos bg-gray-50 aqui, que antes estava no <body>
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       {/* Vanta container: use style zIndex para forçar ficar atrás */}
       <div
         ref={vantaRef}

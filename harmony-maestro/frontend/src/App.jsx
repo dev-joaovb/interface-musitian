@@ -19,6 +19,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Partitura from "./pages/Partitura";
 import RelatorioEventos from "./pages/RelatorioEventos";
+import { ThemeProvider } from "./context/ThemeContext";
+import { Theme } from "@fullcalendar/core/internal";
 
 // 🔐 Proteção de rotas
 function ProtectedRoute({ children }) {
@@ -77,36 +79,38 @@ function PageTransitionWrapper({ children }) {
 
 export default function App() {
   return (
-    <Router>
-      <PageTransitionWrapper>
-        <Routes>
-          {/* Rotas públicas */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+    <ThemeProvider>
+      <Router>
+        <PageTransitionWrapper>
+          <Routes>
+            {/* Rotas públicas */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          {/* Rotas protegidas */}
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/calendar" element={<Calendar />} />
-                    <Route path="/biblioteca" element={<Biblioteca />} />
-                    <Route path="/partitura" element={<Partitura />} />
-                    <Route path="/series" element={<Series />} />
-                    <Route path="/membros" element={<Membros />} />
-                    <Route path="/notificacoes" element={<Notificacoes />} />
-                    <Route path="/configuracoes" element={<Configuracoes />} />
-                    <Route path="/relatorio/eventos/:year/:month" element={<RelatorioEventos />} />
-                  </Routes>
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </PageTransitionWrapper>
-    </Router>
+            {/* Rotas protegidas */}
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/calendar" element={<Calendar />} />
+                      <Route path="/biblioteca" element={<Biblioteca />} />
+                      <Route path="/partitura" element={<Partitura />} />
+                      <Route path="/series" element={<Series />} />
+                      <Route path="/membros" element={<Membros />} />
+                      <Route path="/notificacoes" element={<Notificacoes />} />
+                      <Route path="/configuracoes" element={<Configuracoes />} />
+                      <Route path="/relatorio/eventos/:year/:month" element={<RelatorioEventos />} />
+                    </Routes>
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </PageTransitionWrapper>
+      </Router>
+    </ThemeProvider>
   );
 }

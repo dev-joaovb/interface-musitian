@@ -10,6 +10,9 @@
 
 @import "tailwindcss";
 
+/* ✅ Habilita o suporte ao dark mode por class */
+@custom-variant dark (&:where(.dark, .dark *));
+
 button{
   cursor: pointer
 }

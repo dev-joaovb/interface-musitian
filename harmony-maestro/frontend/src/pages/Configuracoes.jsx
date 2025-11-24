@@ -1,5 +1,6 @@
 // src/pages/Configuracoes.jsx
 import React, { useEffect, useState } from "react";
+import { useTheme } from "../context/ThemeContext";
 
 const Configuracoes = () => {
   const [formData, setFormData] = useState({
@@ -8,7 +9,7 @@ const Configuracoes = () => {
   senha: "",
   notifEmail: false,
   notifWhats: false,
-  tema: "Claro",
+  tema: "",
   sexo: "",
   idade: "",
   experiencia: "",
@@ -24,6 +25,8 @@ const Configuracoes = () => {
 
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
+
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     if (!user || !token) return;
@@ -46,6 +49,10 @@ const Configuracoes = () => {
           disponibilidade: data.disponibilidade || "",
           celular: data.celular || "",
         }));
+
+        if (data.tema === "dark" || data.tema === "light") {
+          setTheme(data.tema);
+        }
       })
       .catch((err) => console.error("Erro ao carregar dados:", err));
   }, [token]);
@@ -105,8 +112,6 @@ const Configuracoes = () => {
 
     if (res.ok) {
       alert("Configurações atualizadas com sucesso!");
-      localStorage.setItem("user", JSON.stringify(data));
-      window.location.reload(); // 🔄 Atualiza a página após salvar
     } else {
       alert(data.error || "Erro ao salvar configurações");
     }
@@ -119,7 +124,7 @@ const Configuracoes = () => {
   return (
     <div className="flex flex-col flex-1 overflow-hidden items-center">
       <div className="hidden md:flex items-center justify-between px-6 py-3">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Configurações</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Configurações</h1>
       </div>
         <p className="text-base text-gray-600 text-center mb-10 max-w-4xl px-4">
           Nesta área você pode editar seus dados pessoais, atualizar suas informações
@@ -132,15 +137,15 @@ const Configuracoes = () => {
           <div className="flex flex-col md:flex-row gap-6">
           
             {/* Preferencias */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border w-100">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700 w-100">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                 Preferências do Usuário
               </h2>
 
               <form className="space-y-4" onSubmit={handleSubmit}>
                 {/* Nome */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Nome
                   </label>
                   <input
@@ -148,13 +153,13 @@ const Configuracoes = () => {
                     name="nome"
                     value={formData.nome}
                     onChange={handleChange}
-                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                    className="mt-2 block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Email
                   </label>
                   <input
@@ -162,13 +167,13 @@ const Configuracoes = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                    className="mt-2 block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Senha */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Senha</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Senha</label>
 
                   {/* Botão para mostrar/ocultar campos */}
                   <button
@@ -183,7 +188,7 @@ const Configuracoes = () => {
                   {showPasswordFields && (
                     <div className="mt-4 space-y-3 transition-all duration-300">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Senha atual
                         </label>
                         <input
@@ -192,12 +197,12 @@ const Configuracoes = () => {
                           value={formData.senhaAtual || ""}
                           onChange={handleChange}
                           placeholder="Digite sua senha atual"
-                          className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                          className="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 rounded-lg shadow-sm  focus:ring-teal-500 focus:border-teal-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Nova senha
                         </label>
                         <input
@@ -206,12 +211,12 @@ const Configuracoes = () => {
                           value={formData.novaSenha || ""}
                           onChange={handleChange}
                           placeholder="Digite a nova senha"
-                          className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                          className="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 rounded-lg shadow-sm  focus:ring-teal-500 focus:border-teal-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Confirmar nova senha
                         </label>
                         <input
@@ -220,7 +225,7 @@ const Configuracoes = () => {
                           value={formData.confirmarSenha || ""}
                           onChange={handleChange}
                           placeholder="Confirme a nova senha"
-                          className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                          className="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 rounded-lg shadow-sm  focus:ring-teal-500 focus:border-teal-500"
                         />
                       </div>
                     </div>
@@ -239,7 +244,7 @@ const Configuracoes = () => {
                   />
                   <label
                     htmlFor="notifEmail"
-                    className="ml-2 text-sm text-gray-700"
+                    className="ml-2 text-sm text-gray-700 dark:text-gray-300"
                   >
                     Receber notificações por e-mail
                   </label>
@@ -257,7 +262,7 @@ const Configuracoes = () => {
                   />
                   <label
                     htmlFor="notifWhats"
-                    className="ml-2 text-sm text-gray-700"
+                    className="ml-2 text-sm text-gray-700 dark:text-gray-300"
                   >
                     Receber notificações por WhatsApp (em breve)
                   </label>
@@ -265,19 +270,33 @@ const Configuracoes = () => {
 
                 {/* Tema */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Tema
                   </label>
-                  <select
-                    name="tema"
-                    value={formData.tema}
-                    onChange={handleChange}
-                    disabled
-                    className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-teal-500 focus:border-teal-500"
-                  >
-                    <option>Claro</option>
-                    <option>Escuro</option>
-                  </select>
+
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Claro</span>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const novo = theme === "dark" ? "light" : "dark";
+                        setTheme(novo);
+                      }}
+                      aria-pressed={theme === "dark"}
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                        theme === "dark" ? "bg-teal-600" : "bg-gray-300"
+                      }`}
+                    >
+                      <span
+                        className={`transform transition-transform inline-block w-5 h-5 bg-white rounded-full shadow ${
+                          theme === "dark" ? "translate-x-5" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Escuro</span>
+                  </div>
                 </div>
 
                 <button
@@ -290,39 +309,39 @@ const Configuracoes = () => {
             </div>
 
             {/* Outros dados */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border w-100">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700 w-100">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                 Outros Dados
               </h2>
 
               <form className="space-y-4" onSubmit={handleSubmit}>
                 {/* Sexo (somente leitura) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Sexo</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Sexo</label>
                   <input
                     type="text"
                     value={formData.sexo}
                     readOnly
-                    className="mt-2 block w-full border-gray-300 rounded-lg bg-gray-100 shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                    className="mt-2 block w-full border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Data de Nascimento (somente leitura) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Data de Nascimento
                   </label>
                   <input
                     type="text"
                     value={formData.idade}
                     readOnly
-                    className="mt-2 block w-full border-gray-300 rounded-lg bg-gray-100 shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                    className="mt-2 block w-full border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Experiência */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Experiência (anos)
                   </label>
                   <input
@@ -330,13 +349,13 @@ const Configuracoes = () => {
                     name="experiencia"
                     value={formData.experiencia}
                     onChange={handleChange}
-                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                    className="mt-2 block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Quantidade de instrumentos */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Quantidade de instrumentos
                   </label>
                   <input
@@ -344,13 +363,13 @@ const Configuracoes = () => {
                     name="instrumentosQtd"
                     value={formData.instrumentosQtd}
                     onChange={handleChange}
-                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                    className="mt-2 block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Instrumento preferido */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Instrumento preferido
                   </label>
                   <input
@@ -358,13 +377,13 @@ const Configuracoes = () => {
                     name="instrumento"
                     value={formData.instrumento}
                     onChange={handleChange}
-                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                    className="mt-2 block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Disponibilidade */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Disponibilidade
                   </label>
                   <input
@@ -373,13 +392,13 @@ const Configuracoes = () => {
                     value={formData.disponibilidade}
                     onChange={handleChange}
                     placeholder="Ex: Manhã, tarde, noite..."
-                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                    className="mt-2 block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Celular */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Celular
                   </label>
                   <input
@@ -388,7 +407,7 @@ const Configuracoes = () => {
                     value={formData.celular}
                     onChange={handleChange}
                     placeholder="(DDD) 99999-9999"
-                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                    className="mt-2 block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
