@@ -160,12 +160,12 @@ useEffect(() => {
 
 
   return (
-  <div className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 min-h-screen">
-    <h1 className="text-3xl font-bold text-gray-800 mb-6">Membros</h1>
+  <div className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 dark:bg-transparent min-h-screen">
+    <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Membros</h1>
 
     {/* Texto para ADMIN */}
     {user.role === "admin" && (
-      <p className="text-base text-gray-600 max-w-6xl mx-left mb-10">
+      <p className="text-base text-gray-600 dark:text-gray-300 max-w-6xl mx-left mb-10">
         Esta página permite gerenciar os membros da banda. Aqui você pode convidar
         novos integrantes utilizando a barra de pesquisa, buscando pelo e-mail do
         usuário para localizar seu perfil e enviar o convite.  
@@ -178,7 +178,7 @@ useEffect(() => {
 
     {/* Texto para USER */}
     {user.role === "user" && (
-      <p className="text-base text-gray-600 max-w-6xl mx-left mb-10">
+      <p className="text-base text-gray-600 dark:text-gray-300 max-w-6xl mx-left mb-10">
         Nesta página você pode visualizar todos os membros que fazem parte da
         banda. É possível acessar as informações de cada integrante e, caso
         necessário, sair do grupo utilizando a opção disponível.
@@ -187,15 +187,15 @@ useEffect(() => {
 
     {/* 🔍 Campo de busca visível apenas para administradores */}
     {user.role === "admin" && (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Convidar Membros</h1>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Convidar Membros</h1>
         <div className="flex items-center">
           <input
             type="email"
             placeholder="Digite o e-mail do membro..."
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            className="flex-1 border border-gray-300 dark:text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-teal-500 focus:outline-none"
           />
           <button
             onClick={handleSearch}
@@ -214,7 +214,7 @@ useEffect(() => {
     )}
 
     {message && (
-      <div className="bg-yellow-100 border border-yellow-300 text-yellow-700 px-4 py-2 rounded mb-4">
+      <div className="bg-yellow-100 border border-yellow-300 text-yellow-700 dark:text-yellow-400 px-4 py-2 rounded mb-4">
         {message}
       </div>
     )}
@@ -224,8 +224,8 @@ useEffect(() => {
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-gray-800">{userFound.name}</h3>
-            <p className="text-sm text-gray-500">{userFound.email}</p>
+            <h3 className="font-semibold text-gray-800 dark:text-white">{userFound.name}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{userFound.email}</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -260,23 +260,23 @@ useEffect(() => {
     {/* Membros do grupo (visível para admin) */}
     {user.role === "admin" && groupMembers.length > 0 && (
       <div className="mt-8">
-  <h2 className="text-lg font-semibold text-gray-700 mb-4">
+  <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
     Membros do Grupo
   </h2>
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     {groupMembers.map((m) => (
       <div
         key={m.id}
-        className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 relative"
+        className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 relative"
       >
-        <h3 className="font-semibold text-gray-800">{m.name}</h3>
-        <p className="text-sm text-gray-500">{m.email}</p>
+        <h3 className="font-semibold text-gray-800 dark:text-white">{m.name}</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{m.email}</p>
 
         {/* 🔍 Ver informações do membro */}
         <button
           title="Ver informações do usuário"
           onClick={() => fetchUserDetails(m.id)}
-          className="mt-2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-lg flex items-center text-sm transition"
+          className="mt-2 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-200 px-3 py-1 rounded-lg flex items-center text-sm transition"
         >
           <Info className="w-4 h-4 mr-1" /> Ver informações
         </button>
@@ -321,7 +321,7 @@ useEffect(() => {
               alert("Não foi possível remover o membro do grupo.");
             }
           }}
-          className="absolute top-3 right-3 p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-full transition"
+          className="absolute top-3 right-3 p-2 bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 text-red-600 dark:text-red-300 rounded-full transition"
         >
           <Trash2 size={18} />
         </button>
@@ -336,13 +336,13 @@ useEffect(() => {
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mt-8">
         {/* 🧑‍💼 Administrador */}
         <div className="border-b border-gray-200 pb-4 mb-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-2 flex items-center">
             Administrador do grupo
           </h2>
           <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
             <div>
-              <p className="text-gray-800 font-medium">{adminInfo.name}</p>
-              <p className="text-sm text-gray-500">{adminInfo.email}</p>
+              <p className="text-gray-800 dark:text-white font-medium">{adminInfo.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{adminInfo.email}</p>
             </div>
             <button
               title="Ver informações do administrador"
@@ -355,17 +355,17 @@ useEffect(() => {
         </div>
 
         {/* 👥 Membros */}
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Membros Convidados</h1>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Membros Convidados</h1>
 
         <div className="space-y-3">
           {/* Exibe o próprio usuário */}
           <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
             <div>
-              <p className="text-gray-800 font-medium">
+              <p className="text-gray-800 dark:text-white font-medium">
                 {user.name}{" "}
-                <span className="text-gray-500 text-sm">(você)</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">(você)</span>
               </p>
-              <p className="text-sm text-gray-500">{user.email}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
             </div>
             <button
               title="Ver suas informações"
@@ -470,56 +470,56 @@ useEffect(() => {
     {/* 🪪 Modal de informações do usuário */}
     {showModal && selectedUser && (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-        <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md relative border border-gray-100 dark:border-gray-700">
           <button
             onClick={() => setShowModal(false)}
-            className="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold"
+            className="absolute top-2 right-3 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-white text-xl font-bold"
           >
             ×
           </button>
 
-          <h2 className="text-2xl font-semibold text-gray-800 mb-5 border-b pb-2">
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-5 border-b pb-2">
             Informações do Usuário
           </h2>
 
-          <div className="space-y-3 text-gray-700">
-            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+          <div className="space-y-3 text-gray-700 dark:text-gray-300">
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600">
               <strong>Nome:</strong> {selectedUser.name}
             </div>
 
-            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600">
               <strong>Email:</strong> {selectedUser.email}
             </div>
 
-            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600">
               <strong>Sexo:</strong> {selectedUser.sexo || "Não informado"}
             </div>
 
-            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600">
               <strong>Experiência:</strong> {selectedUser.experiencia ?? "Não informado"}{" "}
               {selectedUser.experiencia ? "anos" : ""}
             </div>
 
-            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600">
               <strong>Instrumento:</strong> {selectedUser.instrumento || "Não informado"}
             </div>
 
-            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600">
               <strong>Qtd. Instrumentos:</strong> {selectedUser.instrumentosQtd ?? "Não informado"}
             </div>
 
-            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600">
               <strong>Data de Nascimento:</strong>{" "}
               {selectedUser.idade
                 ? new Date(selectedUser.idade).toLocaleDateString("pt-BR")
                 : "Não informada"}
             </div>
 
-            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600">
               <strong>Disponibilidade:</strong> {selectedUser.disponibilidade || "Não informado"}
             </div>
 
-            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm">
+            <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600">
               <strong>Celular:</strong> {selectedUser.celular || "Não informado"}
             </div>
           </div>
