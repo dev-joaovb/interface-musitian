@@ -279,13 +279,13 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
         Séries de Ensaios
       </h1>
 
       {/* Texto para ADMIN */}
       {role === "admin" && (
-        <p className="text-base text-gray-600 max-w-6xl mx-left mb-10">
+        <p className="text-base text-gray-600 dark:text-gray-300 max-w-6xl mx-left mb-10">
           Esta página permite criar e gerenciar séries de ensaios relacionados a um
           evento agendado. Quando um evento estiver disponível, você poderá registrar
           novos ensaios até a data do evento, organizando a preparação do grupo de
@@ -298,7 +298,7 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
 
       {/* Texto para USER */}
       {role === "user" && (
-        <p className="text-base text-gray-600 max-w-6xl mx-left mb-10">
+        <p className="text-base text-gray-600 dark:text-gray-300 max-w-6xl mx-left mb-10">
           Nesta página você pode visualizar os eventos e as séries de ensaios
           agendados pelo administrador. Aqui você verá as datas, horários e
           informações dos ensaios que foram programados.  
@@ -318,35 +318,35 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
           return (
             <div
               key={event.id}
-              className="bg-white p-4 rounded-lg shadow-md border border-gray-100 mb-6"
+              className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-100 dark:border-gray-700 mb-6"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-gray-800">{event.title}</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="font-semibold text-gray-800 dark:text-white">{event.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {new Date(event.date).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
-                <span className="text-xs px-2 py-1 bg-teal-100 text-teal-700 rounded">
+                <span className="text-xs px-2 py-1 bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 rounded">
                   Faltam {daysLeft} dias
                 </span>
               </div>
 
               {/* 📆 Registrar Série */}
-              <div className="mt-4 border-t border-gray-200 pt-4">
-                <h4 className="text-gray-700 font-medium mb-2">
+              <div className="mt-4 border-t border-gray-200 dark:border-gray-600 pt-4">
+                <h4 className="text-gray-700 dark:text-gray-300 font-medium mb-2">
                   Registrar Série de Ensaios
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">
+                    <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
                       Início dos Ensaios
                     </label>
                     <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                     />
                   </div>
                   <div>
@@ -357,7 +357,7 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
                       type="time"
                       value={hour}
                       onChange={(e) => setHour(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                     />
                   </div>
                   {role === "admin" && (
@@ -374,12 +374,12 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
           );
         })
       ) : (
-        <p className="text-gray-500">Nenhum evento futuro encontrado.</p>
+        <p className="text-gray-500 dark:text-gray-400">Nenhum evento futuro encontrado.</p>
       )}
 
       {/* 💾 Mensagem de sucesso */}
       {message && (
-        <div className="mt-4 p-3 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg text-sm">
+        <div className="mt-4 p-3 bg-teal-50 dark:bg-teal-900 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-700 rounded-lg text-sm">
           {message}
         </div>
       )}
@@ -387,17 +387,17 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
       {/* 📋 Lista de séries registradas */}
       {seriesList.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
             Séries Registradas
           </h2>
           <div className="space-y-3">
             {seriesList.map((serie) => (
               <div
                 key={serie.id}
-                className="p-3 bg-white rounded-lg border border-gray-100 shadow-sm flex justify-between items-center"
+                className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm flex justify-between items-center"
               >
                 <div>
-                  <p className="font-medium text-gray-800">{serie.title}</p>
+                  <p className="font-medium text-gray-800 dark:text-white">{serie.title}</p>
 
                   {editingId === serie.id ? (
                     <div className="flex gap-2 mt-1">
@@ -405,13 +405,13 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
                         type="date"
                         value={editingStartDate}
                         onChange={(e) => setEditingStartDate(e.target.value)}
-                        className="border border-gray-300 rounded px-2 py-1"
+                        className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                       />
                       <input
                         type="time"
                         value={editingHour}
                         onChange={(e) => setEditingHour(e.target.value)}
-                        className="border border-gray-300 rounded px-2 py-1"
+                        className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                       />
                       <button
                         onClick={() => handleUpdateSeries(serie.id)}
@@ -421,13 +421,13 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
+                        className="bg-gray-300 dark:bg-gray-600 text-black dark:text-white px-3 py-1 rounded hover:bg-gray-400 dark:hover:bg-gray-500"
                       >
                         Cancelar
                       </button>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       {new Date(serie.startDate).toLocaleDateString("pt-BR")} às{" "}
                       {serie.hour}
                     </p>
