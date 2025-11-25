@@ -383,7 +383,7 @@ export default function Biblioteca() {
 
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 dark:bg-gray-900">
 
       {/* Botões de navegação entre Biblioteca e Partituras */}
       <div className="flex justify-center items-center mb-6 space-x-4">
@@ -410,7 +410,7 @@ export default function Biblioteca() {
 
         {/* Parte superior — título + descrição */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Biblioteca Musical</h1>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Biblioteca Musical</h1>
         </div>
 
       </div>
@@ -418,7 +418,7 @@ export default function Biblioteca() {
       {/* Texto de apresentação — Admin */}
       {userRole === "admin" && (
         <div className="mb-10 max-w-4xl mx-auto text-center">
-          <p className="text-gray-600 text-base leading-relaxed">
+          <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
             Bem-vindo ao painel de gerenciamento da <strong>Biblioteca Musical</strong>.  
             Aqui você pode organizar todo o acervo, criando pastas, adicionando músicas,
             movendo arquivos e mantendo tudo sempre acessível e estruturado para a equipe
@@ -430,7 +430,7 @@ export default function Biblioteca() {
       {/* Texto de apresentação — Usuário comum */}
       {userRole !== "admin" && (
         <div className="mb-10 max-w-3xl mx-auto text-center">
-          <p className="text-gray-700 text-base leading-relaxed">
+          <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
             Aqui você pode visualizar e acessar as músicas disponibilizadas na 
             <strong> Biblioteca Musical</strong>.  
             As pastas e arquivos são organizados pelos administradores para facilitar sua navegação e consulta.
@@ -439,7 +439,7 @@ export default function Biblioteca() {
       )}
 
       {/* CARD GERAL — envolve desde Gerencie seu acervo até Músicas sem pasta */}
-      <div className="bg-white shadow-lg rounded-2xl p-8 border border-gray-100 mb-10">
+      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-8 border border-gray-100 dark:border-gray-700 mb-10">
 
         {/* Admin */}
         {userRole === "admin" && (
@@ -447,7 +447,7 @@ export default function Biblioteca() {
 
             {/* Parte superior — título + descrição */}
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">Gerencie seu acervo de músicas</h1>
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Gerencie seu acervo de músicas</h1>
               
             </div>
             
@@ -460,7 +460,7 @@ export default function Biblioteca() {
 
             {/* Parte superior — título + descrição */}
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">Acervo musical</h1>
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Acervo musical</h1>
               
             </div>
             
@@ -470,18 +470,22 @@ export default function Biblioteca() {
         {/* BOTÕES SUPERIORES */}
         <div className="mb-10 flex flex-wrap gap-6">
 
-          <button
-            onClick={() => openModal()}
-            disabled={userRole === "user"}
-            className={`${
-              userRole === "user"
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-teal-600 hover:bg-teal-700"
-            } text-white px-6 py-3 rounded-lg flex items-center text-base shadow`}
-          >
-            <FiPlus className="w-5 h-5 mr-2" />
-            Adicionar Música
-          </button>
+          {userRole === "admin" && (
+          
+            <button
+              onClick={() => openModal()}
+              disabled={userRole === "user"}
+              className={`${
+                userRole === "user"
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-teal-600 hover:bg-teal-700"
+              } text-white px-6 py-3 rounded-lg flex items-center text-base shadow`}
+            >
+              <FiPlus className="w-5 h-5 mr-2" />
+              Adicionar Música
+            </button>
+              
+            )}
 
           {userRole === "admin" && (
             <>
@@ -495,8 +499,8 @@ export default function Biblioteca() {
               {/* Modal de Nova Pasta */}
               {novaPasta && (
                 <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-fadeIn">
-                    <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
+                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-fadeIn">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4 text-center">
                       Criar Nova Pasta
                     </h2>
 
@@ -504,13 +508,13 @@ export default function Biblioteca() {
                       type="text"
                       id="nomePasta"
                       placeholder="Digite o nome da pasta"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mb-4"
                     />
 
                     <div className="flex justify-end space-x-3">
                       <button
                         onClick={() => setNovaPasta(false)}
-                        className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                        className="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
                       >
                         Cancelar
                       </button>
@@ -527,7 +531,7 @@ export default function Biblioteca() {
                             window.location.reload();
                           }
                         }}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white rounded-lg transition"
                       >
                         Criar
                       </button>
@@ -539,9 +543,9 @@ export default function Biblioteca() {
               {/* ✏️ Modal de Editar Pasta */}
               {editarPastaData && (
                 <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-fadeIn">
+                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-fadeIn">
 
-                    <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4 text-center">
                       Editar Pasta
                     </h2>
 
@@ -549,13 +553,13 @@ export default function Biblioteca() {
                       type="text"
                       id="editarNomePasta"
                       defaultValue={editarPastaData.name}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mb-4"
                     />
 
                     <div className="flex justify-end space-x-3">
                       <button
                         onClick={() => setEditarPastaData(null)}
-                        className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                        className="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
                       >
                         Cancelar
                       </button>
@@ -570,7 +574,7 @@ export default function Biblioteca() {
                             editarPasta(editarPastaData.id, novoNome);
                           }
                         }}
-                        className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg"
+                        className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-600 dark:hover:bg-yellow-700 text-white rounded-lg transition"
                       >
                         Salvar
                       </button>
@@ -586,15 +590,15 @@ export default function Biblioteca() {
         <div>
           {/* 🔥 Breadcrumb — movido para baixo e mais destacado */}
           {pastaAberta && (
-            <div className="mb-8 text-gray-700 flex items-center space-x-3 text-lg">
+            <div className="mb-8 text-gray-700 dark:text-gray-300 flex items-center space-x-3 text-lg">
               <span
                 className="cursor-pointer hover:text-teal-600 font-medium"
                 onClick={() => setPastaAberta(null)}
               >
                 Biblioteca
               </span>
-              <span className="text-gray-500">›</span>
-              <span className="font-semibold text-teal-700">{pastaAberta.name}</span>
+              <span className="text-gray-500 dark:text-gray-400">›</span>
+              <span className="font-semibold text-teal-700 dark:text-teal-400">{pastaAberta.name}</span>
             </div>
           )}
         </div>
@@ -602,7 +606,7 @@ export default function Biblioteca() {
         {/* 📁 Pastas */}
         {!pastaAberta && pastas.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-700 mb-3">Pastas</h2>
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Pastas</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {pastas.map((p) => (
@@ -621,12 +625,12 @@ export default function Biblioteca() {
                   className={`rounded-xl p-5 border shadow-sm transition-all flex flex-col h-full ${
                     dragOver === p.id
                       ? "bg-blue-50 border-blue-300 shadow-md"
-                      : "bg-gray-50 border-gray-200 hover:shadow-md hover:border-gray-300"
+                      : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500"
                   }`}
                 >
-                  <h3 className="font-semibold text-gray-800 mb-3">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">
                     {p.name}{" "}
-                    <span className="text-gray-600 text-sm">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm">
                       ({p.songs.length} {p.songs.length === 1 ? "música" : "músicas"})
                     </span>
                   </h3>
@@ -637,29 +641,29 @@ export default function Biblioteca() {
                     p.songs.map((s) => (
                       <div
                         key={s.id}
-                        className="p-3 bg-white rounded-md shadow-sm hover:shadow-md border border-gray-200 transition cursor-pointer flex items-center justify-between mb-3"
+                        className="p-3 bg-white dark:bg-gray-900 rounded-md shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700 transition cursor-pointer flex items-center justify-between mb-3"
                         draggable={userRole === "admin"}
                         onDragStart={(e) => handleDragStart(e, s.id)}
                         onClick={() => abrirPasta(p.id)}
                       >
-                        🎵 <span className="font-medium text-gray-700">{s.title}</span>
+                        🎵 <span className="font-medium text-gray-700 dark:text-gray-200">{s.title}</span>
                       </div>
                     ))
                   )}
 
                   {userRole === "admin" && (
-                    <div className="mt-auto flex justify-between pt-3 border-t border-gray-200">
+                    <div className="mt-auto flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
                       <button
                         onClick={() => setEditarPastaData({ id: p.id, name: p.name })}
-                        className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-blue-600 dark:text-blue-400 text-sm font-medium hover:bg-blue-50 dark:hover:bg-gray-700 transition-all"
                       >
-                        <FiEdit className="mr-1" /> Editar
+                        <FiEdit className="text-lg" /> Editar
                       </button>
                       <button
                         onClick={() => excluirPasta(p.id)}
-                        className="flex items-center text-red-600 hover:text-red-800 text-sm font-medium"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-gray-700 transition-all"
                       >
-                        <FiTrash2 className="mr-1" /> Excluir
+                        <FiTrash2 className="text-lg" /> Excluir
                       </button>
                     </div>
                   )}
@@ -672,7 +676,7 @@ export default function Biblioteca() {
         {/* 🔥 Conteúdo da pasta aberta */}
         {pastaAberta && (
           <div className="mt-6">
-            <h2 className="text-xl font-bold mb-4">
+            <h2 className="text-xl font-bold mb-4 dark:text-gray-100">
               {pastaAberta.name} — {pastaAberta.songs.length} músicas
             </h2>
 
@@ -680,12 +684,12 @@ export default function Biblioteca() {
               {pastaAberta.songs.map((music) => (
                 <div
                   key={music.id}
-                  className="bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
+                  className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500 transition-all"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-gray-800">{music.title}</h3>
-                      <p className="text-gray-500 text-sm">{music.artist}</p>
+                      <h3 className="font-semibold text-gray-800 dark:text-gray-100">{music.title}</h3>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">{music.artist}</p>
                     </div>
 
                     <div className="flex items-center space-x-3">
@@ -751,13 +755,21 @@ export default function Biblioteca() {
           <div className="mb-8">
             
             {/* 🔥 Título "Músicas sem pasta" */}
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
               Músicas sem pasta
             </h2>
 
-            <p className="text-sm text-gray-600 mb-4">
-              Você pode arrastar as músicas para as pastas que desejar, assim que criar uma.
-            </p>
+            {userRole === "admin" && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Você pode arrastar as músicas para as pastas que desejar, assim que criar uma.
+              </p>
+            )}
+
+            {userRole === "user" && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Você pode somente visualizar as músicas e pastas organizadas pelo administrador.
+              </p>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {musicas.map((music) => {
@@ -769,17 +781,17 @@ export default function Biblioteca() {
                 return (
                   <div
                     key={music.id}
-                    className="bg-gray-50 rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-300 overflow-hidden cursor-grab active:cursor-grabbing"
+                    className="bg-gray-50 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-300 overflow-hidden cursor-grab active:cursor-grabbing"
                     draggable
                     onDragStart={(e) => handleDragStart(e, music.id)}
                   >
                     <div className="p-5">
-                      <h3 className="font-semibold text-gray-800">{music.title}</h3>
-                      <p className="text-sm text-gray-500 mb-3">
+                      <h3 className="font-semibold text-gray-800 dark:text-white">{music.title}</h3>
+                      <p className="ext-sm text-gray-500 dark:text-gray-400 mb-3">
                         Compositor: {music.artist}
                       </p>
 
-                      <div className="flex items-center justify-between text-xs text-gray-400">
+                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                         <span>{music.tipo || "MP3"}</span>
                         <span>{new Date(music.createdAt).toLocaleDateString("pt-BR")}</span>
                       </div>
@@ -787,7 +799,7 @@ export default function Biblioteca() {
                       {fileUrl && (
                         <div className="mt-4">
                           {music.tipo === "MP4" ? (
-                            <video controls className="w-full rounded-lg border border-gray-200">
+                            <video controls className="w-full rounded-lg border border-gray-200 dark:border-gray-700">
                               <source src={fileUrl} type="video/mp4" />
                             </video>
                           ) : (
@@ -800,14 +812,14 @@ export default function Biblioteca() {
                     </div>
 
                     {/* Ações */}
-                    <div className="border-t border-gray-200 flex">
+                    <div className="border-t border-gray-200 dark:border-gray-700 flex">
                       <button
                         onClick={() => openModal(music)}
                         disabled={userRole === "user"}
                         className={`w-1/2 py-3 flex items-center justify-center text-sm ${
                           userRole === "user"
                             ? "bg-gray-100 text-gray-400"
-                            : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            : "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700"
                         }`}
                       >
                         <FiEdit className="w-4 h-4 mr-2" /> Editar
@@ -819,7 +831,7 @@ export default function Biblioteca() {
                         className={`w-1/2 py-3 flex items-center justify-center text-sm ${
                           userRole === "user"
                             ? "bg-gray-100 text-gray-400"
-                            : "bg-red-50 text-red-600 hover:bg-red-100"
+                            : "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-gray-700"
                         }`}
                       >
                         <FiTrash2 className="w-4 h-4 mr-2" /> Excluir
@@ -838,9 +850,9 @@ export default function Biblioteca() {
       {/* Modal */}
       {showModal && userRole !== "user" && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-800">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                 {editingMusic ? "Editar Música" : "Adicionar Nova Música"}
               </h3>
               <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">✕</button>
@@ -850,34 +862,57 @@ export default function Biblioteca() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium">Título</label>
-                  <input type="text" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} className="w-full border rounded-lg px-3 py-2" required />
+                  <label className="block text-sm font-medium dark:text-white">Título</label>
+                  <input type="text" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 dark:bg-gray-900 dark:text-white" required />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium">Compositor</label>
-                  <input type="text" value={form.compositor} onChange={(e) => setForm({ ...form, compositor: e.target.value })} className="w-full border rounded-lg px-3 py-2" required />
+                  <label className="block text-sm font-medium dark:text-white">Compositor</label>
+                  <input type="text" value={form.compositor} onChange={(e) => setForm({ ...form, compositor: e.target.value })} className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 dark:bg-gray-900 dark:text-white" required />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium">Tipo</label>
-                  <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} className="w-full border rounded-lg px-3 py-2">
+                  <label className="block text-sm font-medium dark:text-white">Tipo</label>
+                  <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 dark:bg-gray-900 dark:text-white">
                     <option value="MP3">MP3</option>
                     <option value="MP4">MP4</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium">Arquivo</label>
-                  <input type="file" accept=".mp3,.mp4" onChange={(e) => setForm({ ...form, arquivo: e.target.files[0] })} className="w-full" />
+                  <label className="block text-sm font-medium dark:text-white mb-2">
+                    Arquivo
+                  </label>
+
+                  <label className="w-full h-12 flex items-center justify-center cursor-pointer border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <span className="text-sm font-medium">Enviar arquivo</span>
+                    <input
+                      type="file"
+                      accept=".mp3,.mp4"
+                      onChange={(e) => setForm({ ...form, arquivo: e.target.files[0] })}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
               </div>
 
               <div className="flex justify-end space-x-3">
-                <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-600 hover:text-gray-800">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900 
+                            dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white transition"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 
+                            dark:bg-teal-500 dark:hover:bg-teal-600 transition"
+                >
                   {editingMusic ? "Salvar Alterações" : "Adicionar Música"}
                 </button>
               </div>

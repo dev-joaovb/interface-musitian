@@ -111,7 +111,7 @@ const Notificacoes = () => {
         <Bell className="w-6 h-6 text-teal-600 dark:text-teal-400" />
         Minhas Notificações
       </h1>
-      <p className="text-base text-gray-600  mb-10 max-w-4xl mx-letf">
+      <p className="text-base text-gray-600  dark:text-gray-300 mb-10 max-w-4xl mx-letf">
         Aqui você receberá notificações sobre novidades, convites, eventos,
         alterações de agenda e outras atualizações importantes, permitindo que você
         acompanhe tudo o que acontece no grupo em tempo real.
@@ -132,7 +132,7 @@ const Notificacoes = () => {
               {convites.map((c) => (
                 <div
                   key={c.id}
-                  className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center mb-3"
+                  className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center mb-3 dark:bg-gray-800 dark:border-gray-700"
                 >
                   <div>
                     <p className="font-semibold text-gray-800 dark:text-white">
@@ -182,7 +182,7 @@ const Notificacoes = () => {
       limitedNotifs.map((n) => (
       <div
         key={n.id}
-        className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
+        className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700"
       >
         <h3 className="font-semibold text-gray-800 dark:text-white">{n.title}</h3>
         <p className="text-gray-600 dark:text-gray-300">{n.message}</p>

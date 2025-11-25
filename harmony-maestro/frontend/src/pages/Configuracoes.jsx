@@ -126,7 +126,7 @@ const Configuracoes = () => {
       <div className="hidden md:flex items-center justify-between px-6 py-3">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Configurações</h1>
       </div>
-        <p className="text-base text-gray-600 text-center mb-10 max-w-4xl px-4">
+        <p className="text-base text-gray-600 dark:text-gray-300 text-center mb-10 max-w-4xl px-4">
           Nesta área você pode editar seus dados pessoais, atualizar suas informações
           de contato, gerenciar o envio de notificações e realizar a redefinição da
           sua senha de forma segura, mantendo sua conta sempre protegida e atualizada.
