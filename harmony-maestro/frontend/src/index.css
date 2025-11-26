@@ -13,6 +13,53 @@
 /* ✅ Habilita o suporte ao dark mode por class */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ===== FullCalendar Dark Mode ===== */
+
+.dark .fc {
+  color: #e5e7eb; /* texto claro */
+}
+
+.dark .fc .fc-toolbar-title {
+  color: #f9fafb;
+}
+
+.dark .fc .fc-button {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark .fc .fc-button:hover {
+  background-color: #374151;
+}
+
+.dark .fc-theme-standard td,
+.dark .fc-theme-standard th {
+  border-color: #374151;
+}
+
+.dark .fc-daygrid-day {
+  background-color: #111827;
+}
+
+.dark .fc-daygrid-day-number {
+  color: #9ca3af;
+}
+
+.dark .fc-day-today {
+  background-color: rgba(13, 148, 136, 0.15) !important;
+}
+
+.dark .fc-event {
+  background-color: inherit !important;
+  border: none;
+}
+
+.dark .fc-scrollgrid {
+  background-color: #111827;
+  border-color: #374151;
+}
+
 button{
   cursor: pointer
 }
