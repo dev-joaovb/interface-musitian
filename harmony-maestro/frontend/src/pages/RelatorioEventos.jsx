@@ -227,184 +227,196 @@ const gerarPDF = () => {
 
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      {/* Cabeçalho da página */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-semibold text-gray-800">
-          Relatório de Eventos — {month.toUpperCase()} / {year}
-        </h1>
-        {eventos.length > 0 && (
-          <button
-            onClick={gerarPDF}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow-md transition-all duration-200"
-          >
-            📄 Baixar Relatório
-          </button>
-        )}
-      </div>
-
-      {/* Corpo dos eventos */}
-      {eventos.length === 0 ? (
-        <p className="text-gray-500 text-lg text-center mt-20">
-          Nenhum evento realizado neste mês.
-        </p>
-      ) : (
-        <div className="grid gap-8">
-          {eventos.map((ev) => {
-            const resumo = ev.attendanceResumoGlobal || ev.attendanceResumo;
-
-            return (
-              <div
-                key={ev.id}
-                className="bg-white border border-gray-200 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all"
-              >
-                {/* Título e status */}
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-xl font-semibold text-gray-800">
-                    {ev.title}
-                  </h2>
-                  <span
-                    className="px-3 py-1 rounded-full text-white text-xs font-medium shadow"
-                    style={{ backgroundColor: ev.color || "#3b82f6" }}
-                  >
-                    {ev.status}
-                  </span>
-                </div>
-
-                {/* Informações básicas */}
-                <p className="text-sm text-gray-600">
-                  📅 {new Date(ev.date).toLocaleString("pt-BR")}
-                </p>
-                {ev.location && (
-                  <p className="text-sm text-gray-600">📍 {ev.location}</p>
-                )}
-                {ev.description && (
-                  <p className="mt-3 text-gray-700 leading-relaxed">
-                    {ev.description}
-                  </p>
-                )}
-
-                {/* 🔹 Resumo geral de presenças (se existir) */}
-                {resumo && resumo.totalParticipantes && (
-                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-blue-800 mb-2">
-                      Resumo Geral de Presenças
-                    </h3>
-                    <div className="flex flex-wrap gap-6 text-sm text-gray-700">
-                      <span>
-                        <strong>Total:</strong> {resumo.totalParticipantes}
-                      </span>
-                      <span className="text-green-700">
-                        <strong>Compareceram:</strong> {resumo.compareceram}
-                      </span>
-                      <span className="text-red-700">
-                        <strong>Faltaram:</strong> {resumo.faltaram}
-                      </span>
-                      <span className="text-gray-700">
-                        <strong>Aguardando:</strong> {resumo.aguardando}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* 🔹 Relatório de Presenças (séries) */}
-                {Array.isArray(ev.presencas) && ev.presencas.length > 0 ? (
-                  <div className="mt-6 border-t pt-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-4">
-                      🎵 Séries de Ensaios e Presenças
-                    </h3>
-
-                    {ev.presencas.map((serie, idx) => (
-                      <div
-                        key={idx}
-                        className="mb-6 bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm"
-                      >
-                        <h4 className="text-gray-800 font-medium text-sm mb-3">
-                          Série:{" "}
-                          <span className="font-semibold">
-                            {serie.serieTitulo || "Sem título"}
-                          </span>{" "}
-                          —{" "}
-                          {serie.serieData
-                            ? new Date(serie.serieData).toLocaleDateString("pt-BR", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                              })
-                            : "Data não informada"}
-                        </h4>
-
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm border-collapse rounded-xl overflow-hidden">
-                            <thead className="bg-gray-100">
-                              <tr>
-                                <th className="border px-3 py-2 text-left w-1/4">Nome</th>
-                                <th className="border px-3 py-2 text-left w-1/3">E-mail</th>
-                                <th className="border px-3 py-2 text-center w-1/6">Status</th>
-                                <th className="border px-3 py-2 text-center w-1/6">
-                                  Confirmação Admin
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {serie.presencas && serie.presencas.length > 0 ? (
-                                serie.presencas.map((r, i) => (
-                                  <tr
-                                    key={i}
-                                    className="odd:bg-white even:bg-gray-50 hover:bg-blue-50 transition-all"
-                                  >
-                                    <td className="border px-3 py-2">{r.nome}</td>
-                                    <td className="border px-3 py-2">{r.email}</td>
-                                    <td
-                                      className={`border px-3 py-2 text-center ${
-                                        r.status === "Confirmou presença"
-                                          ? "text-green-600"
-                                          : r.status === "Não Disponível"
-                                          ? "text-red-600"
-                                          : "text-gray-600"
-                                      }`}
-                                    >
-                                      {r.status}
-                                    </td>
-                                    <td
-                                      className={`border px-3 py-2 text-center ${
-                                        r.confirmacaoAdmin === "Compareceu"
-                                          ? "text-green-600"
-                                          : r.confirmacaoAdmin === "Não Compareceu"
-                                          ? "text-red-600"
-                                          : "text-gray-500"
-                                      }`}
-                                    >
-                                      {r.confirmacaoAdmin || "-"}
-                                    </td>
-                                  </tr>
-                                ))
-                              ) : (
-                                <tr>
-                                  <td
-                                    colSpan="4"
-                                    className="border px-3 py-2 text-center text-gray-500"
-                                  >
-                                    Nenhum registro de presença nesta série.
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-gray-500 italic">
-                    Nenhuma série registrada para este evento.
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </div>
+  <div className="p-8 max-w-6xl mx-auto dark:text-gray-200">
+    {/* Cabeçalho da página */}
+    <div className="flex justify-between items-center mb-8">
+      <h1 className="text-3xl font-semibold text-gray-800 dark:text-gray-100">
+        Relatório de Eventos — {month.toUpperCase()} / {year}
+      </h1>
+      {eventos.length > 0 && (
+        <button
+          onClick={gerarPDF}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow-md transition-all duration-200"
+        >
+          📄 Baixar Relatório
+        </button>
       )}
     </div>
-  );
+
+    {/* Corpo dos eventos */}
+    {eventos.length === 0 ? (
+      <p className="text-gray-500 dark:text-gray-400 text-lg text-center mt-20">
+        Nenhum evento realizado neste mês.
+      </p>
+    ) : (
+      <div className="grid gap-8">
+        {eventos.map((ev) => {
+          const resumo = ev.attendanceResumoGlobal || ev.attendanceResumo;
+
+          return (
+            <div
+              key={ev.id}
+              className="bg-white dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all"
+            >
+              {/* Título e status */}
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                  {ev.title}
+                </h2>
+                <span
+                  className="px-3 py-1 rounded-full text-white text-xs font-medium shadow"
+                  style={{ backgroundColor: ev.color || "#3b82f6" }}
+                >
+                  {ev.status}
+                </span>
+              </div>
+
+              {/* Informações básicas */}
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                📅 {new Date(ev.date).toLocaleString("pt-BR")}
+              </p>
+              {ev.location && (
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  📍 {ev.location}
+                </p>
+              )}
+              {ev.description && (
+                <p className="mt-3 text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {ev.description}
+                </p>
+              )}
+
+              {/* 🔹 Resumo geral de presenças (se existir) */}
+              {resumo && resumo.totalParticipantes && (
+                <div className="mt-4 bg-blue-50 dark:bg-gray-700 border border-blue-200 dark:border-gray-600 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">
+                    Resumo Geral de Presenças
+                  </h3>
+                  <div className="flex flex-wrap gap-6 text-sm text-gray-700 dark:text-gray-200">
+                    <span>
+                      <strong>Total:</strong> {resumo.totalParticipantes}
+                    </span>
+                    <span className="text-green-700 dark:text-green-400">
+                      <strong>Compareceram:</strong> {resumo.compareceram}
+                    </span>
+                    <span className="text-red-700 dark:text-red-400">
+                      <strong>Faltaram:</strong> {resumo.faltaram}
+                    </span>
+                    <span className="text-gray-700 dark:text-gray-300">
+                      <strong>Aguardando:</strong> {resumo.aguardando}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* 🔹 Relatório de Presenças (séries) */}
+              {Array.isArray(ev.presencas) && ev.presencas.length > 0 ? (
+                <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4">
+                    🎵 Séries de Ensaios e Presenças
+                  </h3>
+
+                  {ev.presencas.map((serie, idx) => (
+                    <div
+                      key={idx}
+                      className="mb-6 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl p-4 shadow-sm"
+                    >
+                      <h4 className="text-gray-800 dark:text-gray-100 font-medium text-sm mb-3">
+                        Série:{" "}
+                        <span className="font-semibold">
+                          {serie.serieTitulo || "Sem título"}
+                        </span>{" "}
+                        —{" "}
+                        {serie.serieData
+                          ? new Date(serie.serieData).toLocaleDateString("pt-BR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })
+                          : "Data não informada"}
+                      </h4>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border-collapse rounded-xl overflow-hidden">
+                          <thead className="bg-gray-100 dark:bg-gray-700">
+                            <tr>
+                              <th className="border border-gray-200 dark:border-gray-600 px-3 py-2 text-left w-1/4">
+                                Nome
+                              </th>
+                              <th className="border border-gray-200 dark:border-gray-600 px-3 py-2 text-left w-1/3">
+                                E-mail
+                              </th>
+                              <th className="border border-gray-200 dark:border-gray-600 px-3 py-2 text-center w-1/6">
+                                Status
+                              </th>
+                              <th className="border border-gray-200 dark:border-gray-600 px-3 py-2 text-center w-1/6">
+                                Confirmação Admin
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {serie.presencas && serie.presencas.length > 0 ? (
+                              serie.presencas.map((r, i) => (
+                                <tr
+                                  key={i}
+                                  className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-700 hover:bg-blue-50 dark:hover:bg-gray-600 transition-all"
+                                >
+                                  <td className="border border-gray-200 dark:border-gray-600 px-3 py-2 dark:text-gray-200">
+                                    {r.nome}
+                                  </td>
+                                  <td className="border border-gray-200 dark:border-gray-600 px-3 py-2 dark:text-gray-200">
+                                    {r.email}
+                                  </td>
+                                  <td
+                                    className={`border border-gray-200 dark:border-gray-600 px-3 py-2 text-center ${
+                                      r.status === "Confirmou presença"
+                                        ? "text-green-600 dark:text-green-400"
+                                        : r.status === "Não Disponível"
+                                        ? "text-red-600 dark:text-red-400"
+                                        : "text-gray-600 dark:text-gray-300"
+                                    }`}
+                                  >
+                                    {r.status}
+                                  </td>
+                                  <td
+                                    className={`border border-gray-200 dark:border-gray-600 px-3 py-2 text-center ${
+                                      r.confirmacaoAdmin === "Compareceu"
+                                        ? "text-green-600 dark:text-green-400"
+                                        : r.confirmacaoAdmin === "Não Compareceu"
+                                        ? "text-red-600 dark:text-red-400"
+                                        : "text-gray-500 dark:text-gray-400"
+                                    }`}
+                                  >
+                                    {r.confirmacaoAdmin || "-"}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td
+                                  colSpan="4"
+                                  className="border border-gray-200 dark:border-gray-600 px-3 py-2 text-center text-gray-500 dark:text-gray-400"
+                                >
+                                  Nenhum registro de presença nesta série.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-gray-500 dark:text-gray-400 italic">
+                  Nenhuma série registrada para este evento.
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+);
 }

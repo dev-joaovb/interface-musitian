@@ -60,6 +60,89 @@
   border-color: #374151;
 }
 
+/* ===== Recharts Dark Mode Adjustments ===== */
+
+/* Texto dos eixos (X e Y) */
+.dark .recharts-cartesian-axis-tick-value {
+  fill: #d1d5db !important; /* cinza claro */
+}
+
+/* Linhas do grid */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: #374151 !important; /* cinza escuro suave */
+}
+
+/* Tooltip (fundo, borda, texto) */
+.dark .recharts-default-tooltip {
+  background-color: #1f2937 !important; /* bg-gray-800 */
+  border-color: #374151 !important;
+  color: #e5e7eb !important; /* texto claro */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ===== Ajuste do recharts-surface (SVG base do gráfico) ===== */
+
+.dark .recharts-surface {
+  background-color: transparent !important;
+}
+
+/* Ajuste do hover claro demais */
+.dark .recharts-bar-rectangle:hover {
+  filter: brightness(0.85) !important;  /* escurece ao invés de clarear */
+  transition: filter 0.2s ease-in-out;
+}
+
+/* Ajuste extra no retângulo ao passar o mouse */
+.dark .recharts-active-bar {
+  filter: brightness(0.9) !important;
+}
+
+/* Evita fundo branco invisível no SVG */
+.dark svg {
+  background: transparent !important;
+}
+
+/* Legenda (texto) */
+.dark .recharts-legend-item-text {
+  fill: #d1d5db !important;
+}
+
+/* Linhas de foco (quando passa o mouse) */
+.dark .recharts-bar-rectangle:hover {
+  opacity: 0.85 !important; /* hover mais suave */
+  transition: opacity 0.2s;
+}
+
+/* Linha do eixo (eixo X/Y vertical/horizontal) */
+.dark .recharts-cartesian-axis-line {
+  stroke: #4b5563 !important;
+}
+.dark .recharts-cartesian-axis-tick-line {
+  stroke: #4b5563 !important;
+}
+
+/* Cor mais suave nos rótulos internos (tooltip labels) */
+.dark .recharts-tooltip-label {
+  color: #f3f4f6 !important;
+}
+
+/* Retângulo que o Recharts desenha atrás da barra no hover */
+.dark .recharts-active-shape {
+  fill: rgba(255, 255, 255, 0.05) !important; /* bem sutil */
+}
+
+/* Evita brilho exagerado da barra no hover */
+.dark .recharts-bar-rectangle path:hover {
+  filter: brightness(0.95) !important;
+  transition: filter 0.15s ease-in-out;
+}
+
+/* Suaviza o fundo do cursor (linha vertical do hover) */
+.dark .recharts-tooltip-cursor {
+  fill: rgba(255, 255, 255, 0.03) !important;
+}
+
 button{
   cursor: pointer
 }
