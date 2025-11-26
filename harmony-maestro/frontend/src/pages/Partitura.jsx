@@ -391,7 +391,7 @@ export default function Partitura() {
 
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Botões de navegação */}
       <div className="flex justify-center items-center mb-6 space-x-4">
         <button
@@ -410,7 +410,7 @@ export default function Partitura() {
         </button>
       </div>
 
-      <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">
+      <h1 className="text-3xl font-semibold text-gray-800 dark:text-white mb-6 text-center">
         Biblioteca de Partituras
       </h1>
 
@@ -418,7 +418,7 @@ export default function Partitura() {
       {user?.role === "admin" && (
         <div className="mb-10 text-center">
           
-          <p className="text-gray-600 text-base leading-relaxed max-w-4xl mx-auto">
+          <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
             Aqui em <strong> Biblioteca de Partituras</strong> você pode cadastrar novas partituras (em PDF), organizar em pastas,
             editar informações, remover arquivos e manter todo o acervo musical
             sempre atualizado. Arraste partituras para as pastas, mova, renomeie
@@ -431,7 +431,7 @@ export default function Partitura() {
       {user?.role === "user" && (
         <div className="mb-10 text-center">
           
-          <p className="text-gray-600 text-base leading-relaxed max-w-4xl mx-auto">
+          <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
             Aqui em <strong> Biblioteca de Partituras</strong> você pode visualizar e acessar todas as partituras
             disponíveis para estudo e uso nos cultos e apresentações.
             A organização em pastas facilita a navegação, permitindo que você
@@ -442,9 +442,9 @@ export default function Partitura() {
 
       {/* Upload (admins) */}
       {user?.role === "admin" && (
-        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mb-6">
           
-          <h2 className="text-lg font-semibold mb-4">Adicionar Partitura</h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Adicionar Partitura</h2>
 
           <form
             onSubmit={handleUpload}
@@ -455,7 +455,7 @@ export default function Partitura() {
               placeholder="Nome da partitura"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              className="border p-2 rounded w-full md:w-1/4"
+              className="border dark:border-gray-700 p-2 rounded w-full md:w-1/4 bg-white dark:bg-gray-900 text-gray-800 dark:text-white"
               required
             />
 
@@ -464,14 +464,14 @@ export default function Partitura() {
               placeholder="Descrição"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              className="border p-2 rounded w-full md:w-1/3"
+              className="border dark:border-gray-700 p-2 rounded w-full md:w-1/3 bg-white dark:bg-gray-900 text-gray-800 dark:text-white"
             />
 
             <input
               type="file"
               accept="application/pdf"
               onChange={(e) => setFile(e.target.files[0])}
-              className="border p-2 rounded w-full md:w-1/4"
+              className="border dark:border-gray-700 p-2 rounded w-full md:w-1/4 bg-white dark:bg-gray-900 text-gray-800 dark:text-white"
               required
             />
 
@@ -487,9 +487,9 @@ export default function Partitura() {
 
       {/* PASTAS + CRIAR PASTA */}
       <div className="flex flex-col md:flex-row gap-6 mb-8">
-        <div className="w-full bg-white rounded-lg shadow p-4">
+        <div className="w-full bg-white dark:bg-gray-800 rounded-lg shadow p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-700">Pastas</h2>
+            <h2 className="font-semibold text-gray-700 dark:text-gray-200">Pastas</h2>
             {user?.role === "admin" && (
               <div className="flex items-center gap-2">
                 <input
@@ -497,7 +497,7 @@ export default function Partitura() {
                   placeholder="Nova pasta..."
                   value={novaPastaNome}
                   onChange={(e) => setNovaPastaNome(e.target.value)}
-                  className="border px-2 py-1 rounded"
+                  className="border dark:border-gray-700 px-2 py-1 rounded bg-white dark:bg-gray-900 text-gray-800 dark:text-white"
                 />
                 <button
                   onClick={() => criarPasta(novaPastaNome)}
@@ -516,7 +516,7 @@ export default function Partitura() {
               {pastas.map((p) => (
                 <div
                   key={p.id}
-                  className="bg-gray-50 p-5 rounded-xl border flex flex-col justify-between cursor-pointer group hover:bg-gray-100 transition relative"
+                  className="bg-gray-50 dark:bg-gray-700 p-5 rounded-xl border dark:border-gray-600 flex flex-col justify-between cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-600 transition relative"
                   onClick={() => abrirPasta(p)}
                   onDrop={(e) => handleDrop(e, p.id)}
                   onDragOver={(e) => e.preventDefault()}
@@ -524,8 +524,8 @@ export default function Partitura() {
                   {/* Cabeçalho */}
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-semibold text-base">{p.name}</h3>
-                      <p className="text-xs text-gray-500">
+                      <h3 className="font-semibold text-base text-gray-800 dark:text-white">{p.name}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-300">
                         {(p.partituras || []).length} partituras
                       </p>
                     </div>
@@ -537,13 +537,13 @@ export default function Partitura() {
                   </div>
 
                   {/* Apenas nomes quando a pasta está fechada */}
-                  <div className="mb-4 text-xs text-gray-600">
+                  <div className="mb-4 text-xs text-gray-600 dark:text-gray-300">
                     {(p.partituras || []).length > 0 ? (
                       p.partituras.slice(0, 6).map((pt) => (
                         <p key={pt.id} className="truncate">{pt.nome}</p>
                       ))
                     ) : (
-                      <p className="text-gray-400 text-xs">Nenhum arquivo</p>
+                      <p className="text-gray-400 dark:text-gray-500 text-xs">Nenhum arquivo</p>
                     )}
                   </div>
 
@@ -556,7 +556,7 @@ export default function Partitura() {
                       <button
                         title="Editar"
                         onClick={() => setEditarPastaData(p)}
-                        className="flex-1 text-sm px-3 py-1 rounded bg-white border hover:bg-gray-200 transition"
+                        className="flex-1 text-sm px-3 py-1 rounded bg-white dark:bg-gray-800 border dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-gray-800 dark:text-white"
                       >
                         ✏️ Editar
                       </button>
@@ -564,7 +564,7 @@ export default function Partitura() {
                       <button
                         title="Excluir"
                         onClick={() => excluirPasta(p.id)}
-                        className="flex-1 text-sm px-3 py-1 rounded bg-red-100 text-red-600 border hover:bg-red-200 transition"
+                        className="flex-1 text-sm px-3 py-1 rounded bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 border dark:border-red-700 hover:bg-red-200 dark:hover:bg-red-800 transition"
                       >
                         🗑️ Excluir
                       </button>
@@ -580,13 +580,13 @@ export default function Partitura() {
 
       {/* Se uma pasta estiver aberta, mostra seu conteúdo */}
       {pastaAberta ? (
-        <div className="bg-white p-4 rounded-lg shadow mb-8">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">{pastaAberta.name}</h2>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">{pastaAberta.name}</h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPastaAberta(null)}
-                className="px-3 py-1 bg-gray-100 rounded"
+                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-800 dark:text-white"
               >
                 Fechar
               </button>
@@ -594,7 +594,7 @@ export default function Partitura() {
           </div>
 
           {(!pastaAberta.partituras || pastaAberta.partituras.length === 0) ? (
-            <p className="text-gray-500">Nenhuma partitura nesta pasta.</p>
+            <p className="text-gray-500 dark:text-gray-400">Nenhuma partitura nesta pasta.</p>
           ) : (
             <div className="grid gap-8 md:grid-cols-4 lg:grid-cols-4">
               {pastaAberta.partituras.map((p) => {
@@ -605,7 +605,7 @@ export default function Partitura() {
                 return (
                   <div
                     key={p.id}
-                    className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer w-70 transform transition duration-300 hover:scale-105 hover:brightness-90 hover:shadow-xl"
+                    className="bg-white dark:bg-gray-900 rounded-xl shadow-md overflow-hidden cursor-pointer w-70 transform transition duration-300 hover:scale-105 hover:brightness-90 hover:shadow-xl"
                     draggable
                     onDragStart={(e) => handleDragStart(e, p.id)}
                     onClick={() => {
@@ -613,7 +613,7 @@ export default function Partitura() {
                       setShowPdf(true);
                     }}
                   >
-                    <div className="relative w-full h-95 bg-gray-100 flex items-center justify-center">
+                    <div className="relative w-full h-95 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                       {p.thumbnail ? (
                         <img
                           src={p.thumbnail}
@@ -621,13 +621,13 @@ export default function Partitura() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-gray-400">Prévia indisponível</span>
+                        <span className="text-gray-400 dark:text-gray-300">Prévia indisponível</span>
                       )}
                     </div>
 
                     <div className="p-3">
-                      <h3 className="text-base font-semibold text-gray-800 truncate">{p.nome}</h3>
-                      <p className="text-xs text-gray-500 mb-2 line-clamp-2">{p.descricao || "Sem descrição"}</p>
+                      <h3 className="text-base font-semibold text-gray-800 dark:text-white truncate">{p.nome}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">{p.descricao || "Sem descrição"}</p>
 
                       {user?.role === "admin" && (
                         <div className="flex gap-2 mt-2">
@@ -665,12 +665,20 @@ export default function Partitura() {
 
       {/* Lista principal de partituras (sem pasta) */}
       {!pastaAberta && (
-        <div className="bg-white p-4 rounded-lg shadow mb-8">
-          <h2 className="text-lg font-semibold mb-4">Partituras (Sem pasta)</h2>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-8">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Partituras (Sem pasta)</h2>
 
-          <p className="text-sm text-gray-600 mb-4">
-            Para organizar suas partituras, arraste e solte os arquivos nas pastas desejadas.
-          </p>
+          {user?.role === "admin" && (
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              Para organizar suas partituras, arraste e solte os arquivos nas pastas desejadas.
+            </p>
+          )}
+
+          {user?.role === "user" && (
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              Você pode somente visualizar os arquivos dentro e fora da pasta.
+            </p>
+          )}
 
           <div className="grid gap-8 md:grid-cols-4 lg:grid-cols-4">
             {partituras.length === 0 ? (
@@ -693,7 +701,7 @@ export default function Partitura() {
                 return (
                   <div
                     key={p.id}
-                    className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer w-70 transform transition duration-300 hover:scale-105 hover:brightness-90 hover:shadow-xl"
+                    className="bg-white dark:bg-gray-900 rounded-xl shadow-md overflow-hidden cursor-pointer w-70 transform transition duration-300 hover:scale-105 hover:brightness-90 hover:shadow-xl"
                     draggable
                     onDragStart={(e) => handleDragStart(e, p.id)}
                     onClick={() => {
@@ -701,7 +709,7 @@ export default function Partitura() {
                       setShowPdf(true);
                     }}
                   >
-                    <div className="relative w-full h-95 bg-gray-100 flex items-center justify-center">
+                    <div className="relative w-full h-95 bg-gray-100 dark:bg-gray-600 flex items-center justify-center">
                       {p.thumbnail ? (
                         <img src={p.thumbnail} alt={p.nome} className="w-full h-full object-cover" />
                       ) : (
@@ -710,8 +718,8 @@ export default function Partitura() {
                     </div>
 
                     <div className="p-3">
-                      <h3 className="text-base font-semibold text-gray-800 truncate">{p.nome}</h3>
-                      <p className="text-xs text-gray-500 mb-2 line-clamp-2">
+                      <h3 className="text-base font-semibold text-gray-800 dark:text-white truncate">{p.nome}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-200 mb-2 line-clamp-2">
                         {p.descricao || "Sem descrição"}
                       </p>
 
@@ -740,9 +748,9 @@ export default function Partitura() {
       {/* Show Modal PDF */}
       {showPdf && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-11/12 md:w-3/4 lg:w-2/3 h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-lg font-semibold text-gray-800">Visualizar Partitura</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-11/12 md:w-3/4 lg:w-2/3 h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Visualizar Partitura</h2>
               <div className="flex items-center gap-2">
                 <a
                   href={pdfUrl}
@@ -758,7 +766,7 @@ export default function Partitura() {
                     setShowPdf(false);
                     setPdfUrl(null);
                   }}
-                  className="text-gray-500 hover:text-gray-800 text-xl font-bold px-3"
+                  className="text-gray-500 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white text-xl font-bold px-3"
                   aria-label="Fechar visualizador"
                 >
                   ×
@@ -784,16 +792,16 @@ export default function Partitura() {
       {/* Modal editar pasta */}
       {editarPastaData && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-1/3">
-            <h3 className="text-lg font-semibold mb-3">Editar Pasta</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-11/12 md:w-1/3">
+            <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">Editar Pasta</h3>
             <input
               type="text"
               value={editarPastaData.name}
               onChange={(e) => setEditarPastaData({ ...editarPastaData, name: e.target.value })}
-              className="border p-2 rounded w-full mb-4"
+              className="border dark:border-gray-700 p-2 rounded w-full mb-4 bg-white dark:bg-gray-900 text-gray-800 dark:text-white"
             />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setEditarPastaData(null)} className="px-3 py-1 rounded border">
+              <button onClick={() => setEditarPastaData(null)} className="px-3 py-1 rounded border dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                 Cancelar
               </button>
               <button
