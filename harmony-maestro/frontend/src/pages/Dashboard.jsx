@@ -48,27 +48,27 @@ useEffect(() => {
 
 
 // 🔹 Estatísticas de presença em ensaios
-const [presencaData, setPresencaData] = useState(null);
+// const [presencaData, setPresencaData] = useState(null);
 
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  fetch("http://localhost:4000/api/dashboard/presencas", {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-    .then((res) => res.json())
-    .then((json) => {
-      // converte os dados para formato de gráfico
-      const data = [
-        { status: "Confirmou Presença", valor: json.confirmados, cor: "#22c55e" },
-        { status: "Não Disponível", valor: json.naoDisponiveis, cor: "#ef4444" },
-        { status: "Aguardando Resposta", valor: json.aguardando, cor: "#facc15" },
-      ];
-      setPresencaData(data);
-    })
-    .catch((err) =>
-      console.error("Erro ao buscar dados de presença:", err)
-    );
-}, []);
+// useEffect(() => {
+//   const token = localStorage.getItem("token");
+//   fetch("http://localhost:4000/api/dashboard/presencas", {
+//     headers: { Authorization: `Bearer ${token}` },
+//   })
+//     .then((res) => res.json())
+//     .then((json) => {
+//       // converte os dados para formato de gráfico
+//       const data = [
+//         { status: "Confirmou Presença", valor: json.confirmados, cor: "#22c55e" },
+//         { status: "Não Disponível", valor: json.naoDisponiveis, cor: "#ef4444" },
+//         { status: "Aguardando Resposta", valor: json.aguardando, cor: "#facc15" },
+//       ];
+//       setPresencaData(data);
+//     })
+//     .catch((err) =>
+//       console.error("Erro ao buscar dados de presença:", err)
+//     );
+// }, []);
 
 
 // 🔹 Médias mensais de presença e falta
@@ -276,7 +276,7 @@ useEffect(() => {
     )}
 
     {/* Gráfico de Presença */}
-    {presencaData && (
+    {/* {presencaData && (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
           Confirmação de Presença nos Ensaios
@@ -314,7 +314,7 @@ useEffect(() => {
           </span>
         </div>
       </div>
-    )}
+    )} */}
 
     {/* Gráfico de Faltas */}
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
