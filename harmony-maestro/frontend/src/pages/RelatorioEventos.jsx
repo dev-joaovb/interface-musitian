@@ -23,7 +23,7 @@ const gerarPDF = () => {
   if (!eventos.length) return;
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const logoUrl = "/vide-logo.png"; // fallback: se não carregar, segue sem logo
+  const logoUrl = "/logo-light.png"; // fallback: se não carregar, segue sem logo
 
   // pega o responsável do primeiro evento (todos são do mesmo grupo)
   const responsavel = eventos[0]?.responsavel;
