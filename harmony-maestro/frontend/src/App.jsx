@@ -33,13 +33,13 @@ function ProtectedRoute({ children }) {
 function Loader({ isVisible }) {
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center bg-gray-100/80 z-[9999] transition-opacity duration-500 ${
+      className={`fixed inset-0 flex items-center justify-center bg-gray-100/80 dark:bg-gray-900/80 z-[9999] transition-opacity duration-500 ${
         isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >
       <div className="flex flex-col items-center gap-2">
         <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm text-gray-600">Carregando...</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300">Carregando...</p>
       </div>
     </div>
   );
