@@ -36,10 +36,21 @@ export default function Sidebar({ mobile = false, onClose }) {
   return (
   <aside className={classes}>
     <div className="flex flex-col w-64 h-full border-r-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-      <div className="flex items-center justify-center h-14 px-4 border-b-1 border-gray-300 dark:border-gray-700">
-        <div className="flex items-center">
-          <FiMusic className="text-teal-600 w-6 h-6" />
-          <span className="ml-2 text-xl font-bold text-gray-800 dark:text-gray-100">Harmony Maestro</span>
+      <div className="flex items-center justify-center h-30 px-4 border-b-1 border-gray-300 dark:border-gray-700">
+        <div className="flex items-center gap-2">
+          {/* Logo Light */}
+          <img
+            src="/logo-light.svg"
+            alt="Harmony Maestro"
+            className="h-27 w-auto block dark:hidden"
+          />
+
+          {/* Logo Dark */}
+          <img
+            src="/logo-dark.svg"
+            alt="Harmony Maestro"
+            className="h-27 w-auto hidden dark:block"
+          />
         </div>
       </div>
 
