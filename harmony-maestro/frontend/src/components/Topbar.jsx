@@ -8,19 +8,19 @@ export default function Topbar({ onMenuClick }) {
   return (
     <>
       {/* Mobile header */}
-      <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+      <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center">
-          <button className="text-gray-500 focus:outline-none" onClick={onMenuClick}>
+          <button className="text-gray-500 dark:text-gray-300 focus:outline-none" onClick={onMenuClick}>
             <FiMenu className="w-6 h-6" />
           </button>
-          <span className="ml-2 text-lg font-bold text-gray-800">Harmony Maestro</span>
+          <span className="ml-2 text-lg font-bold text-gray-800 dark:text-gray-100">Harmony Maestro</span>
         </div>
         <div className="flex items-center">
-          <button className="text-gray-500 focus:outline-none">
+          <button className="text-gray-500 dark:text-gray-300 focus:outline-none">
             <FiBell className="w-5 h-5" />
           </button>
           <img
-            className="w-8 h-8 ml-4 rounded-full"
+            className="w-8 h-8 ml-4 rounded-full border border-gray-200 dark:border-gray-600"
             src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=14b8a6&color=fff`}
             alt={user.name}
           />
@@ -28,7 +28,7 @@ export default function Topbar({ onMenuClick }) {
       </div>
 
       {/* Desktop header */}
-      <div className="hidden md:flex items-center justify-between px-6 py-3 h-14 border-b-1 border-gray-200 bg-white">
+      <div className="hidden md:flex items-center justify-between px-6 py-3 h-14 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center">
           {/* <div className="relative">
             <input
@@ -40,7 +40,7 @@ export default function Topbar({ onMenuClick }) {
           </div> */}
         </div>
         <div className="flex items-center space-x-4">
-          <Link to="/notificacoes" className="relative text-gray-500 focus:outline-none">
+          <Link to="/notificacoes" className="relative text-gray-500 dark:text-gray-300 focus:outline-none">
             <FiBell className="w-5 h-5" />
             <span className="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full"></span>
           </Link>
@@ -50,7 +50,7 @@ export default function Topbar({ onMenuClick }) {
               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=14b8a6&color=fff`}
               alt={user.name}
             />
-            <span className="ml-2 text-sm font-medium text-gray-700">{user.name}</span>
+            <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200">{user.name}</span>
           </div>
         </div>
       </div>
