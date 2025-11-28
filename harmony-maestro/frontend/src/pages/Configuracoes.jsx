@@ -52,6 +52,7 @@ const Configuracoes = () => {
 
         if (data.tema === "dark" || data.tema === "light") {
           setTheme(data.tema);
+          localStorage.setItem(`theme_user_${user.id}`, data.tema);
         }
       })
       .catch((err) => console.error("Erro ao carregar dados:", err));
@@ -282,6 +283,14 @@ const Configuracoes = () => {
                       onClick={() => {
                         const novo = theme === "dark" ? "light" : "dark";
                         setTheme(novo);
+
+                        // Salva a preferência no backend
+                        setFormData((prev) => ({
+                          ...prev,
+                          tema: novo
+                        }));
+
+                        localStorage.setItem(`theme_user_${user.id}`, novo);
                       }}
                       aria-pressed={theme === "dark"}
                       className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${

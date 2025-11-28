@@ -41,6 +41,16 @@ const Login = () => {
       localStorage.setItem("userId", data.user.id);   // ✅ Salva o ID do usuário logado
       localStorage.setItem("role", data.user.role);   // ✅ Salva o papel (user/admin)
 
+      // ✅ Aplicar tema correto do usuário ao logar
+      const savedTheme = localStorage.getItem(`theme_user_${data.user.id}`);
+      const themeToApply = savedTheme === "dark" || savedTheme === "light"
+        ? savedTheme
+        : "light";
+
+      document.documentElement.setAttribute("data-theme", themeToApply);
+      document.documentElement.classList.toggle("dark", themeToApply === "dark");
+      
+
       // Redireciona
       navigate("/");
     } catch (err) {

@@ -136,6 +136,7 @@ router.put("/userss/:id", authenticateToken, async (req, res) => {
       senhaAtual,
       novaSenha,
       notifEmail,
+      tema,
       experiencia,
       instrumentosQtd,
       instrumento,
@@ -152,6 +153,14 @@ router.put("/userss/:id", authenticateToken, async (req, res) => {
         return res.status(400).json({ error: "Email já cadastrado" });
       }
       updateData.email = email;
+    }
+
+    // Validação do tema
+    if (typeof tema !== "undefined") {
+      if (!["light", "dark"].includes(tema)) {
+        return res.status(400).json({ error: "Tema inválido" });
+      }
+      updateData.tema = tema;
     }
 
     if (typeof notifEmail !== "undefined") updateData.notifEmail = notifEmail;
@@ -182,6 +191,7 @@ router.put("/userss/:id", authenticateToken, async (req, res) => {
         email: true,
         role: true,
         notifEmail: true,
+        tema: true,
         experiencia: true,
         instrumentosQtd: true,
         instrumento: true,

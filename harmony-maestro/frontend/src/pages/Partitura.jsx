@@ -8,6 +8,9 @@ import { GlobalWorkerOptions } from "pdfjs-dist";
 import pdfWorkerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
 
+import { useTheme } from "../context/ThemeContext"; // ajuste path se necessário
+
+
 
 export default function Partitura() {
   const [partituras, setPartituras] = useState([]);
@@ -26,6 +29,46 @@ export default function Partitura() {
 
 
   const navigate = useNavigate();
+
+  const { theme: themeFromContext } = useTheme();
+
+  useEffect(() => {
+    const apply = (t) => {
+      const html = document.documentElement;
+      html.setAttribute("data-theme", t);
+      if (t === "dark") html.classList.add("dark");
+      else html.classList.remove("dark");
+    };
+
+    // 1) Prioriza ThemeContext
+    if (themeFromContext === "dark" || themeFromContext === "light") {
+      apply(themeFromContext);
+      return;
+    }
+
+    // 2) Em seguida tenta per-user
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const userId = storedUser?.id || null;
+    const perUserKey = userId ? `theme_user_${userId}` : null;
+    const perUserTheme = perUserKey ? localStorage.getItem(perUserKey) : null;
+
+    const themeToApply = perUserTheme === "dark" || perUserTheme === "light"
+      ? perUserTheme
+      : "light";
+
+    apply(themeToApply);
+
+    // Reaplica caso o per-user key mude em outra aba
+    const onStorage = (e) => {
+      if (!userId) return;
+      if (e.key === perUserKey && (e.newValue === "dark" || e.newValue === "light")) {
+        apply(e.newValue);
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [themeFromContext]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");

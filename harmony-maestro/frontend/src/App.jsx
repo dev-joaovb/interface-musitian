@@ -29,6 +29,7 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+
 // 🌀 Loader global com Tailwind
 function Loader({ isVisible }) {
   return (
