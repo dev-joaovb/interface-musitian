@@ -20,8 +20,16 @@ const Series = () => {
   // const [confirmedSeries, setConfirmedSeries] = useState([]);
   const [confirmedSeries, setConfirmedSeries] = useState(() => {
   const saved = localStorage.getItem("confirmedSeries");
-  return saved ? JSON.parse(saved) : [];
-});
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // 📌 Estados do Chat
+  const [chatPopupOpen, setChatPopupOpen] = useState(false);
+  const [chatFloating, setChatFloating] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatName, setChatName] = useState("");
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [chatOptionsOpen, setChatOptionsOpen] = useState(false);
 
 
   // 📦 Carregar eventos do backend (somente futuros)
@@ -62,6 +70,7 @@ const Series = () => {
     };
 
     fetchEvents();
+
   }, []);
 
 
@@ -277,8 +286,328 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
   }
 };
 
+// 📦 carregar chat salvo (se houver)
+useEffect(() => {
+  const savedChatId = localStorage.getItem("currentChatId");
+  if (!savedChatId) return;
+
+  const loadChat = async () => {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`http://localhost:4000/api/series/chat/${savedChatId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      localStorage.removeItem("currentChatId");
+      return;
+    }
+
+    const chat = await res.json();
+    if (chat.status === "closed") {
+      localStorage.removeItem("currentChatId");
+      return;
+    }
+
+    // Restaurar chat
+    setCurrentChatId(chat.id);
+    setChatFloating(true);
+
+    // 🔥 Carregar mensagens do chat restaurado
+    const loadMessages = async () => {
+      const token = localStorage.getItem("token");
+      const r = await fetch(`http://localhost:4000/api/series/chat/${chat.id}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (r.ok) {
+        const msgs = await r.json();
+        setChatMessages(msgs);
+      }
+    };
+
+    loadMessages();
+  };
+
+  loadChat();
+}, []);
+
+// 📦 Criar chat do evento
+const [creatingChat, setCreatingChat] = useState(false);
+
+const handleCreateChat = async () => {
+  if (!chatName) return alert("Nome obrigatório!");
+
+  const token = localStorage.getItem("token");
+  // usa o ID do evento (conforme o backend agora espera)
+  const eventId = events[0]?.id;
+  if (!eventId) return alert("Nenhum evento disponível para criar chat.");
+
+  try {
+    setCreatingChat(true);
+
+    const res = await fetch(`http://localhost:4000/api/series/event/${eventId}/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ chatName }),
+    });
+
+    // tenta ler corpo mesmo quando não ok para mostrar erro detalhado
+    const text = await res.text();
+    let jsonBody;
+    try { jsonBody = JSON.parse(text); } catch { jsonBody = { raw: text }; }
+
+    if (!res.ok) {
+      console.error("Resposta com erro ao criar chat:", res.status, jsonBody);
+      // mostra mensagem mais clara pro usuário
+      const errorMessage = (jsonBody && (jsonBody.error || jsonBody.message)) || `Erro ao criar chat (status ${res.status})`;
+      throw new Error(errorMessage);
+    }
+
+    // sucesso
+    const data = typeof jsonBody === "object" ? jsonBody : JSON.parse(text);
+    setCurrentChatId(data.id);
+    localStorage.setItem("currentChatId", data.id);
+    setChatPopupOpen(true);
+    setChatOptionsOpen(false);
+    setChatFloating(false);
+    setChatMessages([]); // limpa mensagens locais caso existam
+    setMessage(""); // opcional limpar mensagem global de UI
+  } catch (err) {
+    console.error("Erro ao criar chat:", err);
+    alert(err.message || "Erro ao criar chat");
+  } finally {
+    setCreatingChat(false);
+  }
+};
+
+const handleSendMessage = async (text) => {
+  if (!text || !currentChatId) return;
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch(`http://localhost:4000/api/series/chat/${currentChatId}/message`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Erro ao enviar mensagem");
+    }
+
+    const msg = await res.json();
+    // atualiza chatMessages localmente
+    setChatMessages(prev => [...prev, { user: msg.userId ? (msg.userName || "Você") : "Você", text: msg.text }]);
+  } catch (err) {
+    console.error("Erro ao enviar mensagem:", err);
+    alert(err.message || "Erro ao enviar mensagem");
+  }
+};
+
+const [messageInput, setMessageInput] = useState("");
+
+const updateStatus = async (status) => {
+  const token = localStorage.getItem("token");
+  await fetch(`http://localhost:4000/api/series/chat/${currentChatId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+  alert(`Status do chat atualizado para: ${status}`);
+};
+
+const endChat = async () => {
+  if (!confirm("Deseja ENCERRAR o chat?")) return;
+
+  const token = localStorage.getItem("token");
+
+  await fetch(`http://localhost:4000/api/series/chat/${currentChatId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  alert("Chat encerrado.");
+  setChatPopupOpen(false);
+  setChatFloating(false);
+  localStorage.removeItem("currentChatId");
+  setCurrentChatId(null);
+};
+
   return (
+    
+
     <div className="p-6">
+
+      {chatFloating && (
+        <div
+          className="fixed bottom-6 right-6 bg-purple-600 text-white p-4 rounded-full shadow-lg cursor-pointer"
+          onClick={() => {
+            setChatPopupOpen(true);
+            setChatFloating(false);
+          }}
+        >
+          💬
+        </div>
+      )}
+
+      {/* Modal de criação de chat */}
+      {chatPopupOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white dark:bg-gray-800 w-[450px] h-[550px] rounded-xl shadow-xl flex flex-col">
+            
+            {/* Cabeçalho */}
+            <div className="p-4 border-b dark:border-gray-700 flex flex-col gap-3">
+
+              {/* Linha 1 — Título + Fechar */}
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold">{chatName || "Chat do Evento"}</h2>
+
+                <button
+                  onClick={() => {
+                    setChatPopupOpen(false);
+                    setChatFloating(true);
+                  }}
+                  className="text-red-500 font-bold text-lg"
+                >
+                  ✖
+                </button>
+              </div>
+
+              {/* Linha 2 — Controles do Admin */}
+              {role === "admin" && currentChatId && (
+                <div className="flex flex-wrap gap-2 justify-between">
+
+                  <button
+                    className="px-3 py-1 rounded bg-blue-600 text-white text-sm"
+                    onClick={() => updateStatus("frozen")}
+                  >
+                    Congelar
+                  </button>
+
+                  <button
+                    className="px-3 py-1 rounded bg-yellow-600 text-white text-sm"
+                    onClick={() => updateStatus("admin_only")}
+                  >
+                    Admin Only
+                  </button>
+
+                  <button
+                    className="px-3 py-1 rounded bg-green-600 text-white text-sm"
+                    onClick={() => updateStatus("active")}
+                  >
+                    Reativar
+                  </button>
+
+                  <button
+                    className="px-3 py-1 rounded bg-red-600 text-white text-sm"
+                    onClick={() => endChat()}
+                  >
+                    Encerrar
+                  </button>
+                </div>
+              )}
+
+            </div>
+
+            {/* Mensagens */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {chatMessages.map((m, i) => (
+                <div key={i} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                  <strong>{m.user}:</strong> {m.text}
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="p-4 border-t dark:border-gray-700 flex gap-2">
+              <input
+                type="text"
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSendMessage(messageInput);
+                    setMessageInput("");
+                  }
+                }}
+                placeholder="Digite..."
+                className="flex-1 border px-3 py-2 rounded dark:bg-gray-600 dark:text-white"
+              />
+
+              <button
+                onClick={() => {
+                  handleSendMessage(messageInput);
+                  setMessageInput("");
+                }}
+                className="bg-purple-600 text-white px-3 rounded"
+              >
+                Enviar
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Criar Chat */}
+      {chatOptionsOpen && (
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-96 shadow-xl">
+          <h2 className="text-xl font-semibold mb-4">Criar Chat</h2>
+
+          <input
+            type="text"
+            value={chatName}
+            onChange={(e) => setChatName(e.target.value)}
+            placeholder="Nome do chat"
+            className="w-full border px-3 py-2 rounded-lg dark:bg-gray-700 dark:text-white"
+          />
+
+          <div className="flex justify-end gap-3 mt-5">
+            <button
+              onClick={() => setChatOptionsOpen(false)}
+              className="px-4 py-2 rounded-lg bg-gray-400 text-white"
+            >
+              Cancelar
+            </button>
+
+            <button
+              onClick={handleCreateChat}
+              className="px-4 py-2 rounded-lg bg-purple-600 text-white"
+              disabled={creatingChat}
+            >
+              {creatingChat ? "Criando..." : "Criar"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+      
+      {/* Chat */}
+      {role === "admin" && events.length > 0 && (
+        <div className="mb-6">
+          <button
+            onClick={() => setChatOptionsOpen(true)}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700 transition"
+          >
+            Abrir Chat do Evento
+          </button>
+        </div>
+      )}
+
       <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
         Séries de Ensaios
       </h1>
@@ -574,6 +903,7 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

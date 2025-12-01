@@ -402,7 +402,7 @@ router.delete("/calendar/:id", authenticateToken, async (req, res) => {
 
 //       // (opcional) se quiser mais informação:
 //       if (orphanIds.length > 0) {
-//         console.log("🧹 IDs de séries removidas:", orphanIds);
+//         console.log("🧹 IDs de séries removidas:", orphanIds); 
 //       }
 //     }
 //   } catch (err) {
@@ -451,10 +451,12 @@ const deletePastEvents = async () => {
       });
       const orphanIds = orphanSeries.map((s) => s.id);
 
+      let deletedSeriesCount = 0;
       if (orphanIds.length > 0) {
         const result = await prisma.series.deleteMany({
           where: { id: { in: orphanIds } },
         });
+        deletedSeriesCount = result.count ?? 0;
         console.log(`🧹 ${result.count ?? 0} séries órfãs removidas automaticamente.`);
       }
     }

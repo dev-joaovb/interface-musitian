@@ -39,6 +39,7 @@ model User {
   attendance_report Attendance_report[]
   folder Folder[]
   folderPartitura FolderPartitura[]
+  chatMessage ChatMessage[]
 }
 
 model Invite {
@@ -67,6 +68,9 @@ model Event {
   userId      Int
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
+
+  chat Chat[]
+  chatMessage ChatMessage[]
 }
 
 model Past_events {
@@ -83,6 +87,30 @@ model Past_events {
 
   attendanceResumo Json?
   presencas Json?
+  chatLog Json?
+}
+
+model Chat {
+  id        Int           @id @default(autoincrement())
+  name      String
+  status    String        @default("active") // active | frozen | admin_only | closed
+  eventId   Int?
+  event     Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  chatId    Int
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  eventId   Int?
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  createdAt DateTime @default(now())
 }
 
 model Attendance_report {

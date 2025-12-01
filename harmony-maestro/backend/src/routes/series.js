@@ -416,4 +416,183 @@ router.delete("/series/:id", authenticateToken, async (req, res) => {
   }
 });
 
+
+// Espaço para chatLog
+
+// 📌 Buscar chat por ID
+router.get("/series/chat/:chatId", authenticateToken, async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const chat = await prisma.chat.findUnique({
+      where: { id: Number(chatId) }
+    });
+
+    if (!chat) return res.status(404).json({ error: "Chat não encontrado" });
+
+    res.json(chat);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao obter chat" });
+  }
+});
+
+
+// 📌 Criar chat para EVENTO
+router.post("/series/event/:eventId/chat", authenticateToken, async (req, res) => {
+  const { eventId } = req.params;
+  const { chatName } = req.body;
+
+  const chat = await prisma.chat.create({
+    data: {
+      name: chatName,
+      status: "active",
+      eventId: Number(eventId),   // 🔥 agora usa EVENTO
+    },
+  });
+
+  res.json(chat);
+});
+
+
+// 📌 Enviar mensagem no chat
+router.post("/series/chat/:chatId/message", authenticateToken, async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { text } = req.body;
+
+    const chat = await prisma.chat.findUnique({ where: { id: Number(chatId) } });
+
+    if (!chat || chat.status === "closed") {
+      return res.status(400).json({ error: "Chat encerrado" });
+    }
+
+    if (chat.status === "admin_only" && req.user.role !== "admin") {
+      return res.status(403).json({ error: "Somente admin pode enviar mensagens" });
+    }
+
+    const msg = await prisma.chatMessage.create({
+      data: {
+        chatId: Number(chatId), // mantém, pois chat ainda tem ID próprio
+        eventId: chat.eventId,  // 🔥 vincula ao evento
+        userId: req.user.id,
+        text,
+      },
+    });
+
+    res.json(msg);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao enviar mensagem" });
+  }
+});
+
+// 📌 Carregar mensagens de um chat
+router.get("/series/chat/:chatId/messages", authenticateToken, async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const messages = await prisma.chatMessage.findMany({
+      where: { chatId: Number(chatId) },
+      orderBy: { createdAt: "asc" },
+      include: { user: true }
+    });
+
+    const formatted = messages.map(m => ({
+      user: m.user?.name || "Usuário",
+      text: m.text,
+      timestamp: m.createdAt
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar mensagens" });
+  }
+});
+
+
+// 📌 Alterar status do chat
+router.patch("/series/chat/:chatId/status", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ error: "Apenas admins podem alterar o chat" });
+    }
+
+    const { chatId } = req.params;
+    const { status } = req.body; // active | frozen | admin_only
+
+    const updated = await prisma.chat.update({
+      where: { id: Number(chatId) },
+      data: { status },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao alterar status do chat" });
+  }
+});
+
+// 📌 Editar nome do chat
+router.patch("/series/chat/:chatId/name", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ error: "Apenas admins podem renomear o chat" });
+    }
+
+    const { chatId } = req.params;
+    const { name } = req.body;
+
+    const updated = await prisma.chat.update({
+      where: { id: Number(chatId) },
+      data: { name }
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao renomear chat" });
+  }
+});
+
+// 📌 Encerrar chat
+router.delete("/series/chat/:chatId", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ error: "Apenas admins podem encerrar o chat" });
+    }
+
+    const { chatId } = req.params;
+
+    const messages = await prisma.chatMessage.findMany({
+      where: { chatId: Number(chatId) },
+      include: { user: true }
+    });
+
+    const serializedLog = messages.map(m => ({
+      user: m.user.name,
+      text: m.text,
+      timestamp: m.createdAt
+    }));
+
+    const chat = await prisma.chat.findUnique({ where: { id: Number(chatId) } });
+
+    await prisma.past_events.update({
+      where: { id: chat.eventId },   // 🔥 agora usa evento
+      data: { chatLog: serializedLog }
+    });
+
+    await prisma.chat.update({
+      where: { id: Number(chatId) },
+      data: { status: "closed" }
+    });
+
+    res.json({ message: "Chat encerrado e salvo" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao encerrar chat" });
+  }
+});
+
 export default router;
