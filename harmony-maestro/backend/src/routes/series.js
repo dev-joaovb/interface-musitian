@@ -425,12 +425,26 @@ router.get("/series/chat/:chatId", authenticateToken, async (req, res) => {
     const { chatId } = req.params;
 
     const chat = await prisma.chat.findUnique({
-      where: { id: Number(chatId) }
+      where: { id: Number(chatId) },
+      include: {
+        event: {
+          select: {
+            title: true
+          }
+        }
+      }
     });
 
-    if (!chat) return res.status(404).json({ error: "Chat não encontrado" });
+    if (!chat) {
+      return res.status(404).json({ error: "Chat não encontrado" });
+    }
 
-    res.json(chat);
+    // Retorno padronizado com eventTitle
+    return res.json({
+      ...chat,
+      eventTitle: chat.event?.title || null
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao obter chat" });
@@ -499,6 +513,7 @@ router.get("/series/chat/:chatId/messages", authenticateToken, async (req, res) 
     });
 
     const formatted = messages.map(m => ({
+      userId: m.userId,
       user: m.user?.name || "Usuário",
       text: m.text,
       timestamp: m.createdAt

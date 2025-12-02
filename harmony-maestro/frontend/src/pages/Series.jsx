@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 const Series = () => {
   const [events, setEvents] = useState([]);
@@ -29,7 +29,9 @@ const Series = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatName, setChatName] = useState("");
   const [currentChatId, setCurrentChatId] = useState(null);
+  const [currentChatEventTitle, setCurrentChatEventTitle] = useState("");
   const [chatOptionsOpen, setChatOptionsOpen] = useState(false);
+  const userId = localStorage.getItem("userId");
 
 
   // 📦 Carregar eventos do backend (somente futuros)
@@ -286,6 +288,18 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
   }
 };
 
+// 📌 Chat do Evento
+
+// 👉 ref que aponta para o final da lista de mensagens
+const messagesEndRef = useRef(null);
+
+// 👉 função que faz o scroll automático
+const scrollToBottom = () => {
+  if (messagesEndRef.current) {
+    messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+  }
+};
+
 // 📦 carregar chat salvo (se houver)
 useEffect(() => {
   const savedChatId = localStorage.getItem("currentChatId");
@@ -311,6 +325,7 @@ useEffect(() => {
 
     // Restaurar chat
     setCurrentChatId(chat.id);
+    setCurrentChatEventTitle(chat.eventTitle || "Evento");
     setChatFloating(true);
 
     // 🔥 Carregar mensagens do chat restaurado
@@ -323,6 +338,7 @@ useEffect(() => {
       if (r.ok) {
         const msgs = await r.json();
         setChatMessages(msgs);
+        setTimeout(scrollToBottom, 50);
       }
     };
 
@@ -331,6 +347,7 @@ useEffect(() => {
 
   loadChat();
 }, []);
+
 
 // 📦 Criar chat do evento
 const [creatingChat, setCreatingChat] = useState(false);
@@ -369,6 +386,7 @@ const handleCreateChat = async () => {
 
     // sucesso
     const data = typeof jsonBody === "object" ? jsonBody : JSON.parse(text);
+    setCurrentChatEventTitle(events[0]?.title || "Evento");
     setCurrentChatId(data.id);
     localStorage.setItem("currentChatId", data.id);
     setChatPopupOpen(true);
@@ -405,7 +423,16 @@ const handleSendMessage = async (text) => {
 
     const msg = await res.json();
     // atualiza chatMessages localmente
-    setChatMessages(prev => [...prev, { user: msg.userId ? (msg.userName || "Você") : "Você", text: msg.text }]);
+    setChatMessages(prev => [
+      ...prev,
+      {
+        userId: msg.userId,
+        user: Number(msg.userId) === Number(userId) ? "Você" : msg.userName || "Usuário",
+        text: msg.text,
+      }
+    ]);
+
+    setTimeout(scrollToBottom, 50);
   } catch (err) {
     console.error("Erro ao enviar mensagem:", err);
     alert(err.message || "Erro ao enviar mensagem");
@@ -446,6 +473,15 @@ const endChat = async () => {
   setCurrentChatId(null);
 };
 
+
+// 🔤 Gera iniciais do nome (GA, GS etc.)
+const getInitials = (name) => {
+  if (!name) return "??";
+  const parts = name.trim().split(" ");
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+};
+
   return (
     
 
@@ -473,7 +509,7 @@ const endChat = async () => {
 
               {/* Linha 1 — Título + Fechar */}
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">{chatName || "Chat do Evento"}</h2>
+                <h2 className="text-lg font-semibold">{currentChatEventTitle || "Chat do Evento"}</h2>
 
                 <button
                   onClick={() => {
@@ -501,7 +537,7 @@ const endChat = async () => {
                     className="px-3 py-1 rounded bg-yellow-600 text-white text-sm"
                     onClick={() => updateStatus("admin_only")}
                   >
-                    Admin Only
+                    Somente Admin
                   </button>
 
                   <button
@@ -523,16 +559,34 @@ const endChat = async () => {
             </div>
 
             {/* Mensagens */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {chatMessages.map((m, i) => (
-                <div key={i} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg">
-                  <strong>{m.user}:</strong> {m.text}
-                </div>
-              ))}
+            <div className="flex flex-col gap-2 p-3 overflow-y-auto h-[350px]">
+
+              {chatMessages.map((msg, index) => {
+                const isMine = Number(localStorage.getItem("userId")) === msg.userId;
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex w-full ${isMine ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[70%] px-3 py-2 rounded-lg shadow 
+                        ${isMine ? "bg-blue-600 text-white" : "bg-gray-200 text-black"}`}
+                    >
+                      <p className="text-xs opacity-70">{isMine ? "Você" : msg.user}</p>
+                      <p className="text-sm">{msg.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* marcador para scroll automático */}
+              <div ref={messagesEndRef} />
+
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t dark:border-gray-700 flex gap-2">
+            <div className="p-4 border-t dark:border-gray-700 flex items-center gap-3">
               <input
                 type="text"
                 value={messageInput}
