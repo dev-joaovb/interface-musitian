@@ -1,6 +1,7 @@
 import React from "react";
 import { FiSearch, FiBell, FiMenu } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import LinkWithReload from "../layouts/LinkWithReload.jsx"
 
 export default function Topbar({ onMenuClick }) {
   const user = JSON.parse(localStorage.getItem("user")) || { name: "Usuário" };
@@ -40,10 +41,16 @@ export default function Topbar({ onMenuClick }) {
           </div> */}
         </div>
         <div className="flex items-center space-x-4">
-          <Link to="/notificacoes" className="relative text-gray-500 dark:text-gray-300 focus:outline-none">
-            <FiBell className="w-5 h-5" />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full"></span>
-          </Link>
+          <LinkWithReload 
+                to="/notificacoes" 
+                className="relative text-gray-500 dark:text-gray-300 focus:outline-none"
+            >
+                {/* Ícone de sino */}
+                <FiBell className="w-5 h-5" />
+                
+                {/* Indicador de notificação (a bolinha amarela) */}
+                <span className="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full"></span>
+            </LinkWithReload>
           <div className="flex items-center">
             <img
               className="w-8 h-8 rounded-full"

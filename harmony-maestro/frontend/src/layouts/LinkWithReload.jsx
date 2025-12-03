@@ -9,13 +9,8 @@ function LinkWithReload({ to, children, className, ...props }) {
   const handleClick = (event) => {
     // Previne a navegação padrão do React Router (SPA)
     event.preventDefault();
-
-    // 1. Ativa o Loader imediatamente antes da navegação
-    // Precisamos de uma maneira de acionar o loader global
     
-    // 💡 SOLUÇÃO RÁPIDA: Manipular o DOM para mostrar o loader antes do reload
-    // Isso é considerado 'hacky' no React, mas é o método mais eficaz
-    // para mostrar um loader antes de um hard reload.
+    // 1. Mostra o loader global (se existir)
     const loaderElement = document.getElementById('global-loader-portal');
     if (loaderElement) {
         // Encontra e ativa o loader global (se ele existir fora do React Root)
@@ -29,10 +24,6 @@ function LinkWithReload({ to, children, className, ...props }) {
       window.location.href = to;
     }, LOADER_DURATION_MS);
 
-    // 💡 Para garantir que o usuário veja o loader antes do delay, 
-    // você precisa ter certeza que o loader está visível.
-    // O ideal seria usar um Context global para controlar o `isVisible` do Loader,
-    // mas para manter o código mínimo, confie no `setTimeout` para o efeito visual.
   };
 
   return (

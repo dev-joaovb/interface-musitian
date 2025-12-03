@@ -24,6 +24,8 @@ import {
   CartesianGrid
 } from "recharts";
 
+import LinkWithReload from '../layouts/LinkWithReload.jsx';
+
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -103,7 +105,19 @@ useEffect(() => {
     .catch((err) => console.error("Erro ao buscar eventos realizados:", err));
 }, [anoSelecionado]);
 
+// Constante de duração do loader (deve ser a mesma usada no LinkWithReload e no Logout)
+const LOADER_DURATION_MS = 400; 
 
+// Função para navegação com loader e reload
+const navigateWithReload = (path) => {
+    // 1. Ativa o loader visualmente (por meio de um Context/Portal ou confiando no delay)
+    
+    // 2. Aguarda o tempo do Loader
+    setTimeout(() => {
+        // 3. Força a navegação com RELOAD (F5)
+        window.location.href = path;
+    }, LOADER_DURATION_MS);
+};
 
   if (!data) return <p>Carregando...</p>;
 
@@ -213,7 +227,7 @@ useEffect(() => {
                   </span>
                   <button
                     className="p-1 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
-                    onClick={() => (window.location.href = `/series`)}
+                    onClick={() => navigateWithReload('/series')}
                   >
                     <FiChevronRight className="w-5 h-5" />
                   </button>
@@ -225,49 +239,51 @@ useEffect(() => {
       </div>
 
       <div className="px-6 py-3 border-t border-gray-200 dark:border-gray-700 text-center">
-        <Link
-          to="/series"
-          className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300"
-        >
-          Ver todos os ensaios
-        </Link>
+        <LinkWithReload
+                to="/series"
+                className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300">
+              Ver todos os ensaios
+          </LinkWithReload>
       </div>
     </div>
 
     {/* Quick Actions */}
     {role === "admin" ? (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Link
-          to="/calendar"
-          className="flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        <LinkWithReload
+            to="/calendar"
+            className="flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
-          <FiPlus className="w-5 h-5 text-teal-600 mr-2" />
-          <span className="font-medium text-gray-700 dark:text-gray-200">Novo Evento</span>
-        </Link>
+            <FiPlus className="w-5 h-5 text-teal-600 mr-2" />
+            <span className="font-medium text-gray-700 dark:text-gray-200">Novo Evento</span>
+        </LinkWithReload>
 
-        <Link
-          to="/biblioteca"
-          className="flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        {/* Link: Upload de Música (para /biblioteca) */}
+        <LinkWithReload
+            to="/biblioteca"
+            className="flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
-          <FiUpload className="w-5 h-5 text-teal-600 mr-2" />
-          <span className="font-medium text-gray-700 dark:text-gray-200">Upload de Música</span>
-        </Link>
+            <FiUpload className="w-5 h-5 text-teal-600 mr-2" />
+            <span className="font-medium text-gray-700 dark:text-gray-200">Upload de Música</span>
+        </LinkWithReload>
 
-        <Link
-          to="/series"
-          className="flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        {/* Link: Nova Série (para /series) */}
+        <LinkWithReload
+            to="/series"
+            className="flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
-          <FiLayers className="w-5 h-5 text-teal-600 mr-2" />
-          <span className="font-medium text-gray-700 dark:text-gray-200">Nova Série</span>
-        </Link>
+            <FiLayers className="w-5 h-5 text-teal-600 mr-2" />
+            <span className="font-medium text-gray-700 dark:text-gray-200">Nova Série</span>
+        </LinkWithReload>
 
-        <Link
-          to="/membros"
-          className="flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        {/* Link: Adicionar Membro (para /membros) */}
+        <LinkWithReload
+            to="/membros"
+            className="flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
-          <FiUserPlus className="w-5 h-5 text-teal-600 mr-2" />
-          <span className="font-medium text-gray-700 dark:text-gray-200">Adicionar Membro</span>
-        </Link>
+            <FiUserPlus className="w-5 h-5 text-teal-600 mr-2" />
+            <span className="font-medium text-gray-700 dark:text-gray-200">Adicionar Membro</span>
+        </LinkWithReload>
       </div>
     ) : (
       <div className="p-4 mb-6 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 text-center">

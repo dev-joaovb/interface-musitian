@@ -125,7 +125,7 @@ const Login = () => {
                 to="/register"
                 className="text-teal-600 hover:underline">
               Cadastre-se
-            </LinkWithReload>
+          </LinkWithReload>
         </p>
       </div>
     </div>
