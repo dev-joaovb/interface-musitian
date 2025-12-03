@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { UserPlus } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import LinkWithReload from '../layouts/LinkWithReload.jsx';
 
 
 const Register = () => {
@@ -52,6 +53,8 @@ const Register = () => {
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  const LOADER_DURATION_MS = 400;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -77,7 +80,11 @@ const Register = () => {
       // localStorage.setItem("user", JSON.stringify(data.user));
 
       setMessage("✅ Cadastro realizado com sucesso! Redirecionando para o login...");
-      setTimeout(() => navigate("/login"), 1500);
+      //setTimeout(() => navigate("/login"), 1500);
+      setTimeout(() => {
+        // Redireciona para /login forçando o reload (F5)
+        window.location.href = "/login";
+    }, LOADER_DURATION_MS);
     } catch (err) {
       setMessage(err.message);
     }
@@ -322,9 +329,11 @@ const Register = () => {
 
         <p className="text-sm text-gray-500 mt-6 text-center">
           Já tem uma conta?{" "}
-          <Link to="/login" className="text-teal-600 hover:underline">
-            Entrar
-          </Link>
+          <LinkWithReload
+                to="/login"
+                className="text-teal-600 hover:underline">
+              Fazer Login
+            </LinkWithReload>
         </p>
       </div>
     </div>

@@ -419,17 +419,81 @@ router.delete("/series/:id", authenticateToken, async (req, res) => {
 
 // Espaço para chatLog
 
-// 📌 Buscar chat por ID
+// 📌 Listar todos os chats (acessíveis pelo grupo do admin)
+router.get("/series/chats", authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { receivedInvites: true },
+    });
+
+    // 1. 🔍 Identificar o ownerId (Admin)
+    let ownerId = user.id; // Padrão: ele mesmo (Admin)
+
+    if (user.role === "user") {
+      // Se for "user", procura o convite aceito e ativo mais recente
+      const acceptedInvite = user.receivedInvites.find(
+        (i) => i.status === "accepted" && i.active
+      );
+      if (acceptedInvite) {
+        ownerId = acceptedInvite.inviterId; // Usa o ID do convidante (Admin)
+      } else {
+        // Se for "user" mas não tiver convite aceito/ativo, não deveria ver nada
+        return res.json({ chats: [], role: user.role, ownerId: null });
+      }
+    }
+
+    // 2. 🧱 Buscar Eventos e seus Chats, filtrando pelo ownerId
+    // Buscamos os Chats que pertencem a Eventos criados por este ownerId
+    const chats = await prisma.chat.findMany({
+      where: {
+        // O evento (Event) deve pertencer ao ownerId
+        event: {
+          userId: ownerId,
+        },
+        // Opcional: Filtra apenas chats ativos/abertos para visualização na listagem
+        status: {
+            not: "closed"
+        }
+      },
+      include: {
+        event: {
+          select: {
+            title: true,
+            date: true
+          }
+        },
+        _count: {
+            select: { messages: true }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json({
+      chats: chats,
+      role: user.role,
+      ownerId: ownerId,
+    });
+  } catch (err) {
+    console.error("Erro ao listar chats:", err);
+    res.status(500).json({ error: "Erro ao listar chats" });
+  }
+});
+
+// 📌 Buscar chat por ID (COM VERIFICAÇÃO DE PERMISSÃO)
 router.get("/series/chat/:chatId", authenticateToken, async (req, res) => {
   try {
     const { chatId } = req.params;
 
+    // 1. 🔍 Obter o Chat e a informação do criador do Evento (userId)
     const chat = await prisma.chat.findUnique({
       where: { id: Number(chatId) },
       include: {
         event: {
           select: {
-            title: true
+            title: true,
+            userId: true, // Adiciona o userId do evento (Admin/ownerId)
           }
         }
       }
@@ -439,7 +503,30 @@ router.get("/series/chat/:chatId", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Chat não encontrado" });
     }
 
-    // Retorno padronizado com eventTitle
+    const eventOwnerId = chat.event?.userId;
+
+    // 2. 👤 Identificar o ownerId do usuário logado (baseado no convite)
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { receivedInvites: true },
+    });
+    
+    let userOwnerId = user.id; // Padrão: ele mesmo (Admin)
+
+    if (user.role === "user") {
+      const acceptedInvite = user.receivedInvites.find(
+        (i) => i.status === "accepted" && i.active
+      );
+      if (acceptedInvite) userOwnerId = acceptedInvite.inviterId;
+    }
+
+    // 3. ⚖️ Verificar Permissão
+    // Se o ownerId do usuário logado for diferente do userId do evento, nega o acesso.
+    if (userOwnerId !== eventOwnerId) {
+      return res.status(403).json({ error: "Acesso negado. O chat pertence a outro grupo" });
+    }
+    
+    // 4. ✅ Retorno (Permitido)
     return res.json({
       ...chat,
       eventTitle: chat.event?.title || null
@@ -451,21 +538,133 @@ router.get("/series/chat/:chatId", authenticateToken, async (req, res) => {
   }
 });
 
+// 🔒 Verificar se já existe chat ativo para o evento (COM VERIFICAÇÃO DE PERMISSÃO)
+router.get("/series/event/:eventId/chat/check", authenticateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
 
-// 📌 Criar chat para EVENTO
+    // 1. 🗃️ Obter o Evento e o seu criador (Admin)
+    const event = await prisma.event.findUnique({
+        where: { id: Number(eventId) },
+        select: { userId: true }
+    });
+
+    if (!event) {
+        return res.status(404).json({ exists: false, error: "Evento não encontrado" });
+    }
+    const eventOwnerId = event.userId;
+
+    // 2. 👤 Identificar o ownerId do usuário logado
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { receivedInvites: true },
+    });
+    
+    let userOwnerId = user.id;
+    if (user.role === "user") {
+        const acceptedInvite = user.receivedInvites.find(
+            (i) => i.status === "accepted" && i.active
+        );
+        if (acceptedInvite) userOwnerId = acceptedInvite.inviterId;
+    }
+
+    // 3. ⚖️ VERIFICAR PERMISSÃO
+    if (userOwnerId !== eventOwnerId) {
+        // Retorna como se o chat não existisse ou o evento não existisse para não vazar informação.
+        return res.status(403).json({ exists: false, error: "Acesso negado. O evento pertence a outro grupo" });
+    }
+
+    // 4. ❗ Procura o chat ativo (somente se a permissão foi concedida)
+    const existing = await prisma.chat.findFirst({
+      where: {
+        eventId: Number(eventId),
+        status: "active"
+      }
+    });
+
+    if (existing) {
+      return res.json({
+        exists: true,
+        chatId: existing.id,
+        name: existing.name
+      });
+    }
+
+    return res.json({ exists: false });
+  } catch (err) {
+    console.error("Erro ao verificar chat existente", err);
+    res.status(500).json({ error: "Erro ao verificar chat existente" });
+  }
+});
+
+
+// 📌 Criar chat para EVENTO (COM VERIFICAÇÃO DE PERMISSÃO)
 router.post("/series/event/:eventId/chat", authenticateToken, async (req, res) => {
   const { eventId } = req.params;
   const { chatName } = req.body;
 
-  const chat = await prisma.chat.create({
-    data: {
-      name: chatName,
-      status: "active",
-      eventId: Number(eventId),   // 🔥 agora usa EVENTO
-    },
-  });
+  try {
+    // 1. 🔍 Identificar o ownerId do usuário logado (usando a mesma lógica)
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { receivedInvites: true },
+    });
+    
+    let userOwnerId = user.id;
+    if (user.role === "user") {
+        const acceptedInvite = user.receivedInvites.find(
+            (i) => i.status === "accepted" && i.active
+        );
+        if (acceptedInvite) userOwnerId = acceptedInvite.inviterId;
+    }
+    
+    // 2. 🗃️ Obter o Evento e o seu criador (Admin)
+    const event = await prisma.event.findUnique({
+        where: { id: Number(eventId) },
+        select: { userId: true } // userId é o ownerId do evento
+    });
 
-  res.json(chat);
+    if (!event) {
+        return res.status(404).json({ error: "Evento não encontrado" });
+    }
+
+    const eventOwnerId = event.userId;
+
+    // 3. ⚖️ VERIFICAR PERMISSÃO DE CRIAÇÃO
+    if (userOwnerId !== eventOwnerId) {
+        return res.status(403).json({ error: "Acesso negado. O evento pertence a outro grupo" });
+    }
+
+    // 4. ❗ Impedir criar outro chat ACTIVE
+    const existing = await prisma.chat.findFirst({
+      where: {
+        eventId: Number(eventId),
+        status: "active"
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        error: "Este evento já possui um chat ativo",
+        chatId: existing.id
+      });
+    }
+
+    // 5. ❗ Criar chat normalmente
+    const chat = await prisma.chat.create({
+      data: {
+        name: chatName,
+        status: "active",
+        eventId: Number(eventId),
+      },
+    });
+
+    res.json(chat);
+
+  } catch (err) {
+    console.error("Erro ao criar chat", err);
+    res.status(500).json({ error: "Erro ao criar chat" });
+  }
 });
 
 

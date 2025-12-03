@@ -356,13 +356,29 @@ const handleCreateChat = async () => {
   if (!chatName) return alert("Nome obrigatório!");
 
   const token = localStorage.getItem("token");
-  // usa o ID do evento (conforme o backend agora espera)
   const eventId = events[0]?.id;
-  if (!eventId) return alert("Nenhum evento disponível para criar chat.");
+  if (!eventId) return alert("Nenhum evento disponível");
+
+  setCreatingChat(true);
 
   try {
-    setCreatingChat(true);
+    // 🔥 Verificar se já existe chat ativo
+    const check = await fetch(`http://localhost:4000/api/series/event/${eventId}/chat/check`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    // TRATAMENTO DE ERRO AQUI: Se a Conta C tentar acessar o evento de João, ela será bloqueada.
+    if (check.status === 403) {
+        return alert("Acesso negado. Você não tem permissão para criar chat neste evento.");
+    }
+    
+    const exists = await check.json();
 
+    if (exists.exists) {
+      return alert(`Já existe um chat ativo: ${exists.name}`);
+    }
+
+    // 🔥 Criar chat normalmente
     const res = await fetch(`http://localhost:4000/api/series/event/${eventId}/chat`, {
       method: "POST",
       headers: {
@@ -372,31 +388,24 @@ const handleCreateChat = async () => {
       body: JSON.stringify({ chatName }),
     });
 
-    // tenta ler corpo mesmo quando não ok para mostrar erro detalhado
-    const text = await res.text();
-    let jsonBody;
-    try { jsonBody = JSON.parse(text); } catch { jsonBody = { raw: text }; }
-
-    if (!res.ok) {
-      console.error("Resposta com erro ao criar chat:", res.status, jsonBody);
-      // mostra mensagem mais clara pro usuário
-      const errorMessage = (jsonBody && (jsonBody.error || jsonBody.message)) || `Erro ao criar chat (status ${res.status})`;
-      throw new Error(errorMessage);
+    if (res.status === 403) { // TRATAMENTO DE ERRO NA CRIAÇÃO
+        return alert("Acesso negado. Você não tem permissão para criar chat neste evento.");
     }
 
-    // sucesso
-    const data = typeof jsonBody === "object" ? jsonBody : JSON.parse(text);
-    setCurrentChatEventTitle(events[0]?.title || "Evento");
+    if (!res.ok) throw new Error("Erro ao criar chat");
+
+    const data = await res.json();
+
     setCurrentChatId(data.id);
+    setCurrentChatEventTitle(events[0]?.title || "Evento");
     localStorage.setItem("currentChatId", data.id);
     setChatPopupOpen(true);
-    setChatOptionsOpen(false);
-    setChatFloating(false);
-    setChatMessages([]); // limpa mensagens locais caso existam
-    setMessage(""); // opcional limpar mensagem global de UI
+    
+    // Opcional: Recarregar a lista de chats para refletir a nova criação
+    // fetchChats(); // Se você extrair a função fetchChats para fora do useEffect
+
   } catch (err) {
-    console.error("Erro ao criar chat:", err);
-    alert(err.message || "Erro ao criar chat");
+    alert(err.message);
   } finally {
     setCreatingChat(false);
   }
@@ -441,6 +450,35 @@ const handleSendMessage = async (text) => {
 
 const [messageInput, setMessageInput] = useState("");
 
+// 📦 Novos estados para guardar os chats acessíveis
+const [accessibleChats, setAccessibleChats] = useState([]);
+const [loadingChats, setLoadingChats] = useState(true); // Opcional, para indicar carregamento
+
+// 📦 Carregar lista de chats acessíveis
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  const fetchChats = async () => {
+    try {
+      setLoadingChats(true);
+      const res = await fetch(`http://localhost:4000/api/series/chats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        // data.chats contém apenas os chats onde o Evento pertence ao ownerId do usuário logado
+        setAccessibleChats(data.chats);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar lista de chats:", err);
+    } finally {
+      setLoadingChats(false);
+    }
+  };
+
+  fetchChats();
+}, [role]);
+
 const updateStatus = async (status) => {
   const token = localStorage.getItem("token");
   await fetch(`http://localhost:4000/api/series/chat/${currentChatId}/status`, {
@@ -481,6 +519,17 @@ const getInitials = (name) => {
   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
   return (parts[0][0] + parts[1][0]).toUpperCase();
 };
+
+// 1. Identifica o Evento principal
+const firstEventId = events[0]?.id;
+
+// 2. Verifica se o chat do evento principal (events[0]) está na lista de chats acessíveis
+// e se ele está ativo/congelado (não 'closed')
+const activeChatForEvent = accessibleChats.find(chat => chat.eventId === firstEventId && chat.status !== 'closed');
+
+// 3. Define as permissões
+const canCreateChat = (role === "admin" && firstEventId && !activeChatForEvent);
+const canOpenChat = (firstEventId && activeChatForEvent); // User ou Admin podem abrir
 
   return (
     
@@ -651,16 +700,43 @@ const getInitials = (name) => {
     )}
       
       {/* Chat */}
-      {role === "admin" && events.length > 0 && (
-        <div className="mb-6">
-          <button
-            onClick={() => setChatOptionsOpen(true)}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700 transition"
-          >
-            Abrir Chat do Evento
-          </button>
-        </div>
-      )}
+      {/* Criar Chat / Abrir Chat - Novo Bloco de Controle de Visibilidade */}
+    {(canCreateChat || canOpenChat) && (
+      <div className="mb-6">
+
+          {/* Botão para CRIAR NOVO CHAT (Se for Admin do evento e não tiver chat ativo) */}
+          {canCreateChat && (
+              <button
+                  onClick={() => setChatOptionsOpen(true)}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700 transition"
+              >
+                  Criar Chat para {events[0]?.title}
+              </button>
+          )}
+
+          {/* Botão para ENTRAR NO CHAT EXISTENTE */}
+          {canOpenChat && (
+              <button
+                  onClick={() => {
+                      if (activeChatForEvent) {
+                          // Simula a restauração de chat (usa o ID encontrado na lista)
+                          setCurrentChatId(activeChatForEvent.id);
+                          setCurrentChatEventTitle(activeChatForEvent.event.title || "Evento");
+                          localStorage.setItem("currentChatId", activeChatForEvent.id);
+                          setChatPopupOpen(true);
+                          
+                          // Disparar o carregamento das mensagens (chamar loadMessages)
+                          // Se você não quiser refatorar loadMessages, pode disparar um recarregamento da tela para forçar o useEffect
+                          // Ou idealmente, chamar uma função que carrega as mensagens diretamente aqui.
+                      }
+                  }}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition"
+              >
+                  Abrir Chat Ativo
+              </button>
+          )}
+      </div>
+    )}
 
       <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
         Séries de Ensaios

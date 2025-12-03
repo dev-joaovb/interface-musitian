@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { LogIn } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import LinkWithReload from '../layouts/LinkWithReload.jsx';
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,6 +18,8 @@ const Login = () => {
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const LOADER_DURATION_MS = 400;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,7 +56,11 @@ const Login = () => {
       
 
       // Redireciona
-      navigate("/");
+      //navigate("/");
+      setTimeout(() => {
+        // Redireciona para /login forçando o reload (F5)
+        window.location.href = "/";
+    }, LOADER_DURATION_MS);
     } catch (err) {
       setMessage(err.message);
     }
@@ -113,9 +121,11 @@ const Login = () => {
 
         <p className="text-sm text-gray-500 mt-6 text-center">
           Ainda não tem conta?{" "}
-          <Link to="/register" className="text-teal-600 hover:underline">
-            Cadastre-se
-          </Link>
+          <LinkWithReload
+                to="/register"
+                className="text-teal-600 hover:underline">
+              Cadastre-se
+            </LinkWithReload>
         </p>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import LinkWithReload from '../layouts/LinkWithReload.jsx';
 import {
   FiMusic,
   FiHome,
@@ -17,6 +18,8 @@ export default function Sidebar({ mobile = false, onClose }) {
 
   const user = JSON.parse(localStorage.getItem("user")) || { name: "Usuário", email: "sememail@exemplo.com" };
 
+  const LOADER_DURATION_MS = 400;
+
   const handleLogout = () => {
     localStorage.removeItem("userToken");
     localStorage.removeItem("user");
@@ -26,8 +29,21 @@ export default function Sidebar({ mobile = false, onClose }) {
     localStorage.removeItem("role");            // ✅ remove papel (user/admin)
     localStorage.removeItem("confirmedSeries"); // ✅ limpa bloqueios de presença
 
-    navigate("/login");
+    //navigate("/login");
+    setTimeout(() => {
+        // Redireciona para /login forçando o reload (F5)
+        window.location.href = "/login";
+    }, LOADER_DURATION_MS);
   };
+
+  const isActiveLink = (path) => window.location.pathname === path;
+
+    // Classe base para o link (mantida a sua estrutura)
+    const baseClasses = "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200";
+
+    // Classes de estado (ativos vs. inativos)
+    const activeClasses = 'bg-teal-600 text-white';
+    const inactiveClasses = 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700';
 
   const classes = mobile
     ? "md:hidden w-64 h-full bg-white border-r border-gray-200 fixed left-0 top-0"
@@ -57,97 +73,75 @@ export default function Sidebar({ mobile = false, onClose }) {
       <div className="flex flex-col flex-grow px-4 py-4 overflow-y-auto">
         <nav className="flex-1 space-y-2">
 
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              `flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
-                isActive
-                  ? 'bg-teal-600 text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`
-            }
-          >
-            <FiHome className="w-4 h-4 mr-3" /> Dashboard
-          </NavLink>
+            {/* NavItem: Dashboard */}
+            <LinkWithReload
+                to="/"
+                className={`${baseClasses} ${
+                    isActiveLink('/') ? activeClasses : inactiveClasses
+                }`}
+            >
+                <FiHome className="w-4 h-4 mr-3" /> Dashboard
+            </LinkWithReload>
 
-          <NavLink
-            to="/calendar"
-            className={({ isActive }) =>
-              `flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
-                isActive
-                  ? 'bg-teal-600 text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`
-            }
-          >
-            <FiCalendar className="w-4 h-4 mr-3" /> Calendário
-          </NavLink>
+            {/* NavItem: Calendário */}
+            <LinkWithReload
+                to="/calendar"
+                className={`${baseClasses} ${
+                    isActiveLink('/calendar') ? activeClasses : inactiveClasses
+                }`}
+            >
+                <FiCalendar className="w-4 h-4 mr-3" /> Calendário
+            </LinkWithReload>
 
-          <NavLink
-            to="/biblioteca"
-            className={({ isActive }) =>
-              `flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
-                isActive
-                  ? 'bg-teal-600 text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`
-            }
-          >
-            <FiFileText className="w-4 h-4 mr-3" /> Biblioteca
-          </NavLink>
+            {/* NavItem: Biblioteca */}
+            <LinkWithReload
+                to="/biblioteca"
+                className={`${baseClasses} ${
+                    isActiveLink('/biblioteca') ? activeClasses : inactiveClasses
+                }`}
+            >
+                <FiFileText className="w-4 h-4 mr-3" /> Biblioteca
+            </LinkWithReload>
 
-          <NavLink
-            to="/series"
-            className={({ isActive }) =>
-              `flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
-                isActive
-                  ? 'bg-teal-600 text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`
-            }
-          >
-            <FiLayers className="w-4 h-4 mr-3" /> Séries de Ensaio
-          </NavLink>
+            {/* NavItem: Séries de Ensaio */}
+            <LinkWithReload
+                to="/series"
+                className={`${baseClasses} ${
+                    isActiveLink('/series') ? activeClasses : inactiveClasses
+                }`}
+            >
+                <FiLayers className="w-4 h-4 mr-3" /> Séries de Ensaio
+            </LinkWithReload>
 
-          <NavLink
-            to="/membros"
-            className={({ isActive }) =>
-              `flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
-                isActive
-                  ? 'bg-teal-600 text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`
-            }
-          >
-            <FiUsers className="w-4 h-4 mr-3" /> Membros
-          </NavLink>
+            {/* NavItem: Membros */}
+            <LinkWithReload
+                to="/membros"
+                className={`${baseClasses} ${
+                    isActiveLink('/membros') ? activeClasses : inactiveClasses
+                }`}
+            >
+                <FiUsers className="w-4 h-4 mr-3" /> Membros
+            </LinkWithReload>
 
-          <NavLink
-            to="/notificacoes"
-            className={({ isActive }) =>
-              `flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
-                isActive
-                  ? 'bg-teal-600 text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`
-            }
-          >
-            <FiBell className="w-4 h-4 mr-3" /> Notificações
-          </NavLink>
+            {/* NavItem: Notificações */}
+            <LinkWithReload
+                to="/notificacoes"
+                className={`${baseClasses} ${
+                    isActiveLink('/notificacoes') ? activeClasses : inactiveClasses
+                }`}
+            >
+                <FiBell className="w-4 h-4 mr-3" /> Notificações
+            </LinkWithReload>
 
-          <NavLink
-            to="/configuracoes"
-            className={({ isActive }) =>
-              `flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
-                isActive
-                  ? 'bg-teal-600 text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`
-            }
-          >
-            <FiSettings className="w-4 h-4 mr-3" /> Configurações
-          </NavLink>
+            {/* NavItem: Configurações */}
+            <LinkWithReload
+                to="/configuracoes"
+                className={`${baseClasses} ${
+                    isActiveLink('/configuracoes') ? activeClasses : inactiveClasses
+                }`}
+            >
+                <FiSettings className="w-4 h-4 mr-3" /> Configurações
+            </LinkWithReload>
 
         </nav>
 

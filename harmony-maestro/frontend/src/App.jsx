@@ -30,8 +30,8 @@ function ProtectedRoute({ children }) {
 }
 
 
-// 🌀 Loader global com Tailwind
-function Loader({ isVisible }) {
+// 🌀 Loader global com Tailwind (Movido para o topo do App, sempre pronto)
+function GlobalLoader({ isVisible }) {
   return (
     <div
       className={`fixed inset-0 flex items-center justify-center 
@@ -47,98 +47,24 @@ function Loader({ isVisible }) {
   );
 }
 
-// 🎯 PageTransitionWrapper (robusto, usa rAF + transitionDelay para evitar "flash")
-function PageTransitionWrapper({ children }) {
-  const location = useLocation();
-
-  // controla o overlay loader
-  const [showLoader, setShowLoader] = useState(true);
-  // controla quando iniciar a animação do conteúdo (fade-in)
-  const [playPageAnimation, setPlayPageAnimation] = useState(false);
-  // força o conteúdo a estar "montado" e pronto para animar
-  const [contentReady, setContentReady] = useState(false);
-
-  useEffect(() => {
-    // cada troca de rota reinicia o fluxo
-    setShowLoader(true);
-    setPlayPageAnimation(false);
-    setContentReady(false);
-
-    // 1) deixamos o conteúdo montar primeiro (pequeno delay de tick)
-    // isso garante que o DOM do children exista antes de animar
-    const mountTick = requestAnimationFrame(() => {
-      // dá uma micro-pausa para o browser pintar o conteúdo
-      setContentReady(true);
-    });
-
-    // 2) tempo mínimo que o loader ficará visível (ms)
-    // ajuste 600 para ficar mais longo, 350 para mais curto
-    const LOADER_MIN_MS = 900;
-
-    // timer para iniciar fade-out do loader (reduzir sua opacidade)
-    const t1 = setTimeout(() => {
-      setShowLoader(false); // o Loader aplica transition-opacity
-    }, LOADER_MIN_MS);
-
-    // 3) depois do loader começar a sumir, TOQUE no page animation
-    // adicionamos pequeno delay para garantir que o loader já esteja desaparecendo
-    const t2 = setTimeout(() => {
-      // espera o próximo frame para garantir paint antes da transição do conteúdo
-      requestAnimationFrame(() => {
-        setPlayPageAnimation(true);
-      });
-    }, LOADER_MIN_MS + 80); // 80ms depois do início do fade-out do loader
-
-    return () => {
-      cancelAnimationFrame(mountTick);
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [location.pathname]);
-
-  /**
-   * Observações sobre as classes/estilos:
-   * - O conteúdo fica sempre montado (evita pulo).
-   * - Enquanto `contentReady` for false, aplicamos uma invisibilidade imediata (sem transição).
-   * - Quando contentReady true e playPageAnimation false, deixamos opacity 0 (pronto para transição).
-   * - Quando playPageAnimation true, aplicamos transition de opacidade+translate para um fade suave.
-   *
-   * Usamos estilos inline para controlar transitionDelay/Duration com precisão.
-   */
-
-  const transitionDuration = 700; // ms
-  const transitionEasing = "cubic-bezier(.2,.8,.2,1)";
-
-  // estilos dinâmicos do container que envolve as páginas
-  const pageStyle = {
-    transition: `opacity ${transitionDuration}ms ${transitionEasing}, transform ${transitionDuration}ms ${transitionEasing}`,
-    // Se página ainda não está pronta para transição, escondemos sem transição
-    opacity: contentReady ? (playPageAnimation ? 1 : 0) : 0,
-    transform: contentReady ? (playPageAnimation ? "translateY(0px)" : "translateY(6px)") : "translateY(6px)",
-    // força o browser a otimizar a animação
-    willChange: "opacity, transform",
-    // evita interação enquanto anima (o loader pode ainda estar sobrepondo)
-    pointerEvents: showLoader ? "none" : "auto",
-  };
-
-  return (
-    <>
-      {/* Loader permanece no topo e controla seu próprio fade via classes */}
-      <Loader isVisible={showLoader} />
-
-      {/* Conteúdo: sempre montado, animado via style */}
-      <div style={pageStyle}>
-        {children}
-      </div>
-    </>
-  );
-}
-
 export default function App() {
+
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // Simula o tempo mínimo de visualização do loader na carga inicial (pós-reload)
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialLoading(false);
+    }, 400); // 500ms é um bom tempo de "transição de entrada"
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <ThemeProvider>
+
+      <GlobalLoader isVisible={initialLoading} />
+
       <Router>
-        <PageTransitionWrapper>
           <Routes>
             {/* Rotas públicas */}
             <Route path="/login" element={<Login />} />
@@ -149,6 +75,8 @@ export default function App() {
               path="/*"
               element={
                 <ProtectedRoute>
+                  {/* 💡 O conteúdo da página aparece somente após o loader inicial sumir */}
+                  <div className={`transition-opacity duration-400 ${initialLoading ? 'opacity-0' : 'opacity-100'}`}></div>
                   <MainLayout>
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
@@ -166,7 +94,6 @@ export default function App() {
               }
             />
           </Routes>
-        </PageTransitionWrapper>
       </Router>
     </ThemeProvider>
   );
