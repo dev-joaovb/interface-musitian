@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { FiSend, FiMessageCircle, FiMessageSquare} from "react-icons/fi";
 
 const Series = () => {
   const [events, setEvents] = useState([]);
@@ -32,6 +33,10 @@ const Series = () => {
   const [currentChatEventTitle, setCurrentChatEventTitle] = useState("");
   const [chatOptionsOpen, setChatOptionsOpen] = useState(false);
   const userId = localStorage.getItem("userId");
+  // ✅ Contador de mensagens não lidas
+  const [unreadCount, setUnreadCount] = useState(0);
+  // ✅ Timestamp da última mensagem enviada pelo usuário logado
+  const [lastUserMessageTimestamp, setLastUserMessageTimestamp] = useState(null);
 
 
   // 📦 Carregar eventos do backend (somente futuros)
@@ -293,6 +298,9 @@ const handleConfirmacaoAdmin = async (serieId, userId, confirmacao) => {
 // 👉 ref que aponta para o final da lista de mensagens
 const messagesEndRef = useRef(null);
 
+// ✅ Mapeamento de refs para as mensagens do usuário (para scroll)
+const messageRefs = useRef({});
+
 // 👉 função que faz o scroll automático
 const scrollToBottom = () => {
   if (messagesEndRef.current) {
@@ -328,15 +336,29 @@ useEffect(() => {
     setCurrentChatEventTitle(chat.eventTitle || "Evento");
     setChatFloating(true);
 
+    setUnreadCount(0); // Zera o contador de não lidas ao restaurar o chat
+
+    // ✅ Buscar o timestamp da última mensagem do usuário
+    const lastMsgRes = await fetch(`http://localhost:4000/api/series/chat/${savedChatId}/last-message-by-user`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    const lastMsgData = lastMsgRes.ok ? await lastMsgRes.json() : { lastCreatedAt: null };
+    
+    // Salva o timestamp para ser usado no scroll após o carregamento das mensagens
+    setLastUserMessageTimestamp(lastMsgData.lastCreatedAt);
+
+
     // 🔥 Carregar mensagens do chat restaurado
-    const loadMessages = async () => {
+    const loadMessages = async (targetTimestamp) => {
       const token = localStorage.getItem("token");
       const r = await fetch(`http://localhost:4000/api/series/chat/${chat.id}/messages`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (r.ok) {
-        const msgs = await r.json();
+      //  const msgs = await r.json();
+        const data = await r.json();
+        const msgs = data.messages || []; // Garante que é um array vazio se não houver 'messages'
         setChatMessages(msgs);
         setTimeout(scrollToBottom, 50);
       }
@@ -347,6 +369,76 @@ useEffect(() => {
 
   loadChat();
 }, []);
+
+// 📦 useEffect para executar o scroll APÓS a abertura e o carregamento do timestamp
+useEffect(() => {
+    // 1. Só tenta rolar se o chat estiver ABERTO
+    if (chatPopupOpen) {
+        // 2. Tenta rolar para a última mensagem do usuário (se houver)
+        if (lastUserMessageTimestamp) {
+            // Um pequeno delay garante que o DOM esteja completamente atualizado (todas as refs criadas)
+            const delay = setTimeout(() => {
+                const targetRef = messageRefs.current[lastUserMessageTimestamp];
+
+                if (targetRef) {
+                    // console.log("Rolando para:", lastUserMessageTimestamp); // Debug: Verifique se o timestamp é válido
+                    targetRef.scrollIntoView({ behavior: "smooth", block: "center" });
+                } else {
+                    // Se a ref não foi encontrada, rola para o final (última mensagem geral)
+                    scrollToBottom(); 
+                }
+            }, 100); 
+
+            return () => clearTimeout(delay); // Limpeza do timeout
+
+        } else if (chatMessages.length > 0) {
+            // 3. Se o usuário nunca mandou mensagem, rola para o final do chat (UX padrão)
+            // Se o chat for muito longo, ele aparecerá no topo (isso é ajustado pelo scrollToBottom)
+            scrollToBottom();
+        }
+    }
+}, [chatPopupOpen, lastUserMessageTimestamp, chatMessages.length]);
+
+
+// 📦 Polling para Notificações de Novas Mensagens
+useEffect(() => {
+  if (!currentChatId || chatPopupOpen) {
+    // Não faz polling se o chat não estiver ativo ou se o pop-up estiver aberto
+    return;
+  }
+
+  const checkNewMessages = async () => {
+    const token = localStorage.getItem("token");
+    const r = await fetch(`http://localhost:4000/api/series/chat/${currentChatId}/messages`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (r.ok) {
+      const { messages, lastMessage } = await r.json();
+      
+      if (lastMessage) {
+        const lastSenderId = Number(lastMessage.userId);
+        const currentUserId = Number(userId);
+
+        if (lastSenderId !== currentUserId) {
+          // Se a última mensagem NÃO foi enviada por mim, incrementa
+          
+          setUnreadCount(1); // Simplesmente indica que há uma nova mensagem
+        } else if (lastSenderId === currentUserId) {
+          // Se a última mensagem foi enviada por mim, não há nada não lido
+          setUnreadCount(0);
+        }
+      }
+    }
+  };
+
+  // Configura o intervalo de Polling (a cada 5 segundos)
+  const intervalId = setInterval(checkNewMessages, 5000); 
+
+  // Função de limpeza do intervalo
+  return () => clearInterval(intervalId);
+
+}, [currentChatId, chatPopupOpen, userId]); // Depende do chat ativo e se o pop-up está aberto
 
 
 // 📦 Criar chat do evento
@@ -367,7 +459,7 @@ const handleCreateChat = async () => {
       headers: { Authorization: `Bearer ${token}` }
     });
     
-    // TRATAMENTO DE ERRO AQUI: Se a Conta C tentar acessar o evento de João, ela será bloqueada.
+    // TRATAMENTO DE ERRO NA VERIFICAÇÃO
     if (check.status === 403) {
         return alert("Acesso negado. Você não tem permissão para criar chat neste evento.");
     }
@@ -411,6 +503,7 @@ const handleCreateChat = async () => {
   }
 };
 
+
 const handleSendMessage = async (text) => {
   if (!text || !currentChatId) return;
   const token = localStorage.getItem("token");
@@ -441,7 +534,9 @@ const handleSendMessage = async (text) => {
       }
     ]);
 
-    setTimeout(scrollToBottom, 50);
+    setUnreadCount(0); // Zera o contador de não lidas ao enviar mensagem
+
+    setTimeout(scrollToBottom, 50); // faz scroll após adicionar a mensagem
   } catch (err) {
     console.error("Erro ao enviar mensagem:", err);
     alert(err.message || "Erro ao enviar mensagem");
@@ -538,27 +633,38 @@ const canOpenChat = (firstEventId && activeChatForEvent); // User ou Admin podem
 
       {chatFloating && (
         <div
-          className="fixed bottom-6 right-6 bg-purple-600 text-white p-4 rounded-full shadow-lg cursor-pointer"
+          // Cor alterada para verde (bg-green-600) com hover (hover:bg-green-700)
+          className="fixed bottom-20 right-15 bg-green-600 text-white p-4 rounded-full shadow-lg cursor-pointer z-40 transition-colors duration-200 hover:bg-green-700"
           onClick={() => {
             setChatPopupOpen(true);
             setChatFloating(false);
+
+            setUnreadCount(0); // Zera o contador ao abrir o chat
           }}
         >
-          💬
+          <FiMessageCircle className="w-6 h-6 transform rotate-360" />
+
+          {/* INDICADOR DE MENSAGEM NÃO LIDA */}
+          {unreadCount > 0 && (
+            <div className="absolute top-0 right-0 transform translate-x-1 -translate-y-1 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full border-2 border-white dark:border-gray-800 shadow-md">
+              {/* Se você quiser mostrar o número, use {unreadCount}, caso contrário, deixe vazio ou use um ponto: */}
+              ! 
+            </div>
+          )}
         </div>
       )}
 
       {/* Modal de criação de chat */}
       {chatPopupOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white dark:bg-gray-800 w-[450px] h-[550px] rounded-xl shadow-xl flex flex-col">
+          <div className="bg-white dark:bg-gray-800 w-[450px] h-[650px] rounded-xl shadow-xl flex flex-col">
             
             {/* Cabeçalho */}
             <div className="p-4 border-b dark:border-gray-700 flex flex-col gap-3">
 
               {/* Linha 1 — Título + Fechar */}
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">{currentChatEventTitle || "Chat do Evento"}</h2>
+                <h2 className="text-lg font-bold dark:text-gray-200 mb-2">{currentChatEventTitle || "Chat do Evento"}</h2>
 
                 <button
                   onClick={() => {
@@ -608,10 +714,13 @@ const canOpenChat = (firstEventId && activeChatForEvent); // User ou Admin podem
             </div>
 
             {/* Mensagens */}
-            <div className="flex flex-col gap-2 p-3 overflow-y-auto h-[350px]">
+            <div className="flex flex-col gap-2 p-3 overflow-y-auto flex-1 dark:bg-gray-900">
 
               {chatMessages.map((msg, index) => {
                 const isMine = Number(localStorage.getItem("userId")) === msg.userId;
+
+                // ✅ Identifica se é a mensagem alvo para o scroll
+                const isTargetMessage = isMine && msg.timestamp === lastUserMessageTimestamp;
 
                 return (
                   <div
@@ -619,11 +728,16 @@ const canOpenChat = (firstEventId && activeChatForEvent); // User ou Admin podem
                     className={`flex w-full ${isMine ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[70%] px-3 py-2 rounded-lg shadow 
-                        ${isMine ? "bg-blue-600 text-white" : "bg-gray-200 text-black"}`}
+                      // ✅ REFERÊNCIA NA DIV DO BALÃO DA MENSAGEM
+                      ref={isTargetMessage ? (el) => messageRefs.current[msg.timestamp] = el : null}
+                      className={`max-w-[80%] px-4 py-3 rounded-xl shadow 
+                        ${isMine 
+                            ? "bg-green-600 text-white rounded-br-none" // Balão próprio: Verde (Rounded nos cantos, exceto inferior direito)
+                            : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white rounded-bl-none" // Balão alheio: Cinza (Rounded nos cantos, exceto inferior esquerdo)
+                        }`}
                     >
-                      <p className="text-xs opacity-70">{isMine ? "Você" : msg.user}</p>
-                      <p className="text-sm">{msg.text}</p>
+                      <p className="text-xs font-bold mb-1">{isMine ? "Você" : msg.user}</p>
+                      <p className="text-sm break-words">{msg.text}</p>
                     </div>
                   </div>
                 );
@@ -635,29 +749,31 @@ const canOpenChat = (firstEventId && activeChatForEvent); // User ou Admin podem
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t dark:border-gray-700 flex items-center gap-3">
+            <div className="p-4 border-t dark:border-gray-700 flex items-end gap-3 bg-white dark:bg-gray-800">
               <input
                 type="text"
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === "Enter" && messageInput.trim()) {
                     handleSendMessage(messageInput);
                     setMessageInput("");
                   }
                 }}
                 placeholder="Digite..."
-                className="flex-1 border px-3 py-2 rounded dark:bg-gray-600 dark:text-white"
+                className="flex-1 border-2 border-gray-300 dark:border-gray-600 px-4 py-3 rounded-full dark:bg-gray-700 dark:text-white focus:outline-none focus:border-green-500"
               />
 
               <button
                 onClick={() => {
+                  if (messageInput.trim())
                   handleSendMessage(messageInput);
                   setMessageInput("");
                 }}
-                className="bg-purple-600 text-white px-3 rounded"
+                className="bg-green-600 text-white p-3 rounded-full shadow-lg flex items-center justify-center h-12 w-12 hover:bg-green-700 transition disabled:opacity-50"
+                disabled={!messageInput.trim()} // Desabilita se o campo estiver vazio
               >
-                Enviar
+                <FiSend className="w-8 h-8 transform rotate-45 mr-1" />
               </button>
             </div>
 

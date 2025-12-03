@@ -718,13 +718,52 @@ router.get("/series/chat/:chatId/messages", authenticateToken, async (req, res) 
       timestamp: m.createdAt
     }));
 
-    res.json(formatted);
+    const lastMessage = await prisma.chatMessage.findFirst({
+        where: { chatId: Number(chatId) },
+        orderBy: { createdAt: "desc" },
+        select: { 
+            userId: true,
+            createdAt: true // para garantir que não é null
+        }
+    });
+
+    res.json({
+        messages: formatted,
+        lastMessage: lastMessage 
+            ? { userId: lastMessage.userId, timestamp: lastMessage.createdAt }
+            : null
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao carregar mensagens" });
   }
 });
 
+// 📌 Buscar a última mensagem enviada pelo usuário logado no chat
+router.get("/series/chat/:chatId/last-message-by-user", authenticateToken, async (req, res) => {
+    try {
+        const { chatId } = req.params;
+        const currentUserId = req.user.id;
+
+        const lastMessage = await prisma.chatMessage.findFirst({
+            where: { 
+                chatId: Number(chatId),
+                userId: currentUserId // Filtra apenas pelas mensagens do usuário logado
+            },
+            orderBy: { createdAt: "desc" }, // A mais recente
+            select: { createdAt: true } // Queremos apenas o timestamp
+        });
+
+        if (!lastMessage) {
+            return res.json({ lastCreatedAt: null });
+        }
+
+        res.json({ lastCreatedAt: lastMessage.createdAt });
+    } catch (err) {
+        console.error("Erro ao buscar última mensagem do usuário:", err);
+        res.status(500).json({ error: "Erro interno" });
+    }
+});
 
 // 📌 Alterar status do chat
 router.patch("/series/chat/:chatId/status", authenticateToken, async (req, res) => {
