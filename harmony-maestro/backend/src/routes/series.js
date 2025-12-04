@@ -676,10 +676,18 @@ router.post("/series/chat/:chatId/message", authenticateToken, async (req, res) 
 
     const chat = await prisma.chat.findUnique({ where: { id: Number(chatId) } });
 
+    // Verifica se o chat existe e está ativo
     if (!chat || chat.status === "closed") {
       return res.status(400).json({ error: "Chat encerrado" });
     }
 
+    //Lógica de bloqueio baseada no status
+    if (chat.status === "frozen") {
+        // Chat Congelado: Ninguém (nem admin, nem user) pode mandar mensagem.
+        return res.status(403).json({ error: "Chat congelado pelo administrador" });
+    }
+
+    // Chat Somente Admin: Apenas admins podem enviar mensagens.
     if (chat.status === "admin_only" && req.user.role !== "admin") {
       return res.status(403).json({ error: "Somente admin pode enviar mensagens" });
     }
@@ -810,7 +818,7 @@ router.patch("/series/chat/:chatId/name", authenticateToken, async (req, res) =>
 });
 
 // 📌 Encerrar chat
-router.delete("/series/chat/:chatId", authenticateToken, async (req, res) => {
+router.patch("/series/chat/:chatId", authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({ error: "Apenas admins podem encerrar o chat" });
@@ -818,30 +826,14 @@ router.delete("/series/chat/:chatId", authenticateToken, async (req, res) => {
 
     const { chatId } = req.params;
 
-    const messages = await prisma.chatMessage.findMany({
-      where: { chatId: Number(chatId) },
-      include: { user: true }
-    });
-
-    const serializedLog = messages.map(m => ({
-      user: m.user.name,
-      text: m.text,
-      timestamp: m.createdAt
-    }));
-
-    const chat = await prisma.chat.findUnique({ where: { id: Number(chatId) } });
-
-    await prisma.past_events.update({
-      where: { id: chat.eventId },   // 🔥 agora usa evento
-      data: { chatLog: serializedLog }
-    });
-
+    // 1. Apenas muda o status para 'closed' (encerrado).
+    // O log de mensagens será movido para Past_events pela rotina noturna no calendar.js
     await prisma.chat.update({
       where: { id: Number(chatId) },
       data: { status: "closed" }
     });
 
-    res.json({ message: "Chat encerrado e salvo" });
+    res.json({ message: "Chat encerrado (status: closed). O log será salvo quando o evento for arquivado." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao encerrar chat" });

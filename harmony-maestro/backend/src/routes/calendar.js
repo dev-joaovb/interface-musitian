@@ -39,6 +39,7 @@ async function moveEventToPast(event) {
 
     let attendanceResumo = null;
     let presencasDetalhadas = [];
+    let chatLog = null;
 
     try {
       // 🔎 1) Busca séries diretamente vinculadas pelo campo seriesId
@@ -121,8 +122,34 @@ const seriesList = Array.from(seriesMap.values());
         // deixa como array vazio e resumo nulo — você pode preferir salvar [] em vez de null
         attendanceResumo = attendanceResumo || null;
       }
+
+      // 🔹 Busca Chat associado e Mensagens
+      const chat = await prisma.chat.findFirst({
+        where: { eventId: event.id, status: "closed" }, // Apenas chats associados e fechados
+        select: { id: true }
+      });
+
+      if (chat) {
+        const messages = await prisma.chatMessage.findMany({
+          where: { chatId: chat.id },
+          orderBy: { createdAt: 'asc' },
+          include: { user: { select: { name: true } } } // Inclui nome para o log
+        });
+
+        // Formata o log de mensagens
+        chatLog = messages.map(m => ({
+          user: m.user?.name || "Usuário Removido",
+          text: m.text,
+          timestamp: m.createdAt.toISOString() // Garante formato JSON compatível
+        }));
+        
+        // 🧹 Opcional: Limpar mensagens e chat agora que o log foi salvo
+        await prisma.chatMessage.deleteMany({ where: { chatId: chat.id } });
+        await prisma.chat.delete({ where: { id: chat.id } });
+        console.log(`🧹 Chat (id=${chat.id}) e mensagens limpas após salvar log.`);
+      }
     } catch (err) {
-      console.warn("⚠️ Erro ao coletar dados de presença:", err);
+      console.warn("⚠️ Erro ao coletar dados de presença ou CHAT:", err);
       // continua e cria o past_events mesmo sem os detalhes
     }
 
@@ -139,6 +166,7 @@ const seriesList = Array.from(seriesMap.values());
         // campos Json — certifique-se de que Past_events.schema contém esses campos
         attendanceResumo,
         presencas: presencasDetalhadas,
+        chatLog,
       },
     });
 

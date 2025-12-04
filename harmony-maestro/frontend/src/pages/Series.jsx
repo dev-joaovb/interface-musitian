@@ -33,6 +33,7 @@ const Series = () => {
   const [currentChatEventTitle, setCurrentChatEventTitle] = useState("");
   const [chatOptionsOpen, setChatOptionsOpen] = useState(false);
   const userId = localStorage.getItem("userId");
+  const [chatStatus, setChatStatus] = useState("active");
   // ✅ Contador de mensagens não lidas
   const [unreadCount, setUnreadCount] = useState(0);
   // ✅ Timestamp da última mensagem enviada pelo usuário logado
@@ -335,6 +336,7 @@ useEffect(() => {
     setCurrentChatId(chat.id);
     setCurrentChatEventTitle(chat.eventTitle || "Evento");
     setChatFloating(true);
+    setChatStatus(chat.status);
 
     setUnreadCount(0); // Zera o contador de não lidas ao restaurar o chat
 
@@ -360,7 +362,7 @@ useEffect(() => {
         const data = await r.json();
         const msgs = data.messages || []; // Garante que é um array vazio se não houver 'messages'
         setChatMessages(msgs);
-        setTimeout(scrollToBottom, 50);
+        //setTimeout(scrollToBottom, 50);
       }
     };
 
@@ -531,12 +533,15 @@ const handleSendMessage = async (text) => {
         userId: msg.userId,
         user: Number(msg.userId) === Number(userId) ? "Você" : msg.userName || "Usuário",
         text: msg.text,
+        timestamp: msg.createdAt,
       }
     ]);
 
     setUnreadCount(0); // Zera o contador de não lidas ao enviar mensagem
 
     setTimeout(scrollToBottom, 50); // faz scroll após adicionar a mensagem
+
+    setLastUserMessageTimestamp(msg.createdAt); // Atualiza o timestamp da última mensagem do usuário
   } catch (err) {
     console.error("Erro ao enviar mensagem:", err);
     alert(err.message || "Erro ao enviar mensagem");
@@ -574,6 +579,8 @@ useEffect(() => {
   fetchChats();
 }, [role]);
 
+
+// 📦 Atualizar status do chat (admin)
 const updateStatus = async (status) => {
   const token = localStorage.getItem("token");
   await fetch(`http://localhost:4000/api/series/chat/${currentChatId}/status`, {
@@ -584,35 +591,88 @@ const updateStatus = async (status) => {
     },
     body: JSON.stringify({ status }),
   });
-  alert(`Status do chat atualizado para: ${status}`);
+
+  setChatStatus(status);
+  
+  // ✅ MELHORIA: Feedback mais claro
+  let statusMessage;
+  switch (status) {
+      case 'frozen':
+          statusMessage = "Congelado";
+          break;
+      case 'admin_only':
+          statusMessage = "Apenas Admin";
+          break;
+      case 'active':
+          statusMessage = "Reativado (Ativo)";
+          break;
+      default:
+          statusMessage = status;
+  }
+  
+  alert(`Status do chat atualizado para: ${statusMessage}`);
 };
 
+// 📦 Encerrar chat (admin)
 const endChat = async () => {
-  if (!confirm("Deseja ENCERRAR o chat?")) return;
+  if (!confirm("Deseja ENCERRAR o chat? O chat será inativado e o log salvo automaticamente no fim do evento.")) return; // ✅ Texto revisado
 
   const token = localStorage.getItem("token");
 
   await fetch(`http://localhost:4000/api/series/chat/${currentChatId}`, {
-    method: "DELETE",
+    method: "PATCH", // Esta rota agora apenas muda o status para "closed"
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
-  alert("Chat encerrado.");
+  alert("Chat inativado com sucesso. O log será arquivado com o evento."); // ✅ Texto revisado
   setChatPopupOpen(false);
   setChatFloating(false);
   localStorage.removeItem("currentChatId");
   setCurrentChatId(null);
 };
 
+// 🔍 Verifica o estado de bloqueio
+const isBlocked = chatStatus === 'frozen' || (chatStatus === 'admin_only' && role !== 'admin');
+const isAdmin = role === 'admin';
+
+let inputPlaceholder = "Digite...";
+let disableInput = false;
+
+if (chatStatus === 'frozen') {
+    inputPlaceholder = "Chat Congelado pelo Administrador";
+    disableInput = true;
+} else if (chatStatus === 'admin_only' && !isAdmin) {
+    inputPlaceholder = "Apenas Administradores podem enviar mensagens";
+    disableInput = true;
+} else if (chatStatus === 'closed') {
+    inputPlaceholder = "Chat Encerrado";
+    disableInput = true;
+}
+
 
 // 🔤 Gera iniciais do nome (GA, GS etc.)
-const getInitials = (name) => {
-  if (!name) return "??";
-  const parts = name.trim().split(" ");
-  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
+// const getInitials = (name) => {
+//   if (!name) return "??";
+//   const parts = name.trim().split(" ");
+//   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+//   return (parts[0][0] + parts[1][0]).toUpperCase();
+// };
+
+// 📅 Função para formatar o timestamp para HH:mm
+const formatTime = (timestamp) => {
+  if (!timestamp) return "";
+  
+  // Cria um objeto Date. Se for string do BD (ISO 8601), o new Date() funciona.
+  const date = new Date(timestamp); 
+  
+  // Usa Intl.DateTimeFormat para garantir o formato e fuso horário corretos (opcionalmente)
+  return new Intl.DateTimeFormat('pt-BR', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    timeZone: 'America/Sao_Paulo' // Ajuste para o fuso horário desejado
+  }).format(date);
 };
 
 // 1. Identifica o Evento principal
@@ -736,8 +796,23 @@ const canOpenChat = (firstEventId && activeChatForEvent); // User ou Admin podem
                             : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white rounded-bl-none" // Balão alheio: Cinza (Rounded nos cantos, exceto inferior esquerdo)
                         }`}
                     >
+
+                      {/* Nome do Usuário */}
                       <p className="text-xs font-bold mb-1">{isMine ? "Você" : msg.user}</p>
-                      <p className="text-sm break-words">{msg.text}</p>
+                      
+
+                      {/* Texto e Horário */}
+                      <div className="flex justify-between items-end gap-3">
+                          
+                          <p className="text-sm break-words leading-snug">{msg.text}</p>
+
+                          {/* ⏰ NOVO: Horário da Mensagem */}
+                          <p 
+                            className={`text-[10px] whitespace-nowrap opacity-75 ${isMine ? 'text-gray-200' : 'text-gray-500 dark:text-gray-400'}`}
+                          >
+                            {formatTime(msg.timestamp)}
+                          </p>
+                      </div>
                     </div>
                   </div>
                 );
@@ -755,13 +830,14 @@ const canOpenChat = (firstEventId && activeChatForEvent); // User ou Admin podem
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && messageInput.trim()) {
+                  if (e.key === "Enter" && messageInput.trim() && !disableInput) { // ✅ Verifica se está desabilitado
                     handleSendMessage(messageInput);
                     setMessageInput("");
                   }
                 }}
-                placeholder="Digite..."
+                placeholder={inputPlaceholder} // ✅ Placeholder dinâmico
                 className="flex-1 border-2 border-gray-300 dark:border-gray-600 px-4 py-3 rounded-full dark:bg-gray-700 dark:text-white focus:outline-none focus:border-green-500"
+                disabled={disableInput} // ✅ Desabilita input
               />
 
               <button
@@ -771,7 +847,7 @@ const canOpenChat = (firstEventId && activeChatForEvent); // User ou Admin podem
                   setMessageInput("");
                 }}
                 className="bg-green-600 text-white p-3 rounded-full shadow-lg flex items-center justify-center h-12 w-12 hover:bg-green-700 transition disabled:opacity-50"
-                disabled={!messageInput.trim()} // Desabilita se o campo estiver vazio
+                disabled={!messageInput.trim() || disableInput} // Desabilita se o campo estiver vazio
               >
                 <FiSend className="w-8 h-8 transform rotate-45 mr-1" />
               </button>
