@@ -4,6 +4,53 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 
+// 📅 Função para formatar o timestamp para DD/MM/YYYY HH:mm:ss (para o CSV)
+const formatDateTime = (timestamp) => {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  return new Intl.DateTimeFormat('pt-BR', { 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit', 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit',
+    timeZone: 'America/Sao_Paulo'
+  }).format(date);
+};
+
+// 📥 Função para gerar e iniciar o download do CSV do ChatLog
+const downloadChatLogCSV = (log, eventTitle) => {
+    if (!log || log.length === 0) {
+        alert("O log do chat está vazio ou não está disponível.");
+        return;
+    }
+
+    // Define cabeçalho CSV
+    const header = ["Data/Hora", "Usuário", "Mensagem"];
+    
+    // Mapear dados e garantir que aspas duplas sejam escapadas
+    const csvData = log.map(msg => [
+        `"${formatDateTime(msg.timestamp)}"`, // Usa a função de formatação
+        `"${msg.user.replace(/"/g, '""')}"`, 
+        `"${msg.text.replace(/"/g, '""')}"`
+    ].join(';')); // Usa ponto e vírgula para compatibilidade PT-BR
+
+    // Juntar cabeçalho e dados
+    const csvContent = [header.join(';'), ...csvData].join('\n');
+    
+    // Criar o Blob e o link de download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `chatlog_${eventTitle.replace(/\s/g, '_')}.csv`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 export default function RelatorioEventos() {
   const { year, month } = useParams();
   const [eventos, setEventos] = useState([]);
@@ -411,6 +458,21 @@ const gerarPDF = () => {
                 <p className="mt-4 text-sm text-gray-500 dark:text-gray-400 italic">
                   Nenhuma série registrada para este evento.
                 </p>
+              )}
+
+              {/* 💬 Link/Botão de Download do ChatLog */}
+              {Array.isArray(ev.chatLog) && ev.chatLog.length > 0 && (
+                <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-between items-center">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    Log de Conversa do Chat
+                  </h3>
+                  <button
+                    onClick={() => downloadChatLogCSV(ev.chatLog, ev.title)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-1.5 rounded-lg shadow transition-all duration-200"
+                  >
+                    📥 Baixar ChatLog Relatório (CSV)
+                  </button>
+                </div>
               )}
             </div>
           );
