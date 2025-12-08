@@ -48,6 +48,7 @@ router.get("/group/:inviterId", async (req, res) => {
             id: true,
             name: true,
             email: true,
+            profilePicture: true,
           },
         },
       },
@@ -81,7 +82,7 @@ router.get("/groupinfo/:userId", async (req, res) => {
       },
       include: {
         inviter: {
-          select: { id: true, name: true, email: true },
+          select: { id: true, name: true, email: true, profilePicture: true},
         },
       },
     });
@@ -98,7 +99,7 @@ router.get("/groupinfo/:userId", async (req, res) => {
       },
       include: {
         invitee: {
-          select: { id: true, name: true, email: true },
+          select: { id: true, name: true, email: true, profilePicture: true},
         },
       },
     });
@@ -125,7 +126,7 @@ router.get("/users/search", async (req, res) => {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true,  profilePicture: true },
     });
 
     if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
@@ -154,6 +155,7 @@ router.get("/users/details/:id", async (req, res) => {
         idade: true,
         disponibilidade: true,
         celular: true,
+        profilePicture: true,
       },
     });
 
@@ -403,6 +405,43 @@ router.post("/notifications", async (req, res) => {
     res.status(500).json({ error: "Erro interno ao criar notificação" });
   }
 
+});
+
+router.get("/notifications/unread-count/:userId", async (req, res) => {
+  const { userId } = req.params;
+  const numericUserId = Number(userId); // ✅ CORREÇÃO: Converte a string em número
+
+  try {
+    // 1. Contar convites pendentes
+    const convitesPendentes = await prisma.invite.count({
+      where: {
+        inviteeId: numericUserId, // 🎉 Usa o ID numérico
+        status: "pending",
+      },
+    });
+
+    // 2. Contar notificações recentes (ex: últimas 24h)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const notificacoesRecentes = await prisma.notification.count({
+      where: {
+        userId: numericUserId, // 🎉 Usa o ID numérico
+        date: {
+          gt: twentyFourHoursAgo,
+        },
+      },
+    });
+
+    res.json({
+      totalUnread: convitesPendentes + notificacoesRecentes,
+      convites: convitesPendentes,
+      notificacoes: notificacoesRecentes,
+    });
+  } catch (err) {
+    console.error("Erro ao buscar contagem de notificações:", err);
+    // 💡 Adicione o erro do console para debug
+    res.status(500).json({ error: "Erro interno ao buscar contagem de notificações" });
+  }
 });
 
 // 🧹 Limpar notificações antigas (mais de 24h) - executa a cada hora

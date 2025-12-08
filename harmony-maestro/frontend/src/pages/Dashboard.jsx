@@ -334,46 +334,52 @@ const navigateWithReload = (path) => {
 
     {/* Gráfico de Faltas */}
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
-      <div className="flex justify-center gap-4 mb-4">
-        <select
-          className="border px-3 py-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-          value={ano_Selecionado}
-          onChange={(e) => setAno_Selecionado(e.target.value)}
-        >
-          {Array.from({ length: 5 }).map((_, i) => {
-            const year = new Date().getFullYear() - i;
-            return (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            );
-          })}
-        </select>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          Médias de Presença e Faltas — {mesSelecionado}/{ano_Selecionado}
+        </h2>
 
-        <select
-          className="border px-3 py-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-          value={mesSelecionado}
-          onChange={(e) => setMesSelecionado(e.target.value)}
-        >
-          {[
-            "01 - Janeiro",
-            "02 - Fevereiro",
-            "03 - Março",
-            "04 - Abril",
-            "05 - Maio",
-            "06 - Junho",
-            "07 - Julho",
-            "08 - Agosto",
-            "09 - Setembro",
-            "10 - Outubro",
-            "11 - Novembro",
-            "12 - Dezembro",
-          ].map((m, index) => (
-            <option key={index} value={index + 1}>
-              {m}
-            </option>
-          ))}
-        </select>
+        <div className="flex space-x-4">
+          <select
+            className="border px-3 py-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+            value={ano_Selecionado}
+            onChange={(e) => setAno_Selecionado(e.target.value)}
+          >
+            {Array.from({ length: 5 }).map((_, i) => {
+              const year = new Date().getFullYear() - i;
+              return (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              );
+            })}
+          </select>
+
+          <select
+            className="border px-3 py-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+            value={mesSelecionado}
+            onChange={(e) => setMesSelecionado(e.target.value)}
+          >
+            {[
+              "01 - Janeiro",
+              "02 - Fevereiro",
+              "03 - Março",
+              "04 - Abril",
+              "05 - Maio",
+              "06 - Junho",
+              "07 - Julho",
+              "08 - Agosto",
+              "09 - Setembro",
+              "10 - Outubro",
+              "11 - Novembro",
+              "12 - Dezembro",
+            ].map((m, index) => (
+              <option key={index} value={index + 1}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {dadosFaltas && (

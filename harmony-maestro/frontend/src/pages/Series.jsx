@@ -327,10 +327,10 @@ useEffect(() => {
     }
 
     const chat = await res.json();
-    if (chat.status === "closed") {
-      localStorage.removeItem("currentChatId");
-      return;
-    }
+    // if (chat.status === "closed") {
+    //   localStorage.removeItem("currentChatId");
+    //   return;
+    // }
 
     // Restaurar chat
     setCurrentChatId(chat.id);
@@ -494,6 +494,9 @@ const handleCreateChat = async () => {
     setCurrentChatEventTitle(events[0]?.title || "Evento");
     localStorage.setItem("currentChatId", data.id);
     setChatPopupOpen(true);
+
+    // Fechar o modal de criação
+    setChatOptionsOpen(false);
     
     // Opcional: Recarregar a lista de chats para refletir a nova criação
     // fetchChats(); // Se você extrair a função fetchChats para fora do useEffect
@@ -626,8 +629,11 @@ const endChat = async () => {
     },
   });
 
+  // ✅ Atualiza o estado para refletir a mudança instantaneamente
+  setChatStatus("closed");
+
   alert("Chat inativado com sucesso. O log será arquivado com o evento."); // ✅ Texto revisado
-  setChatPopupOpen(false);
+  //setChatPopupOpen(false);
   setChatFloating(false);
   localStorage.removeItem("currentChatId");
   setCurrentChatId(null);
@@ -940,7 +946,8 @@ const canOpenChat = (firstEventId && activeChatForEvent); // User ou Admin podem
           Esta página permite criar e gerenciar séries de ensaios relacionados a um
           evento agendado. Quando um evento estiver disponível, você poderá registrar
           novos ensaios até a data do evento, organizando a preparação do grupo de
-          forma prática e eficiente.  
+          forma prática e eficiente. A página conta também com a opção de criar um chat de
+          conversa, onde o administrador pode criar para uma interação melhor com o grupo.  
           Além disso, você poderá acompanhar a participação dos membros, marcando
           quem <strong>Compareceu</strong> ou <strong>Não compareceu</strong> em cada
           ensaio, facilitando o controle de presença e o planejamento do grupo.
@@ -952,7 +959,8 @@ const canOpenChat = (firstEventId && activeChatForEvent); // User ou Admin podem
         <p className="text-base text-gray-600 dark:text-gray-300 max-w-6xl mx-left mb-10">
           Nesta página você pode visualizar os eventos e as séries de ensaios
           agendados pelo administrador. Aqui você verá as datas, horários e
-          informações dos ensaios que foram programados.  
+          informações dos ensaios que foram programados. O usuário pode ter acesso ao chat de
+          conversa (caso o admin tenha criado), para uma interação melhor com o grupo.  
           Sua única ação nesta tela será confirmar sua disponibilidade, clicando em
           <strong> Confirmar presença</strong> ou <strong> Não disponível</strong>
           para cada ensaio.

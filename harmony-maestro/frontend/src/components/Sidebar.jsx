@@ -17,6 +17,10 @@ export default function Sidebar({ mobile = false, onClose }) {
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user")) || { name: "Usuário", email: "sememail@exemplo.com" };
+  const profileImageSrc = user.profilePicture 
+  ? `http://localhost:4000${user.profilePicture}` // ⚠️ Ajuste a URL base do seu servidor
+  : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=14b8a6&color=fff`; // Fallback para avatar gerado
+
 
   const LOADER_DURATION_MS = 400;
 
@@ -150,7 +154,8 @@ export default function Sidebar({ mobile = false, onClose }) {
             <div className="flex items-center">
               <img
                 className="w-10 h-10 rounded-full border border-gray-300 dark:border-gray-500"
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=14b8a6&color=fff`}
+                // src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=14b8a6&color=fff`}
+                src={profileImageSrc}
                 alt={user.name}
               />
               <div className="ml-3">

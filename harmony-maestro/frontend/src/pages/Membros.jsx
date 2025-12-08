@@ -260,80 +260,125 @@ useEffect(() => {
     {/* Membros do grupo (visível para admin) */}
     {user.role === "admin" && groupMembers.length > 0 && (
       <div className="mt-8">
-  <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
-    Membros do Grupo
-  </h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {groupMembers.map((m) => (
-      <div
-        key={m.id}
-        className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 relative"
-      >
-        <h3 className="font-semibold text-gray-800 dark:text-white">{m.name}</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{m.email}</p>
+        <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
+          Membros do Grupo
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {groupMembers.map((m) => {
+            
+            // 💡 Lógica para determinar a fonte da imagem do membro (m)
+            const memberImageSrc = m.profilePicture
+              ? `http://localhost:4000${m.profilePicture}` // Foto real
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name || '??')}&background=14b8a6&color=fff`; // Fallback: Iniciais
 
-        {/* 🔍 Ver informações do membro */}
-        <button
-          title="Ver informações do usuário"
-          onClick={() => fetchUserDetails(m.id)}
-          className="mt-2 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-200 px-3 py-1 rounded-lg flex items-center text-sm transition"
-        >
-          <Info className="w-4 h-4 mr-1" /> Ver informações
-        </button>
+            return (
+              <div
+                key={m.id}
+                className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 relative"
+              >
+                
+                {/* ✅ NOVO: Container Flex para Foto + Info */}
+                <div className="flex items-center gap-3 mb-2">
+                  
+                  {/* 🖼️ Foto do Membro */}
+                  <img
+                    className="w-10 h-10 rounded-full object-cover border border-gray-300 dark:border-gray-600"
+                    src={memberImageSrc}
+                    alt={`Foto de Perfil de ${m.name}`}
+                  />
+                  
+                  {/* Informações de Texto */}
+                  <div>
+                    <h3 className="font-semibold text-gray-800 dark:text-white">{m.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{m.email}</p>
+                  </div>
+                  
+                </div>
+                {/* Fim do Container Flex */}
 
-        {/* 🔘 Botão para excluir membro */}
-        <button
-          title="Excluir membro do grupo"
-          onClick={async () => {
-            if (
-              !window.confirm(`Tem certeza que deseja remover ${m.name} do grupo?`)
+                {/* 🔍 Ver informações do membro */}
+                <button
+                  title="Ver informações do usuário"
+                  onClick={() => fetchUserDetails(m.id)}
+                  className="mt-2 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-200 px-3 py-1 rounded-lg flex items-center text-sm transition"
+                >
+                  <Info className="w-4 h-4 mr-1" /> Ver informações
+                </button>
+
+                {/* 🔘 Botão para excluir membro */}
+                <button
+                  title="Excluir membro do grupo"
+                  onClick={async () => {
+                    if (
+                      !window.confirm(`Tem certeza que deseja remover ${m.name} do grupo?`)
+                    )
+                      return;
+
+                    try {
+                      const token = localStorage.getItem("userToken");
+
+                      // Atualiza o role de volta para admin
+                      const res = await fetch(
+                        `http://localhost:4000/api/users/${m.id}/role`,
+                        {
+                          method: "PATCH",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                          },
+                          body: JSON.stringify({ role: "admin" }),
+                        }
+                      );
+
+                      if (!res.ok) throw new Error("Erro ao alterar função do usuário");
+
+                      // Atualiza status do convite para "leaver"
+                      await fetch(`http://localhost:4000/api/invites/leave/${m.id}`, {
+                        method: "PATCH",
+                        headers: { Authorization: `Bearer ${token}` },
+                      });
+
+                      alert(`Membro ${m.name} foi removido do grupo com sucesso!`);
+                      window.location.reload();
+                    } catch (err) {
+                      console.error(err);
+                      alert("Não foi possível remover o membro do grupo.");
+                    }
+                  }}
+                  className="absolute top-3 right-3 p-2 bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 text-red-600 dark:text-red-300 rounded-full transition"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
             )
-              return;
-
-            try {
-              const token = localStorage.getItem("userToken");
-
-              // Atualiza o role de volta para admin
-              const res = await fetch(
-                `http://localhost:4000/api/users/${m.id}/role`,
-                {
-                  method: "PATCH",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({ role: "admin" }),
-                }
-              );
-
-              if (!res.ok) throw new Error("Erro ao alterar função do usuário");
-
-              // Atualiza status do convite para "leaver"
-              await fetch(`http://localhost:4000/api/invites/leave/${m.id}`, {
-                method: "PATCH",
-                headers: { Authorization: `Bearer ${token}` },
-              });
-
-              alert(`Membro ${m.name} foi removido do grupo com sucesso!`);
-              window.location.reload();
-            } catch (err) {
-              console.error(err);
-              alert("Não foi possível remover o membro do grupo.");
-            }
-          }}
-          className="absolute top-3 right-3 p-2 bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 text-red-600 dark:text-red-300 rounded-full transition"
-        >
-          <Trash2 size={18} />
-        </button>
+          })}
+        </div>
       </div>
-    ))}
-  </div>
-</div>
     )}
 
     {/* 👤 Exibição de informações do grupo para usuários comuns */}
     {user.role === "user" && adminInfo && (
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mt-8">
+        
+        {/* ======================================= */}
+        {/* ✅Foto de Perfil do Administrador */}
+        {/* ======================================= */}
+        {(() => {
+            const adminImageSrc = adminInfo.profilePicture 
+                ? `http://localhost:4000${adminInfo.profilePicture}` // URL completa da foto
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(adminInfo.name || '??')}&background=14b8a6&color=fff`; // Fallback: Iniciais
+
+            return (
+                <div className="flex justify-center mb-6">
+                    <img
+                        className="w-20 h-20 rounded-full object-cover border-4 border-teal-500 dark:border-teal-400 shadow-md"
+                        src={adminImageSrc}
+                        alt={`Foto de Perfil do Administrador ${adminInfo.name}`}
+                    />
+                </div>
+            );
+        })()}
+        
         {/* 🧑‍💼 Administrador */}
         <div className="border-b border-gray-200 pb-4 mb-4">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-2 flex items-center">
@@ -481,6 +526,25 @@ useEffect(() => {
           <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-5 border-b pb-2">
             Informações do Usuário
           </h2>
+
+          {/* ============================================== */}
+          {/* ✅ Foto de Perfil no Modal */}
+          {/* ============================================== */}
+          {(() => {
+            const profileImageSrc = selectedUser.profilePicture 
+                ? `http://localhost:4000${selectedUser.profilePicture}` // URL completa da foto
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name || '??')}&background=14b8a6&color=fff`; // Fallback: Iniciais
+
+            return (
+                <div className="flex justify-center mb-6">
+                    <img
+                        className="w-24 h-24 rounded-full object-cover border-4 border-gray-300 dark:border-gray-600 shadow-lg"
+                        src={profileImageSrc}
+                        alt={`Foto de Perfil de ${selectedUser.name}`}
+                    />
+                </div>
+            );
+          })()}
 
           <div className="space-y-3 text-gray-700 dark:text-gray-300">
             <div className="p-2 rounded-lg transition duration-200 bg-gray-50 hover:bg-gray-100 hover:shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600">

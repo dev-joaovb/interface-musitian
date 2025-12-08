@@ -123,9 +123,13 @@ const seriesList = Array.from(seriesMap.values());
         attendanceResumo = attendanceResumo || null;
       }
 
-      // 🔹 Busca Chat associado e Mensagens
+      // 🔹 Busca Chat associado (independente do status, exceto se já foi apagado/fechado antes)
       const chat = await prisma.chat.findFirst({
-        where: { eventId: event.id, status: "closed" }, // Apenas chats associados e fechados
+        where: { 
+            eventId: event.id,
+            // Procura o chat, seja ele "closed" (encerrado manualmente) ou "active"/"frozen"/etc.
+            // O importante é que ele esteja associado ao evento que acabou.
+        },
         select: { id: true }
       });
 

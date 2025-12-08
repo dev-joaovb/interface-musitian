@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
+import multer from "multer";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -31,6 +32,19 @@ const verifyAdmin = async (req, res, next) => {
   }
   next();
 };
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // Exemplo: Armazenar no diretório 'uploads/perfil/'
+    cb(null, 'uploads/perfil/'); 
+  },
+  filename: (req, file, cb) => {
+    // Nome do arquivo: user-ID-timestamp.ext
+    cb(null, `user-${req.user.id}-${Date.now()}.${file.originalname.split('.').pop()}`);
+  }
+});
+
+const upload = multer({ storage: storage });
 
 // 🧾 Listar todos os usuários (apenas para admin)
 router.get("/users", authenticateToken, verifyAdmin, async (req, res) => {
@@ -208,6 +222,42 @@ router.put("/userss/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Erro ao atualizar usuário" });
   }
 });
+
+
+// 🖼️ Rota para atualizar a foto de perfil
+router.patch("/userss/:id/profile-picture", authenticateToken, upload.single("profilePicture"), // ✅ Middleware Multer para 1 arquivo
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (req.user.id !== Number(id)) {
+        return res.status(403).json({ error: "Ação não permitida" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo enviado." });
+      }
+
+      // 💡 O caminho onde o arquivo foi salvo pelo Multer
+      // Você deve ajustar este path para a URL pública se estiver usando S3 ou outro serviço
+      const profilePicturePath = `/uploads/perfil/${req.file.filename}`; 
+
+      const updated = await prisma.user.update({
+        where: { id: Number(id) },
+        data: { profilePicture: profilePicturePath }, // ✅ Atualiza o campo no DB
+        select: {
+          profilePicture: true,
+          name: true,
+        },
+      });
+
+      res.json(updated);
+    } catch (err) {
+      console.error("Erro ao fazer upload da foto:", err);
+      res.status(500).json({ error: "Erro ao atualizar foto de perfil" });
+    }
+  }
+);
 
 
 // 🔹 Rota para obter o perfil do usuário logado

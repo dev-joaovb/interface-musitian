@@ -20,6 +20,7 @@ model User {
   idade           DateTime?        // Data de nascimento
   disponibilidade String?          // Disponibilidade
   celular         String?          // Número de celular
+  profilePicture  String?
   tema            String?          @default("light")   // Tema por usuário
   
   invites         Invite[]         @relation("UserInvites")
