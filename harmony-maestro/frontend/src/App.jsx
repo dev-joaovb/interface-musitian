@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
 import Biblioteca from "./pages/Biblioteca";
 import Series from "./pages/Series";
+import Escalas from "./pages/Escalas";
 import Membros from "./pages/Membros";
 import Notificacoes from "./pages/Notificacoes";
 import Configuracoes from "./pages/Configuracoes";
@@ -84,6 +85,7 @@ export default function App() {
                       <Route path="/biblioteca" element={<Biblioteca />} />
                       <Route path="/partitura" element={<Partitura />} />
                       <Route path="/series" element={<Series />} />
+                      <Route path="/escalas" element={<Escalas />} />
                       <Route path="/membros" element={<Membros />} />
                       <Route path="/notificacoes" element={<Notificacoes />} />
                       <Route path="/configuracoes" element={<Configuracoes />} />

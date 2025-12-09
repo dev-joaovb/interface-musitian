@@ -41,6 +41,9 @@ model User {
   folder Folder[]
   folderPartitura FolderPartitura[]
   chatMessage ChatMessage[]
+
+  scheduleConfigs ScheduleConfig[] @relation("AdminScheduleConfig")
+  weeklySchedules WeeklySchedule[] @relation("AdminWeeklySchedule")
 }
 
 model Invite {
@@ -222,5 +225,34 @@ model ActivityLog {
   createdAt DateTime @default(now())
   userId    Int?
   user      User?    @relation(fields: [userId], references: [id])
+}
+
+model ScheduleConfig {
+  id              Int      @id @default(autoincrement())
+  ownerId         Int      @unique // Chave única para garantir 1 configuração por Admin
+  rehearsalDays   Json?     // Array de strings: ["Tuesday", "Thursday"]
+  eventDay        String?  // String: "Sunday"
+  usersPerScale   Int      @default(1) // Ex: 4 músicos por escala
+  maxSongs        Int      @default(3) // Míminimo padrão de 3
+
+  owner           User     @relation("AdminScheduleConfig", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+}
+
+// Tabela 2: Escala Semanal Específica
+model WeeklySchedule {
+  id              Int      @id @default(autoincrement())
+  ownerId         Int
+  startDate       DateTime // Início da semana da escala (ex: próxima Segunda-feira)
+  weekNumber      Int      // Número da semana (para rotação)
+  originalUserIds Json     // Array de IDs originais (para rastrear rotação)
+  currentUsers    Json     // Array de objetos: [{ userId: Int, substituteId: Int|null }]
+  isFinalized     Boolean  @default(false) // Travar a escala
+
+  owner           User     @relation("AdminWeeklySchedule", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  selectedSongIds Json?
+  
+  @@unique([ownerId, weekNumber]) // Garante apenas 1 escala por semana por admin
 }
 

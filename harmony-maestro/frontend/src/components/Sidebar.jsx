@@ -11,6 +11,8 @@ import {
   FiBell,
   FiSettings,
   FiLogOut,
+  FiList,
+  FiRefreshCw,
 } from "react-icons/fi";
 
 export default function Sidebar({ mobile = false, onClose }) {
@@ -115,6 +117,16 @@ export default function Sidebar({ mobile = false, onClose }) {
                 }`}
             >
                 <FiLayers className="w-4 h-4 mr-3" /> Séries de Ensaio
+            </LinkWithReload>
+
+            {/* NavItem: Escalas */}
+            <LinkWithReload
+                to="/escalas"
+                className={`${baseClasses} ${
+                    isActiveLink('/escalas') ? activeClasses : inactiveClasses
+                }`}
+            >
+                <FiRefreshCw className="w-4 h-4 mr-3" /> Escalas
             </LinkWithReload>
 
             {/* NavItem: Membros */}
