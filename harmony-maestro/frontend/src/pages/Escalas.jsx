@@ -154,6 +154,13 @@ export default function Escala() {
     const [message, setMessage] = useState('');
     const [fcEvents, setFcEvents] = useState([]); // Eventos para o FullCalendar
 
+
+    // Garante que config não é nulo e tem os defaults
+    const finalConfig = config ?? { rehearsalDays: [], eventDay: null, usersPerScale: 4, maxSongs: 5 };
+
+    const rehearsalDaysNames = finalConfig.rehearsalDays.map(day => DAY_MAP[day]).join(', ') || 'Nenhum dia definido';
+    const eventDayName = DAY_MAP[finalConfig.eventDay] || 'Não definido';
+
     // Função para buscar dados da escala e configuração
     const fetchScaleData = async () => {
         if (!token || !user.id) return;
@@ -192,7 +199,7 @@ export default function Escala() {
                     if (dayIndex > 1) eventDate.setDate(startDate.getDate() + dayIndex -1);
 
                     events.push({
-                        title: `Ensaio Semanal (${data.scaledMembers.length} Músicos)`,
+                        title: `Ensaio Semanal (${finalConfig.usersPerScale} Músicos)`,
                         start: `${eventDate.toISOString().split('T')[0]}T10:00:00`,
                         allDay: false,
                         color: '#14b8a6', // Teal
@@ -294,11 +301,7 @@ export default function Escala() {
         );
     }
     
-    // Garante que config não é nulo e tem os defaults
-    const finalConfig = config ?? { rehearsalDays: [], eventDay: null, usersPerScale: 4, maxSongs: 5 };
 
-    const rehearsalDaysNames = finalConfig.rehearsalDays.map(day => DAY_MAP[day]).join(', ') || 'Nenhum dia definido';
-    const eventDayName = DAY_MAP[finalConfig.eventDay] || 'Não definido';
 
 
     return (
