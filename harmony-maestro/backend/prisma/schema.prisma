@@ -234,7 +234,7 @@ model ScheduleConfig {
   eventDay        String?  // String: "Sunday"
   usersPerScale   Int      @default(1) // Ex: 4 músicos por escala
   maxSongs        Int      @default(3) // Míminimo padrão de 3
-
+  repeatCount     Int      @default(1)
   owner           User     @relation("AdminScheduleConfig", fields: [ownerId], references: [id], onDelete: Cascade)
   
 }
@@ -248,6 +248,8 @@ model WeeklySchedule {
   originalUserIds Json     // Array de IDs originais (para rastrear rotação)
   currentUsers    Json     // Array de objetos: [{ userId: Int, substituteId: Int|null }]
   isFinalized     Boolean  @default(false) // Travar a escala
+  repeatCounter   Int      @default(1)
+  rotationIndex   Int      @default(0)
 
   owner           User     @relation("AdminWeeklySchedule", fields: [ownerId], references: [id], onDelete: Cascade)
 

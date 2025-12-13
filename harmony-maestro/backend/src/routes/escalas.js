@@ -89,8 +89,8 @@ router.post("/escalas/config", authenticateToken, async (req, res) => {
 
     try {
         // ✅ Adicione maxSongs à desestruturação
-        const { rehearsalDays, eventDay, usersPerScale, maxSongs } = req.body; 
-
+        const { rehearsalDays, eventDay, usersPerScale, maxSongs, repeatCount } = req.body;
+        
         const config = await prisma.scheduleConfig.upsert({
             where: { ownerId: req.user.id },
             update: {
@@ -98,6 +98,7 @@ router.post("/escalas/config", authenticateToken, async (req, res) => {
                 eventDay,
                 usersPerScale: Number(usersPerScale),
                 maxSongs: Number(maxSongs) || 5, // Padrão 5
+                repeatCount: Number(repeatCount) || 1,
             },
             create: {
                 ownerId: req.user.id,
@@ -105,6 +106,7 @@ router.post("/escalas/config", authenticateToken, async (req, res) => {
                 eventDay,
                 usersPerScale: Number(usersPerScale),
                 maxSongs: Number(maxSongs) || 5, // Padrão 5
+                repeatCount: Number(repeatCount) || 1,
             }
         });
 
@@ -152,8 +154,10 @@ router.get("/escalas/current", authenticateToken, async (req, res) => {
     try {
         // 1. Busca a configuração
         const config = await prisma.scheduleConfig.findUnique({ where: { ownerId: adminId } });
-        // Garante que usersPerScale é um número válido, ou usa o padrão 4
+        // Garante que usersPerScale e repeatCount são números válidos, ou usam o padrão
         const usersPerScale = Number(config?.usersPerScale) || 4; 
+        // Pega o repeatCount da config
+        const repeatCount = Number(config?.repeatCount) || 1; 
 
         // 2. Tenta buscar a escala já salva para esta semana
         let weeklySchedule = await prisma.weeklySchedule.findFirst({
@@ -182,82 +186,102 @@ router.get("/escalas/current", authenticateToken, async (req, res) => {
         // 4. Se a escala NÃO existir, gera a próxima escala
         if (!weeklySchedule) {
             
-            // B. Encontra o ID do último usuário escalado (para rotação)
+            // B. Encontra a ÚLTIMA escala gerada no banco (qualquer semana anterior)
             const lastSchedule = await prisma.weeklySchedule.findFirst({
                 where: { ownerId: adminId },
                 orderBy: { weekNumber: 'desc' },
-                select: { currentUsers: true }
+                // o Prisma pode quebrar ao tentar selecioná-los em um schema desatualizado.
+                select: { currentUsers: true, rotationIndex: true, repeatCounter: true } 
             });
-
-            let lastUserIds = [];
-            if (lastSchedule) {
-                // Pega os IDs atuais escalados na última semana (Certificar-se que JSON foi parsed)
-                lastUserIds = lastSchedule.currentUsers 
-                    ? JSON.parse(JSON.stringify(lastSchedule.currentUsers)).map(u => u.userId)
-                    : [];
-            }
             
-            // C. Lógica de Rotação (A rotação parece OK, mas dependente do estado anterior)
-            let startIndex = 0;
-            if (lastUserIds.length > 0) {
-                const lastUserId = lastUserIds[0];
-                startIndex = memberIds.findIndex(id => id === lastUserId);
-                
-                // Se o último usuário não for encontrado (ex: saiu do grupo), recomeça.
-                if (startIndex === -1) {
-                    startIndex = 0;
-                } else {
-                    // Rotaciona para o próximo bloco
-                    const nextStartIndex = (startIndex + usersPerScale) % memberIds.length;
-                    startIndex = nextStartIndex;
-                }
+            let lastRotationIndex = lastSchedule?.rotationIndex ?? 0;
+            let lastRepeatCounter = lastSchedule?.repeatCounter ?? 1;
+            
+            // --- C. Lógica de Rotação e Repetição (O coração da nova lógica) ---
+            let nextRotationIndex = lastRotationIndex;
+            let nextRepeatCounter = lastRepeatCounter;
+            
+            // Verifica se devemos avançar o bloco de rotação
+            if (lastRepeatCounter >= repeatCount) {
+                // Avança o índice de rotação para o próximo bloco
+                nextRotationIndex = (lastRotationIndex + usersPerScale) % memberIds.length;
+                // Reinicia o contador de repetição
+                nextRepeatCounter = 1; 
+            } else {
+                // Repete o mesmo bloco e incrementa o contador
+                nextRepeatCounter = lastRepeatCounter + 1;
             }
             
             // D. Define os IDs da nova escala
             let newScaleIds = [];
             for (let i = 0; i < usersPerScale; i++) {
-                newScaleIds.push(memberIds[(startIndex + i) % memberIds.length]);
+                // Começa a partir do índice de rotação calculado
+                newScaleIds.push(memberIds[(nextRotationIndex + i) % memberIds.length]);
             }
             
+            // E. Calcula o início da semana (Você precisa de uma função que encontre a Segunda-feira da currentWeekNumber)
+            // Para simplificar, vamos usar a data de hoje.
+            const startDate = new Date(today);
+            startDate.setHours(0, 0, 0, 0); // Padrão: 00:00:00 da data atual (se for necessário, ajuste para a Segunda)
+
             const newScaleUsers = newScaleIds.map(id => ({ userId: id, substituteId: null }));
             
-            // E. Calcula o início da semana (Próxima Segunda-feira)
-            const todayIndex = today.getDay(); // 0 (Domingo) a 6 (Sábado)
-            const daysToAdd = todayIndex === 0 ? 1 : (8 - todayIndex); 
-            const nextMonday = new Date(today);
-            nextMonday.setDate(today.getDate() + daysToAdd);
-            nextMonday.setHours(0, 0, 0, 0);
-
-
             // F. Salva a nova escala
             weeklySchedule = await prisma.weeklySchedule.create({
                 data: {
                     ownerId: adminId,
                     weekNumber: currentWeekNumber,
-                    startDate: nextMonday, 
-                    originalUserIds: newScaleIds,
+                    startDate: startDate, // Ajuste para a data correta do início da semana
+                    originalUserIds: newScaleIds, // Os IDs definidos pela rotação
                     currentUsers: newScaleUsers,
+                    rotationIndex: nextRotationIndex, // ✅ Salva o índice de onde a escala começou
+                    repeatCounter: nextRepeatCounter, // ✅ Salva o contador de repetição
                 }
             });
         }
         
         // 5. Busca os detalhes dos usuários escalados (usando o weeklySchedule gerado ou encontrado)
-        const currentScaleIds = weeklySchedule.currentUsers
-            ? JSON.parse(JSON.stringify(weeklySchedule.currentUsers)).map(u => u.userId)
-            : [];
+        let currentUsersArray = weeklySchedule.currentUsers;
+
+        // ✅ Normalização do JSON/Array (Correção defensiva anterior)
+        if (typeof currentUsersArray === 'string') {
+            try {
+                currentUsersArray = JSON.parse(currentUsersArray);
+            } catch (e) {
+                console.error("Erro ao fazer parse de currentUsers:", e);
+                currentUsersArray = [];
+            }
+        }
+        if (!Array.isArray(currentUsersArray)) {
+            currentUsersArray = [];
+        }
             
+        // 🛑 CORREÇÃO PRINCIPAL AQUI: Garante que todos os IDs são números inteiros
+        const currentScaleIds = currentUsersArray
+            .map(u => u.userId)
+            .filter(id => id !== null && id !== undefined) // Remove entradas nulas/indefinidas por segurança
+            .map(id => Number(id)); // CONVERTE O ID PARA NÚMERO
+
+        // Agora, currentScaleIds é uma lista de NÚMEROS: [1, 2, 6, 2]
+
+        // ... (Restante da busca)
         const usersDetails = await prisma.user.findMany({
-            where: { id: { in: currentScaleIds } },
+            where: { id: { in: currentScaleIds } }, // ✅ Agora só recebe números
             select: { id: true, name: true, instrumento: true, profilePicture: true }
         });
 
-        // 6. Prepara a resposta, mesclando dados de escala com detalhes do usuário
+        // 6. Prepara a resposta (incluindo o status de substituição)
         const scaledMembers = weeklySchedule.currentUsers.map(scaleItem => {
             const userDetail = usersDetails.find(u => u.id === scaleItem.userId);
+            // Assinala quem foi o membro original, se houver substituição
+            const originalMemberDetail = scaleItem.substituteId 
+                ? allMembers.find(m => m.id === scaleItem.substituteId) : null;
+                
             return {
                 ...userDetail,
                 isSubstitute: scaleItem.substituteId !== null,
-                originalMemberId: scaleItem.substituteId,
+                originalMemberName: originalMemberDetail?.name, // Útil para exibir no front
+                userRemovedId: scaleItem.substituteId, // O ID do membro que foi removido
             };
         });
         
@@ -285,9 +309,12 @@ router.get("/escalas/current", authenticateToken, async (req, res) => {
         // Se por algum motivo o selectedSongIds for uma string JSON no DB:
         
         try {
-            const ids = typeof selectedSongIds === 'string' ? JSON.parse(selectedSongIds) : selectedSongIds;
-            if (Array.isArray(ids)) {
-                 currentSelectedSongs = allAvailableSongs.filter(song => 
+            const ids = Array.isArray(selectedSongIds) 
+                ? selectedSongIds 
+                : (typeof selectedSongIds === 'string' ? JSON.parse(selectedSongIds) : []);
+                
+            if (Array.isArray(ids) && ids.length > 0) {
+                currentSelectedSongs = allAvailableSongs.filter(song => 
                     ids.includes(song.id)
                 );
             }
@@ -295,15 +322,16 @@ router.get("/escalas/current", authenticateToken, async (req, res) => {
             console.error("Erro ao fazer parse dos IDs de músicas selecionadas:", e);
         }
         
-
+        const allAvailableMembers = allMembers;
+        
         // 9. Retorna a escala e músicas
         res.json({
             schedule: weeklySchedule,
             scaledMembers,
-            // songs agora é a lista completa de músicas disponíveis
             songs: allAvailableSongs,
             selectedSongs: currentSelectedSongs, 
             config,
+            members: allAvailableMembers,
         });
 
     } catch (err) {
@@ -322,7 +350,7 @@ router.post("/escalas/substitute", authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: "Acesso negado" });
     
     try {
-        const { scheduleId, userToRemoveId, newSubstituteId } = req.body;
+        const { scheduleId, userToRemoveId, newSubstituteId } = req.body; // userToRemoveId é o membro A, newSubstituteId é o G
         
         const schedule = await prisma.weeklySchedule.findUnique({
             where: { id: Number(scheduleId) },
@@ -330,26 +358,68 @@ router.post("/escalas/substitute", authenticateToken, async (req, res) => {
 
         if (!schedule) return res.status(404).json({ error: "Escala não encontrada" });
 
-        // 1. Atualiza a lista currentUsers na escala
+        // 1. ATUALIZAÇÃO DA LISTA DE USUÁRIOS ATUAIS
         const updatedUsers = schedule.currentUsers.map(item => {
-            if (item.userId === userToRemoveId) {
-                // Substitui o membro A pelo membro H
+            // Garante que ambos os IDs são números para comparação
+            const currentUserId = Number(item.userId);
+            const targetUserToRemoveId = Number(userToRemoveId);
+            const newSubId = Number(newSubstituteId);
+
+            if (currentUserId === targetUserToRemoveId) {
+                // Substitui o membro A pelo membro G
                 return { 
-                    userId: newSubstituteId, 
-                    substituteId: userToRemoveId // Guarda quem foi substituído
+                    userId: newSubId, // O substituto (G) agora ocupa o lugar
+                    // ✅ CORRIGIDO: Usa 'substituteId' e armazena o ID do membro que saiu (A)
+                    substituteId: targetUserToRemoveId 
                 };
             }
-            return item;
+            // ✅ GARANTE CONSISTÊNCIA: Se o item é mantido, garante que seus IDs são números
+            return {
+                userId: currentUserId,
+                substituteId: item.substituteId ? Number(item.substituteId) : null
+            };
         });
+
+        // 2. ATUALIZAÇÃO DA LISTA DE MEMBROS A PULAR
+        // O membro removido (A) deve ser colocado no final da lista de espera
+        // Para que ele seja escalado o mais rápido possível na próxima rotação.
+        
+        // Puxa a lista de IDs originais (que define a ordem de rotação)
+        // ✅ GARANTE QUE OS IDS SÃO NÚMEROS
+        const userToRemoveNumber = Number(userToRemoveId);
+        
+        // Puxa a lista de IDs originais (que define a ordem de rotação)
+        // ✅ CORRIGIDO: Sanitiza a lista de IDs originais para garantir que são números e não têm undefined
+        const originalUserIds = schedule.originalUserIds
+            .map(id => Number(id))
+            .filter(id => id !== null && id !== undefined && !isNaN(id)); // Remove lixo
+
+        // A. Remove o membro substituído (A)
+        const indexToRemove = originalUserIds.indexOf(userToRemoveNumber);
+        if (indexToRemove > -1) {
+            // remove 1 elemento na posição indexToRemove
+            originalUserIds.splice(indexToRemove, 1); 
+        }
+        
+        // B. Adiciona o membro substituído (A) de volta ao final da lista (prioridade)
+        // ✅ Corrigido: Usa o ID como número e garante que ele não é nulo antes de adicionar
+        let nextOriginalUserIds = originalUserIds;
+        if (userToRemoveNumber) {
+            nextOriginalUserIds = [...originalUserIds, userToRemoveNumber];
+        }
 
         const updatedSchedule = await prisma.weeklySchedule.update({
             where: { id: Number(scheduleId) },
-            data: { currentUsers: updatedUsers },
+            data: { 
+                currentUsers: updatedUsers,
+                // Reinicia a lista de rotação para incluir A no final
+                originalUserIds: nextOriginalUserIds // Agora é uma lista limpa de números
+            },
         });
 
-        await logActivity(req.user.id, "schedule_substitution", `Substituição na escala da semana ${schedule.weekNumber}: ${userToRemoveId} substituído por ${newSubstituteId}.`);
+        await logActivity(req.user.id, "schedule_substitution", `Substituição na semana ${schedule.weekNumber}: Membro original ${userToRemoveId} substituído por ${newSubstituteId}.`);
         
-        // Retorna a escala atualizada (você pode retornar a lista completa novamente)
+        // Retorna a escala atualizada
         res.json(updatedSchedule);
 
     } catch (err) {

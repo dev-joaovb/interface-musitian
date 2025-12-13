@@ -145,10 +145,14 @@ export default function Escala() {
     const [loading, setLoading] = useState(true);
     const [scaleData, setScaleData] = useState(null); // Contém scale, members, songs
     // Atualizado com maxSongs: 5
-    const [config, setConfig] = useState({ rehearsalDays: [], eventDay: 'Sunday', usersPerScale: 4, maxSongs: 5 });
+    const [config, setConfig] = useState({ rehearsalDays: [], eventDay: 'Sunday', usersPerScale: 4, maxSongs: 5, repeatCount: 1 });
     
     const [isSongModalOpen, setIsSongModalOpen] = useState(false); 
     const [selectedSongs, setSelectedSongs] = useState([]); 
+
+    const [isSubstituteModalOpen, setIsSubstituteModalOpen] = useState(false);
+    const [memberToReplace, setMemberToReplace] = useState(null); 
+    const [allAvailableMembers, setAllAvailableMembers] = useState([]);
 
     const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [message, setMessage] = useState('');
@@ -176,7 +180,10 @@ export default function Escala() {
             if (!res.ok) throw new Error(data.error || 'Falha ao buscar escala');
 
             setScaleData(data);
-            setConfig(data.config);
+            setConfig({
+                ...data.config,
+                repeatCount: data.config.repeatCount ?? 1 // Se for undefined ou null, usa 1
+            });
             setMessage('');
 
             // ✅ Captura as músicas selecionadas do backend
@@ -288,18 +295,121 @@ export default function Escala() {
         return { show: false };
     };
     
-    // Função para abrir o modal de substituição (Lógica Simplificada)
+    // Função para abrir o modal de substituição
     const handleSubstitute = (memberIdToReplace) => {
-        alert(`Implementar modal de substituição para o membro ID: ${memberIdToReplace}`);
+        // 1. Busca todos os membros ativos para a lista de substitutos
+        // 2. Filtra o membro a ser substituído
+        
+        const allMembers = scaleData?.members || scaleData?.scaledMembers;
+        
+        // Se a lista de todos os membros não existe, usaremos os escalados como fallback
+        const membersList = Array.isArray(allMembers) ? allMembers : scaleData?.scaledMembers || [];
+
+        setAllAvailableMembers(
+            membersList.filter(m => m.id !== memberIdToReplace)
+        );
+        
+        setMemberToReplace(scaleData.scaledMembers.find(m => m.id === memberIdToReplace));
+        setIsSubstituteModalOpen(true);
     };
-    
-    if (loading) {
+
+    // 🆕 NOVO COMPONENTE: SubstituteModal
+    const SubstituteModal = ({ isOpen, onClose, memberToReplace, allAvailableMembers, scheduleId, token, API_URL, fetchDataByDate, setMessage }) => {        
+        if (!isOpen || !memberToReplace) return null;
+
+        const [substituteId, setSubstituteId] = useState('');
+        const [loading, setLoading] = useState(false);
+        
+        // Funçao para salvar a substituição
+        const handleSaveSubstitution = async () => {
+            if (!substituteId) return setMessage('Selecione um substituto.');
+
+            setLoading(true);
+            setMessage('');
+
+            try {
+                const res = await fetch(`${API_URL}/substitute`, { 
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ 
+                        scheduleId: scheduleId,
+                        userToRemoveId: memberToReplace.id,
+                        newSubstituteId: substituteId,
+                    }),
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Falha ao salvar substituição');
+
+                setMessage('Substituição realizada com sucesso!');
+                await fetchScaleData(); // Recarrega os dados completos
+                onClose();
+
+            } catch (err) {
+                setMessage(`Erro ao salvar: ${err.message}`);
+            } finally {
+                setLoading(false);
+            }
+        };
+
         return (
-            <div className="flex-1 flex justify-center items-center h-full dark:bg-gray-900">
-                <p className="text-gray-500 dark:text-gray-400">Carregando escalas...</p>
+            <div 
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+            >
+                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                        Substituir {memberToReplace.name}
+                    </h3>
+                    
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        O membro substituído ({memberToReplace.name}) terá prioridade para ser escalado na próxima rotação.
+                    </p>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Selecione o Substituto
+                        </label>
+                        <select
+                            value={substituteId}
+                            onChange={(e) => setSubstituteId(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:text-white"
+                            disabled={loading}
+                        >
+                            <option value="">-- Selecionar Membro --</option>
+                            {allAvailableMembers.map(member => (
+                                <option key={member.id} value={member.id}>
+                                    {member.name} ({member.instrumento})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex justify-end space-x-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg"
+                            disabled={loading}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSaveSubstitution}
+                            className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                            disabled={loading || !substituteId}
+                        >
+                            {loading ? 'Substituindo...' : 'Confirmar Substituição'}
+                        </button>
+                    </div>
+                </div>
             </div>
         );
-    }
+    };
     
 
 
@@ -432,56 +542,148 @@ export default function Escala() {
                 <Users className="w-6 h-6 text-teal-600 dark:text-teal-400" />
                 Músicos Escalados para a Semana
             </h2>
-            
+
             <div className="space-y-3">
-                {scaleData?.scaledMembers?.length > 0 ? (
-                    scaleData?.scaledMembers?.map(member => {
+                {scaleData?.scaledMembers?.length > 0 ? (() => {
+                    // 1. Usamos um Set para rastrear IDs já renderizados
+                    const renderedIds = new Set();
+                    
+                    // 2. Filtra para manter a primeira ocorrência de cada membro (se houver repetição)
+                    const uniqueScaledMembers = scaleData.scaledMembers.filter(member => {
+                        if (renderedIds.has(member.id)) {
+                            return false; // Este membro já foi visto, descarte
+                        }
+                        renderedIds.add(member.id);
+                        return true; // Este membro é único, mantenha
+                    });
+
+                    // 3. Mapeia apenas a lista única
+                    return uniqueScaledMembers.map((member, index) => {
                         const warning = getScaleWarning(member.id);
+                        const isScaled = true;
                         
                         return (
                             <div 
-                                key={member.id} 
+                                // Mudança de chave para garantir unicidade com o ID.
+                                key={`scaled-member-${member.id}`} 
                                 className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center"
                             >
                                 <div className="flex items-center">
-                                    <img
-                                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=14b8a6&color=fff`}
-                                        alt={member.name}
-                                        className="w-10 h-10 rounded-full mr-4 border-2 border-teal-500"
-                                    />
+                                {/* ✅ BLOCO ADAPTADO: Lógica da URL + Ícone de Status */}
+                                {(() => {
+                                    // 1. Lógica para determinar a URL da imagem de perfil
+                                    const profileImageSrc = member.profilePicture 
+                                        ? `http://localhost:4000${member.profilePicture}` // URL completa da foto
+                                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || '??')}&background=14b8a6&color=fff`; // Fallback: Iniciais
+
+                                    return (
+                                        <div className="relative">
+                                            <img
+                                                // 2. Aplicando a URL e mantendo as classes de tamanho e borda originais
+                                                src={profileImageSrc}
+                                                alt={`Foto de Perfil de ${member.name}`}
+                                                className="w-10 h-10 rounded-full mr-4 border-2 border-teal-500 object-cover" // Adicionado object-cover
+                                            />
+                                            
+                                            {/* 3. Manter o ícone de Status na posição absoluta */}
+                                            <div className="absolute -bottom-1 -right-1 p-0.5 rounded-full border-2 border-white dark:border-gray-800 bg-white dark:bg-gray-800">
+                                                {/* isScaled deve ser definido como true neste loop */}
+                                                {isScaled ? (
+                                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                                ) : (
+                                                    <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                                
+                                <div>
+                                    <p className="font-semibold text-gray-900 dark:text-white">{member.name}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        {member.instrumento || 'Instrumento não definido'}
+                                    </p>
+                                </div>
+                            </div>
+
+                                    <div className="flex items-center gap-4">
+                                        {/* Alerta de Escala Excessiva */}
+                                        {warning.show && userRole === 'admin' && (
+                                            <div className="flex items-center text-yellow-600 dark:text-yellow-400 text-sm font-medium">
+                                                <AlertTriangle className="w-4 h-4 mr-1" />
+                                                {warning.text}
+                                            </div>
+                                        )}
+
+                                        {/* Indicador de Substituição */}
+                                        {member.isSubstitute && (
+                                            <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                                                (Substituto)
+                                            </span>
+                                        )}
+
+                                        {/* Botão de Substituição (Admin Only) */}
+                                        {userRole === 'admin' && (
+                                            <button
+                                                onClick={() => handleSubstitute(member.id)}
+                                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                                            >
+                                                Substituir
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        });
+                })() : (
+                    <div className="p-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-lg">
+                        Nenhum membro escalado para esta semana.
+                    </div>
+                )}
+            </div>
+
+            <hr className="border-gray-200 dark:border-gray-800 my-8" />
+
+            {/* NOVO: STATUS COMPLETO DO GRUPO */}
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                Status de Escalamento do Grupo
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                Visualização completa de todos os músicos do grupo e seu status na escala atual.
+            </p>
+
+            <div className="space-y-3">
+                {scaleData?.members?.length > 0 ? (
+                    scaleData.members.map(groupMember => {
+                        // 1. Verifica se o ID do membro do grupo está na lista de escalados
+                        const isScaled = scaleData.scaledMembers
+                            ?.some(scaled => scaled.id === groupMember.id) || false;
+
+                        return (
+                            <div 
+                                key={`group-${groupMember.id}`} 
+                                className={`p-3 rounded-lg border flex justify-between items-center transition-colors 
+                                    ${isScaled ? 'bg-green-50 dark:bg-green-900/50 border-green-300' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`
+                                }
+                            >
+                                <div className="flex items-center">
+                                    <span className={`w-3 h-3 rounded-full mr-3 ${isScaled ? 'bg-green-500' : 'bg-gray-500'}`}></span>
                                     <div>
-                                        <p className="font-semibold text-gray-900 dark:text-white">{member.name}</p>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            {member.instrumento || 'Instrumento não definido'}
-                                        </p>
+                                        <p className="font-semibold text-gray-900 dark:text-white">{groupMember.name}</p>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400">{groupMember.instrumento}</p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-4">
-                                    {/* Alerta de Escala Excessiva */}
-                                    {warning.show && userRole === 'admin' && (
-                                        <div className="flex items-center text-yellow-600 dark:text-yellow-400 text-sm font-medium">
-                                            <AlertTriangle className="w-4 h-4 mr-1" />
-                                            {warning.text}
-                                        </div>
-                                    )}
-
-                                    {/* Indicador de Substituição */}
-                                    {member.isSubstitute && (
-                                        <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                                            (Substituto)
+                                <div className="text-sm font-medium">
+                                    {isScaled ? (
+                                        <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                                            <CheckCircle className="w-4 h-4" /> ESCALADO
                                         </span>
-                                    )}
-
-                                    {/* Botão de Substituição (Admin Only) */}
-                                    {userRole === 'admin' && (
-                                        <button
-                                            onClick={() => handleSubstitute(member.id)}
-                                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm transition-colors"
-                                            disabled={warning.show} // Admin não deve substituir se houver aviso (ou forçar com alerta)
-                                        >
-                                            Substituir
-                                        </button>
+                                    ) : (
+                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                                            <Clock className="w-4 h-4"/> FORA DE ESCALA
+                                        </span>
                                     )}
                                 </div>
                             </div>
@@ -489,10 +691,11 @@ export default function Escala() {
                     })
                 ) : (
                     <div className="p-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-lg">
-                        Nenhum membro escalado para esta semana.
+                        Nenhum membro ativo encontrado para exibir o status.
                     </div>
                 )}
             </div>
+
 
             {/* Modal de Configuração (Admin Only) */}
             {userRole === 'admin' && isConfigModalOpen && (
@@ -582,6 +785,23 @@ export default function Escala() {
                                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:text-white"
                                     />
                                 </div>
+
+                                {/* ✅ NOVO CAMPO: Repetições de Escala */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Repetições Sequenciais
+                                    </label>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                        Quantas semanas consecutivas o mesmo grupo deve ser escalado.
+                                    </p>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={config.repeatCount}
+                                        onChange={(e) => setConfig({ ...config, repeatCount: Number(e.target.value) })}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:text-white"
+                                    />
+                                </div>
                             </div>
 
                             <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
@@ -618,6 +838,19 @@ export default function Escala() {
                     setMessage={setMessage}
                 />
             )}
+
+            {/* ✅ NOVO: Modal de Substituição */}
+            <SubstituteModal
+                isOpen={isSubstituteModalOpen}
+                onClose={() => setIsSubstituteModalOpen(false)}
+                memberToReplace={memberToReplace}
+                allAvailableMembers={allAvailableMembers}
+                scheduleId={scaleData?.schedule?.id}
+                token={token}
+                API_URL={API_URL}
+                fetchScaleData={fetchScaleData}
+                setMessage={setMessage}
+            />
         </div>
     );
 }
