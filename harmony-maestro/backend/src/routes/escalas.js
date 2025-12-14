@@ -147,7 +147,34 @@ router.get("/escalas/config", authenticateToken, async (req, res) => {
  * GET /api/escala/current - Gera ou busca a escala da semana atual (ou próxima).
  */
 router.get("/escalas/current", authenticateToken, async (req, res) => {
-    const adminId = req.user.id;
+    const loggedInUserId = req.user.id;
+    let adminId = loggedInUserId; // Assume que o logado é o admin por padrão
+
+    // 🛑 DETERMINAR O ID DO ADMINISTRADOR
+    if (req.user.role !== 'admin') {
+        // Se for um usuário comum, buscamos quem o convidou (o Admin do grupo)
+        const invite = await prisma.invite.findFirst({
+            where: {
+                inviteeId: loggedInUserId,
+                status: "accepted", // Apenas convites aceitos garantem associação
+            },
+            select: { inviterId: true },
+        });
+
+        if (!invite || !invite.inviterId) {
+            // Retorna um JSON de erro amigável se o usuário não tiver um Admin associado
+            return res.status(200).json({ 
+                schedule: null,
+                scaledMembers: [],
+                songs: [],
+                // Retorna a config padrão para o frontend não quebrar
+                config: { rehearsalDays: [], eventDay: null, usersPerScale: 4, maxSongs: 5, repeatCount: 1 },
+                error: "Você não está associado a nenhum grupo ativo ou a convite aceito. Peça ao administrador para verificar seu status."
+            });
+        }
+        adminId = invite.inviterId; // Define o adminId como o ID do inviter
+    }
+
     const today = new Date();
     const currentWeekNumber = getWeekNumber(today);
 
