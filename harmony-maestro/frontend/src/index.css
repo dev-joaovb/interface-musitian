@@ -10,6 +10,12 @@
 
 @import "tailwindcss";
 
+/* 🚀 Adicionado para Rolagem Suave (Smooth Scrolling) */
+html {
+  scroll-behavior: smooth;
+}
+/* ------------------------------------------------ */
+
 /* ✅ Habilita o suporte ao dark mode por class */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -149,4 +155,46 @@
 
 button{
   cursor: pointer
+}
+
+/* ===================================================================
+   ✅ CLASSES CSS PARA EFEITO PARALLAX
+   =================================================================== */
+
+/* 🚨 ATENÇÃO: Substitua 'url(/caminho/para/sua/imagem-x.jpg)' pela URL real das suas imagens. */
+
+/* Seção Título (Hero) - PARALLAX 1 */
+.bg-hero-parallax {
+  /* Substitua pela imagem de fundo da seção de Título/Hero */
+  background-image: url('../public/imagem1.svg'); 
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Terceira Seção (Funcionalidades) - PARALLAX 2 */
+.bg-features-parallax {
+  /* Substitua pela imagem de fundo da seção de Funcionalidades */
+  background-image: url('../public/imagem2.svg'); 
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Seção Cinco (Telas) - PARALLAX 3 */
+.bg-telas-parallax {
+  /* Substitua pela imagem de fundo da seção de Telas */
+  background-image: url('../public/imagem3.svg'); 
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Seção Sete (Dúvidas) - PARALLAX 4 */
+.bg-faq-parallax {
+  /* Substitua pela imagem de fundo da seção de Dúvidas */
+  background-image: url('../public/imagem4.svg'); 
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
 }

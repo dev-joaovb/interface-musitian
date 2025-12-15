@@ -16,6 +16,7 @@ import Escalas from "./pages/Escalas";
 import Membros from "./pages/Membros";
 import Notificacoes from "./pages/Notificacoes";
 import Configuracoes from "./pages/Configuracoes";
+import HarmonyMaestro from "./pages/HarmonyMaestro";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Partitura from "./pages/Partitura";
@@ -68,6 +69,7 @@ export default function App() {
       <Router>
           <Routes>
             {/* Rotas públicas */}
+            <Route path="/harmony_maestro" element={<HarmonyMaestro />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
