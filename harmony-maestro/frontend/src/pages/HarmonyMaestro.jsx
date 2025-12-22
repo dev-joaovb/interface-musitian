@@ -123,26 +123,22 @@ export default function LandingPage() {
     { src: "./telas/partituras/tela 2.svg", alt: "Tela de Partituras" },
 
     // Série de Ensaio
-    { src: "/img/screens/dashboard.png", alt: "Tela do Dashboard" },
-    { src: "/img/screens/calendar.png", alt: "Tela do Calendário" },
-    { src: "/img/screens/biblioteca.png", alt: "Tela da Biblioteca Musical" },
-    { src: "/img/screens/partitura.png", alt: "Tela de Partituras" },
-    { src: "/img/screens/series.png", alt: "Tela de Séries de Ensaio" },
-    { src: "/img/screens/escalas.png", alt: "Tela de Escalas Automáticas" },
+    { src: "./telas/series/tela 1.svg", alt: "Tela do Dashboard" },
+    { src: "./telas/series/tela 2.svg", alt: "Tela do Dashboard" },
+    { src: "./telas/series/tela 3.svg", alt: "Tela do Dashboard" },
+    { src: "./telas/series/tela 4.svg", alt: "Tela do Dashboard" },
+    { src: "./telas/series/tela 5.svg", alt: "Tela do Dashboard" },
 
     // Escalas
-    { src: "/img/screens/membros.png", alt: "Tela de Gestão de Membros" },
-    { src: "/img/screens/notificacoes.png", alt: "Tela de Notificações" },
+    { src: "./telas/escalas/tela 1.svg", alt: "Tela de Gestão de Escalas" },
+    { src: "./telas/escalas/tela 2.svg", alt: "Tela de Gestão de Escalas" },
 
     // Membros
-    { src: "/img/screens/configuracoes.png", alt: "Tela de Configurações" },
-    { src: "/img/screens/login.png", alt: "Tela de Login" }, // Tela 20
+    { src: "./telas/membros/tela 1.svg", alt: "Tela de Membros" },
+    { src: "./telas/membros/tela 2.svg", alt: "Tela de Membros" },
     
     // Notificações
-    { src: "/img/screens/configuracoes.png", alt: "Tela de Configurações" },
-
-
-    // Se você precisar de menos, remova as últimas, mas aqui está o limite de 10.
+    { src: "./telas/notificacoes/tela 1.svg", alt: "Tela de Notificações" },
   ];
   
   // 🆕 Estado para controlar o índice da tela atual
