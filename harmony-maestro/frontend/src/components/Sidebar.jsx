@@ -64,14 +64,14 @@ export default function Sidebar({ mobile = false, onClose }) {
           <img
             src="/logo-light.svg"
             alt="Harmony Maestro"
-            className="h-27 w-auto block dark:hidden"
+            className="h-25 w-auto block dark:hidden"
           />
 
           {/* Logo Dark */}
           <img
             src="/logo-dark.svg"
             alt="Harmony Maestro"
-            className="h-27 w-auto hidden dark:block"
+            className="h-25 w-auto hidden dark:block"
           />
         </div>
       </div>
@@ -189,9 +189,11 @@ export default function Sidebar({ mobile = false, onClose }) {
     </div>
 
     {mobile && onClose ? (
-      <button className="absolute top-3 right-3 text-gray-600 dark:text-gray-300" onClick={onClose}>
-        ✕
-      </button>
+      <div className="absolute top-23 right-1 w-6 h-6 border justify-center items-center rounded-full text-black dark:text-gray-300 cursor-pointer flex">
+        <button  onClick={onClose}>
+          ✕
+        </button>
+      </div>
     ) : null}
   </aside>
 );

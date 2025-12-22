@@ -166,7 +166,7 @@ button{
 /* Seção Título (Hero) - PARALLAX 1 */
 .bg-hero-parallax {
   /* Substitua pela imagem de fundo da seção de Título/Hero */
-  background-image: url('../public/imagem1.svg'); 
+  background-image: url('../public/imagem6.svg'); 
   background-attachment: fixed;
   background-size: cover;
   background-position: center;

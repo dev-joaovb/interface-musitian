@@ -54,7 +54,11 @@ export default function MainLayout({ children }) {
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
+            /* Alterado: 
+              bg-black/20 (opacidade de 20% em vez de 50%)
+              backdrop-blur-sm (adiciona um desfoque suave no fundo)
+            */
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden transition-opacity duration-300"
             onClick={() => setMobileOpen(false)}
           />
           <div className="fixed inset-y-0 left-0 z-50 md:hidden">

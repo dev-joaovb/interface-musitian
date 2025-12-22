@@ -74,38 +74,117 @@ export default function LandingPage() {
     { href: '#duvidas', label: 'Dúvidas' },
   ];
 
+  // 1. Primeiro, vamos garantir que a lista de funcionalidades tenha o caminho da imagem correspondente
   const featuresList = [
-    { title: "Dashboard", icon: LayoutDashboard, description: "Serve para visualizar as atividades, quantidades de membros, relatórios de eventos, e ter uma visão geral do grupo." },
-    { title: "Calendário", icon: Calendar, description: "Serve para agendar eventos e compromissos importantes do grupo de forma centralizada." },
-    { title: "Biblioteca", icon: Music, description: "Acervo musical para fazer upload de músicas (.mp3/.mp4) e criar pastas para organizar os gêneros." },
-    { title: "Partituras", icon: FileText, description: "Serve para fazer upload de partituras em PDF, também com a possibilidade de criar pastas para organizar por autor e gênero." },
-    { title: "Séries de Ensaio", icon: Users, description: "Serve para agendar ensaios durante o evento mais próximo, contando com lista de presenças e opção de chat temporário para discussões." },
-    { title: "Escalas", icon: ListOrdered, description: "Serve para gerenciar as escalas em eventos padronizados semanalmente, oferecendo um eficiente rodízio automático de membros." },
-    { title: "Membros", icon: UserPlus, description: "Aqui o administrador pode convidar novos membros, aceitar solicitações e visualizar todas as informações detalhadas sobre os músicos da banda." },
-    { title: "Notificações", icon: Bell, description: "Notificações das atividades, lembretes de eventos e novidades relevantes para manter todos os membros informados e engajados." },
+    { title: "Dashboard", icon: LayoutDashboard, description: "Visualização de atividades, membros e relatórios.", image: "./telas/outros/tela_frontal.svg" },
+    { title: "Calendário", icon: Calendar, description: "Agende eventos e compromissos importantes do grupo.", image: "./telas/outros/tela_frontal_calendario.svg" },
+    { title: "Biblioteca", icon: Music, description: "Acervo musical para upload de músicas e organização.", image: "./telas/outros/tela_frontal_biblioteca.svg" },
+    { title: "Partituras", icon: FileText, description: "Upload e organização de partituras em PDF por autor.", image: "./telas/outros/tela_frontal_partituras.svg" },
+    { title: "Séries de Ensaio", icon: Users, description: "Agendamento de ensaios com lista de presença e chat.", image: "./telas/outros/tela_frontal_series.svg" },
+    { title: "Escalas", icon: ListOrdered, description: "Gerenciamento de escalas com rodízio automático.", image: "./telas/outros/tela_frontal_escalas.svg" },
+    { title: "Membros", icon: UserPlus, description: "Gestão de músicos e convites do administrador.", image: "./telas/outros/tela_frontal_membros.svg" },
+    { title: "Notificações", icon: Bell, description: "Lembretes e novidades relevantes para o engajamento.", image: "./telas/outros/tela_frontal_notificacoes.svg" },
   ];
+
+  // 2. Estado para controlar qual funcionalidade está ativa (Inicia com a primeira: Dashboard)
+  const [activeFeature, setActiveFeature] = useState(featuresList[0]);
+
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+  // Atualize a função de clique para resetar o carregamento
+  const handleFeatureChange = (feat) => {
+    if (feat.title !== activeFeature.title) {
+      setIsImageLoaded(false); // Reseta para a próxima imagem começar invisível
+      setActiveFeature(feat);
+    }
+  };
+
+  // 🆕 Lista de Telas para o Carrossel (MÁXIMO 10)
+  const screens = [
+
+    // Dashboard
+    { src: "./telas/dashboard/tela 1.svg", alt: "Tela do Dashboard" },
+    { src: "./telas/dashboard/tela 2.svg", alt: "Tela do Dashboard" },
+    { src: "./telas/dashboard/tela 3.svg", alt: "Tela do Dashboard" },
+    { src: "./telas/dashboard/tela 4.svg", alt: "Tela do Dashboard" },
+
+    // Calendario
+    { src: "./telas/calendario/tela 1.svg", alt: "Tela de Calendário" },
+    { src: "./telas/calendario/tela 2.svg", alt: "Tela de Calendário" },
+    { src: "./telas/calendario/tela 3.svg", alt: "Tela de Calendário" },
+
+    // Biblioteca
+    { src: "./telas/biblioteca/tela 1.svg", alt: "Tela da Biblioteca Musical" },
+    { src: "./telas/biblioteca/tela 2.svg", alt: "Tela da Biblioteca Musical" },
+    { src: "./telas/biblioteca/tela 3.svg", alt: "Tela da Biblioteca Musical" },
+
+    // Partitura
+    { src: "./telas/partituras/tela 1.svg", alt: "Tela de Partituras" },
+    { src: "./telas/partituras/tela 2.svg", alt: "Tela de Partituras" },
+
+    // Série de Ensaio
+    { src: "/img/screens/dashboard.png", alt: "Tela do Dashboard" },
+    { src: "/img/screens/calendar.png", alt: "Tela do Calendário" },
+    { src: "/img/screens/biblioteca.png", alt: "Tela da Biblioteca Musical" },
+    { src: "/img/screens/partitura.png", alt: "Tela de Partituras" },
+    { src: "/img/screens/series.png", alt: "Tela de Séries de Ensaio" },
+    { src: "/img/screens/escalas.png", alt: "Tela de Escalas Automáticas" },
+
+    // Escalas
+    { src: "/img/screens/membros.png", alt: "Tela de Gestão de Membros" },
+    { src: "/img/screens/notificacoes.png", alt: "Tela de Notificações" },
+
+    // Membros
+    { src: "/img/screens/configuracoes.png", alt: "Tela de Configurações" },
+    { src: "/img/screens/login.png", alt: "Tela de Login" }, // Tela 20
+    
+    // Notificações
+    { src: "/img/screens/configuracoes.png", alt: "Tela de Configurações" },
+
+
+    // Se você precisar de menos, remova as últimas, mas aqui está o limite de 10.
+  ];
+  
+  // 🆕 Estado para controlar o índice da tela atual
+  const [currentScreenIndex, setCurrentScreenIndex] = useState(0);
+  const totalScreens = screens.length;
+
+  // 🆕 Funções de Navegação
+  const nextScreen = () => {
+    setCurrentScreenIndex((prevIndex) => 
+      (prevIndex + 1) % totalScreens // Volta para 0 após a última
+    );
+  };
+
+  const prevScreen = () => {
+    setCurrentScreenIndex((prevIndex) => 
+      (prevIndex - 1 + totalScreens) % totalScreens // Volta para a última após a primeira
+    );
+  };
 
   return (
     <div className="font-sans text-black antialiased">
 
       {/* ===================================================================
-        # HEADER
-        =================================================================== */}
-      <header className={`fixed w-full z-30 transition-all duration-300 ease-in-out 
+          # HEADER
+      =================================================================== */}
+      <header className={`fixed w-full z-30 transition-all duration-500 ease-in-out 
           ${isScrolled 
-            ? 'bg-white/90 shadow-lg backdrop-blur-sm' 
-            : 'bg-white shadow-md'
+            ? 'bg-white/80 shadow-lg backdrop-blur-md py-2' 
+            : 'bg-white/5 py-4'
           }`
-        }>
+      }>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            {/* Logo */}
-            <div className="flex-shrink-0">
-              <a href="#inicio" className="text-xl font-bold text-teal-600">
+            
+            {/* Logo Dinâmico */}
+            <div className="flex-shrink-0 transition-all duration-300">
+              <a href="#inicio" className="flex items-center">
                 <img
-                  src="/logo-light.svg"
+                  // Troca a imagem baseada no scroll
+                  src={isScrolled ? "/logo-light.svg" : "/logo-dark.svg"}
                   alt="Harmony Maestro"
-                  className="h-18 w-auto block"
+                  className="h-18 w-auto transition-opacity duration-300"
                 />
               </a>
             </div>
@@ -116,18 +195,27 @@ export default function LandingPage() {
                 <a
                   key={item.href}
                   href={item.href}
-                  className="text-gray-600 hover:text-teal-600 transition duration-150 ease-in-out font-medium"
+                  // Troca a cor do texto: Branco no topo, Cinza escuro após scroll
+                  className={`transition-colors duration-300 font-medium ${
+                    isScrolled 
+                      ? 'text-gray-800 hover:text-teal-600' 
+                      : 'text-white/90 hover:text-white'
+                  }`}
                 >
                   {item.label}
                 </a>
               ))}
             </nav>
 
-            {/* Botão de Ação (Login/Cadastro) */}
+            {/* Botão de Ação */}
             <div className="hidden md:block">
               <a
-                href="/login" // Ou a rota que o usuário desejar
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 transition duration-150"
+                href="/login"
+                className={`inline-flex items-center justify-center px-6 py-2.5 border-2 text-sm font-bold rounded-full transition-all duration-300 ${
+                  isScrolled
+                    ? 'bg-teal-600 border-teal-600 text-white hover:bg-teal-700 shadow-md'
+                    : 'bg-white/10 border-white text-white hover:bg-white hover:text-teal-600'
+                }`}
               >
                 Acessar Sistema
               </a>
@@ -139,29 +227,49 @@ export default function LandingPage() {
       {/* ===================================================================
         # SEÇÃO TÍTULO (HERO) - PARALLAX 1
         =================================================================== */}
-      <section id="inicio" className="pt-20">
+      <section id="inicio" className="">
         <ParallaxBackground className="bg-hero-parallax">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-            <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-4">
-              Harmony Maestro: Faça gestão da sua banda
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-200 max-w-3xl mx-auto mb-10">
-              A plataforma definitiva para líderes de banda e músicos organizarem ensaios, escalas e repertórios com foco total no desempenho e compromisso.
-            </p>
-            <div className="flex justify-center space-x-4">
-              <a
-                href="/register"
-                className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-teal-600 bg-white hover:bg-gray-100 transition duration-150"
-              >
-                Começar Agora
-              </a>
-              <a
-                href="#funcionalidades"
-                className="inline-flex items-center justify-center px-8 py-3 border border-white text-base font-medium rounded-full text-white hover:bg-teal-600/20 transition duration-150"
-              >
-                Ver Funcionalidades
-              </a>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 flex flex-col md:flex-row items-center gap-12">
+            
+            {/* LADO ESQUERDO: Texto e Botões */}
+            <div className="md:w-1/2 text-center md:text-left">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-4 mt-10">
+                Harmony Maestro: Faça gestão da sua banda
+              </h1>
+              <p className="text-xl md:text-2xl text-gray-200 mb-10">
+                A plataforma definitiva para líderes de banda e músicos organizarem ensaios, escalas e repertórios com foco total no desempenho e compromisso.
+              </p>
+              <div className="flex justify-center md:justify-start space-x-4">
+                <a
+                  href="/register"
+                  className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-teal-600 bg-white hover:bg-gray-100 transition duration-150"
+                >
+                  Começar Agora
+                </a>
+                <a
+                  href="#funcionalidades"
+                  className="inline-flex items-center justify-center px-8 py-3 border border-white text-base font-medium rounded-full text-white hover:bg-teal-600/20 transition duration-150"
+                >
+                  Ver Funcionalidades
+                </a>
+              </div>
             </div>
+
+            {/* LADO DIREITO: Espaço para Imagem */}
+            <div className="md:w-1/2 w-full flex justify-center items-center">
+              <div className="relative w-full max-w-md md:max-w-full">
+                {/* Mockup de exemplo ou sua imagem real */}
+                <img
+                  src="./telas/outros/telaEmComputador.svg" // Substitua pelo caminho da sua imagem
+                  alt="Interface Harmony Maestro"
+                  className="w-full h-auto rounded-2xl transform md:rotate-2 hover:rotate-0 transition-transform duration-500"
+                />
+                
+                {/* Efeito visual opcional: Um brilho atrás da imagem */}
+                <div className="absolute -inset-4 bg-teal-500/20 blur-3xl rounded-full -z-10"></div>
+              </div>
+            </div>
+
           </div>
         </ParallaxBackground>
       </section>
@@ -220,65 +328,98 @@ export default function LandingPage() {
 
 
       {/* ===================================================================
-        # TERCEIRA SEÇÃO - FUNCIONALIDADES - PARALLAX 2
-        =================================================================== */}
+          # TERCEIRA SEÇÃO - FUNCIONALIDADES - PARALLAX 2
+      =================================================================== */}
       <section id="funcionalidades">
-        <ParallaxBackground className="bg-features-parallax">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-extrabold text-white mb-4">
-                Funcionalidades
-              </h2>
-              <p className="text-xl text-gray-200 max-w-4xl mx-auto">
-                Uma visão completa sobre todos os recursos que farão do seu grupo um exemplo de organização e eficiência.
-              </p>
+      <ParallaxBackground className="bg-features-parallax">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-extrabold text-white mb-4">Funcionalidades</h2>
+            <p className="text-xl text-gray-200 max-w-4xl mx-auto">
+              Clique nos títulos para visualizar cada tela do sistema.
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 lg:gap-4">
+            
+            {/* Grupo A: Esquerda */}
+            <div className="w-full md:w-[20%] space-y-10 order-2 md:order-1">
+              {featuresList.slice(0, 4).map((feat, index) => (
+                <div 
+                  key={index} 
+                  onClick={() => handleFeatureChange(feat)} // Altera a imagem ao clicar
+                  className={`flex flex-col items-end text-right group cursor-pointer transition-all duration-300 ${activeFeature.title === feat.title ? 'scale-105' : 'opacity-70 hover:opacity-100'}`}
+                >
+                  <div className="flex items-center mb-3">
+                    <h4 className={`text-lg lg:text-xl font-bold mr-3 transition-colors ${activeFeature.title === feat.title ? 'text-teal-400' : 'text-white'}`}>
+                      {feat.title}
+                    </h4>
+                    <div className={`p-2 rounded-full shadow-lg shrink-0 transition-colors ${activeFeature.title === feat.title ? 'bg-teal-600' : 'bg-white'}`}>
+                      <feat.icon className={`w-5 h-5 ${activeFeature.title === feat.title ? 'text-white' : 'text-teal-600'}`} />
+                    </div>
+                  </div>
+                  <p className="text-gray-400 text-xs lg:text-sm leading-relaxed">{feat.description}</p>
+                </div>
+              ))}
             </div>
 
-            <div className="flex flex-col md:flex-row gap-10 items-center">
-              {/* Grupo A: Esquerda (4 Funcionalidades) */}
-              <div className="flex-1 space-y-8">
-                {featuresList.slice(0, 4).map((feat, index) => (
-                  <div key={index} className="flex flex-col items-end text-right">
-                    <div className="flex items-center mb-2">
-                      <h4 className="text-xl font-bold text-white mr-4">{feat.title}</h4>
-                      <feat.icon className="w-6 h-6 text-teal-600 bg-white p-1 rounded-full" />
+            {/* Imagem Central Dinâmica - 60% */}
+            <div className="w-full md:w-[55%] flex justify-center order-1 md:order-2 mb-12 md:mb-0">
+              <div className="relative w-full max-w-2xl lg:max-w-5xl px-4 transition-all duration-500">
+                <div className="absolute -inset-10 bg-teal-500/10 blur-3xl rounded-full"></div>
+                
+                <div className="relative bg-gray-900/40 p-2 lg:p-3 rounded-[2rem] border-2 border-teal-600/20 shadow-2xl backdrop-blur-sm">
+                  {/* Loader simples opcional enquanto a imagem não carrega */}
+                  {!isImageLoaded && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                    <p className="text-gray-300 max-w-md">{feat.description}</p>
-                    <img src={`/placeholder-icon-${index + 1}.svg`} alt="" className="hidden" /> {/* Placeholder imagem */}
-                  </div>
-                ))}
-              </div>
+                  )}
 
-              {/* Imagem Centralizada */}
-              <div className="flex-none w-full md:w-1/3 p-4">
-                <div className="bg-gray-50 p-4 rounded-xl shadow-2xl border-4 border-teal-600">
-                  <h4 className="text-center text-gray-600 mb-2 font-bold">Imagem Centralizada</h4>
                   <img
-                    src="/placeholder-tela-central.png"
-                    alt="Tela do Sistema Harmony Maestro"
-                    className="w-full h-auto rounded-lg"
+                    key={activeFeature.image}
+                    src={activeFeature.image}
+                    alt={activeFeature.title}
+                    onLoad={() => setIsImageLoaded(true)} // Só ativa quando o arquivo carregar
+                    className={`w-full h-auto rounded-[1.8rem] shadow-2xl transition-all duration-700 ease-in-out ${
+                      isImageLoaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-95 blur-md'
+                    }`}
                   />
-                  <p className="text-center text-sm text-gray-500 mt-2">Aqui ficará uma tela do sistema.</p>
+                  
+                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-teal-600 text-white px-8 py-2.5 rounded-full text-sm font-black shadow-2xl tracking-widest uppercase">
+                    Módulo: {activeFeature.title}
+                  </div>
                 </div>
               </div>
-
-              {/* Grupo B: Direita (4 Funcionalidades) */}
-              <div className="flex-1 space-y-8">
-                {featuresList.slice(4, 8).map((feat, index) => (
-                  <div key={index + 4} className="flex flex-col items-start text-left">
-                    <div className="flex items-center mb-2">
-                      <feat.icon className="w-6 h-6 text-teal-600 bg-white p-1 rounded-full" />
-                      <h4 className="text-xl font-bold text-white ml-4">{feat.title}</h4>
-                    </div>
-                    <p className="text-gray-300 max-w-md">{feat.description}</p>
-                    <img src={`/placeholder-icon-${index + 5}.svg`} alt="" className="hidden" /> {/* Placeholder imagem */}
-                  </div>
-                ))}
-              </div>
             </div>
+
+            {/* Grupo B: Direita */}
+            <div className="w-full md:w-[20%] space-y-10 order-3">
+              {featuresList.slice(4, 8).map((feat, index) => (
+                <div 
+                  key={index + 4} 
+                  onClick={() => handleFeatureChange(feat)} // Altera a imagem ao clicar
+                  className={`flex flex-col items-start text-left group cursor-pointer transition-all duration-300 ${activeFeature.title === feat.title ? 'scale-105' : 'opacity-70 hover:opacity-100'}`}
+                >
+                  <div className="flex items-center mb-3">
+                    <div className={`p-2 rounded-full shadow-lg shrink-0 transition-colors ${activeFeature.title === feat.title ? 'bg-teal-600' : 'bg-white'}`}>
+                      <feat.icon className={`w-5 h-5 ${activeFeature.title === feat.title ? 'text-white' : 'text-teal-600'}`} />
+                    </div>
+                    <h4 className={`text-lg lg:text-xl font-bold ml-3 transition-colors ${activeFeature.title === feat.title ? 'text-teal-400' : 'text-white'}`}>
+                      {feat.title}
+                    </h4>
+                  </div>
+                  <p className="text-gray-400 text-xs lg:text-sm leading-relaxed">{feat.description}</p>
+                </div>
+              ))}
+            </div>
+
           </div>
-        </ParallaxBackground>
-      </section>
+        </div>
+      </ParallaxBackground>
+    </section>
+  
 
 
       {/* ===================================================================
@@ -307,6 +448,7 @@ export default function LandingPage() {
       {/* ===================================================================
         # SEÇÃO CINCO - TELAS - PARALLAX 3
         =================================================================== */}
+      {/* ... (SEÇÃO CINCO - TELAS - PARALLAX 3) ... */}
       <section id="telas">
         <ParallaxBackground className="bg-telas-parallax">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -319,31 +461,46 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Carrossel de Telas (Estrutura Simplificada) */}
+            {/* Carrossel de Telas (Estrutura Atualizada) */}
             <div className="relative">
               {/* Área das Imagens */}
               <div className="overflow-hidden rounded-xl shadow-2xl border-4 border-teal-600 h-96 md:h-[600px] flex items-center justify-center bg-gray-900/90">
                 <img
-                  src="/placeholder-tela-1.png"
-                  alt="Print da Tela Principal do Sistema"
-                  className="w-full md:w-3/4 object-contain transition-transform duration-500"
-                  // Aqui a lógica real do carrossel usaria state para mudar o src e aplicar transform: translateX
+                  // 🚨 Renderiza a tela atual com base no estado
+                  src={screens[currentScreenIndex].src}
+                  alt={screens[currentScreenIndex].alt}
+                  // Adicionamos a classe 'opacity-100' para que a imagem apareça (o `transition` do `*` no index.css já dará o efeito)
+                  className="w-full md:w-3/4 object-contain opacity-100 transition-opacity duration-700"
                 />
               </div>
 
               {/* Botões de Navegação */}
-              <button className="absolute left-0 top-1/2 transform -translate-y-1/2 p-3 bg-white/30 hover:bg-white/50 text-white rounded-r-lg transition">
+              <button 
+                onClick={prevScreen} // 🆕 Lógica do botão
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-r-lg transition z-20"
+                aria-label="Tela Anterior"
+              >
                 <ArrowRight className="w-6 h-6 rotate-180" />
               </button>
-              <button className="absolute right-0 top-1/2 transform -translate-y-1/2 p-3 bg-white/30 hover:bg-white/50 text-white rounded-l-lg transition">
+              <button 
+                onClick={nextScreen} // 🆕 Lógica do botão
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-l-lg transition z-20"
+                aria-label="Próxima Tela"
+              >
                 <ArrowRight className="w-6 h-6" />
               </button>
 
               {/* Indicadores (Dots) */}
               <div className="flex justify-center space-x-2 mt-4">
-                <div className="w-3 h-3 bg-teal-600 rounded-full"></div>
-                <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                {screens.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentScreenIndex(index)} // 🆕 Permite clicar para ir à tela
+                    className={`w-3 h-3 rounded-full transition-colors duration-300 
+                      ${index === currentScreenIndex ? 'bg-teal-600' : 'bg-gray-400 hover:bg-gray-300'}`}
+                    aria-label={`Ir para a tela ${index + 1}`}
+                  ></button>
+                ))}
               </div>
             </div>
           </div>
