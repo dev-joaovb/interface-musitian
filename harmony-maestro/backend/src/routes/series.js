@@ -206,21 +206,126 @@ router.patch("/series/:id/presenca", authenticateToken, async (req, res) => {
 
 
 // ✅ Listar presenças (visível apenas para admin)
+// router.get("/series/:id/presenca", authenticateToken, async (req, res) => {
+//   try {
+//     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+
+//     if (user.role !== "admin") {
+//       return res
+//         .status(403)
+//         .json({ error: "Apenas administradores podem visualizar presenças" });
+//     }
+
+//     const { id } = req.params;
+
+//     // ✅ 1️⃣ Busca todos os usuários que aceitaram o convite (fazem parte do grupo)
+//     const acceptedUsers = await prisma.invite.findMany({
+//       where: {
+//         status: "accepted",
+//         active: true,
+//       },
+//       include: {
+//         invitee: {
+//           select: { id: true, name: true, email: true },
+//         },
+//       },
+//     });
+
+//     // ✅ 2️⃣ Busca todas as presenças registradas para esta série
+//     const presencas = await prisma.presenca.findMany({
+//       where: { serieId: Number(id) },
+//       include: { user: { select: { id: true, name: true, email: true } } },
+//     });
+
+//     // ✅ 3️⃣ Monta a lista final combinando os dois (presenças + usuários sem resposta)
+//     const listaFinal = acceptedUsers.map((invite) => {
+//       const userPresenca = presencas.find(
+//         (p) => p.userId === invite.invitee?.id
+//       );
+
+//       return {
+//         id: invite.invitee?.id,
+//         nome: invite.invitee?.name,
+//         email: invite.invitee?.email,
+//         status: userPresenca ? userPresenca.status : "Aguardando Resposta",
+//         confirmacaoAdmin: userPresenca?.confirmacaoAdmin || null,
+//       };
+//     });
+
+//     // ===============================
+//     // 🔁 Sincronizar Attendance_report (create / update)
+//     // ===============================
+//     try {
+//       await Promise.all(
+//         listaFinal.map(async (row) => {
+//           const whereKey = {
+//             serieId_userId: {
+//               serieId: Number(id),
+//               userId: Number(row.id),
+//             },
+//           };
+
+//           const dataPayload = {
+//             serieId: Number(id),
+//             userId: Number(row.id),
+//             userName: row.nome ?? null,
+//             userEmail: row.email ?? null,
+//             status: row.status ?? "Aguardando Resposta",
+//             confirmacaoAdmin: row.confirmacaoAdmin ?? null,
+//           };
+
+//           await prisma.attendance_report.upsert({
+//             where: whereKey,
+//             update: {
+//               userName: dataPayload.userName,
+//               userEmail: dataPayload.userEmail,
+//               status: dataPayload.status,
+//               confirmacaoAdmin: dataPayload.confirmacaoAdmin,
+//             },
+//             create: dataPayload,
+//           });
+//         })
+//       );
+//     } catch (syncErr) {
+//       console.error("Erro ao sincronizar Attendance_report:", syncErr);
+//       // não interrompe o fluxo de resposta ao client
+//     }
+//     // ===============================
+
+//     // ✅ 4️⃣ Retorna a lista unificada
+//     res.json(listaFinal);
+//   } catch (err) {
+//     console.error("Erro ao listar presenças:", err);
+//     res.status(500).json({ error: "Erro ao listar presenças" });
+//   }
+// });
+
+// ✅ Listar presenças (visível apenas para o admin dono da série)
 router.get("/series/:id/presenca", authenticateToken, async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
-
-    if (user.role !== "admin") {
-      return res
-        .status(403)
-        .json({ error: "Apenas administradores podem visualizar presenças" });
-    }
-
     const { id } = req.params;
 
-    // ✅ 1️⃣ Busca todos os usuários que aceitaram o convite (fazem parte do grupo)
+    // 🚨 1. Busca a série para saber quem é o administrador dono dela
+    const series = await prisma.series.findUnique({
+      where: { id: Number(id) },
+      select: { userId: true } // userId aqui é o ID do admin que criou a série
+    });
+
+    if (!series) {
+      return res.status(404).json({ error: "Série não encontrada" });
+    }
+
+    // 2. Verifica se o usuário logado é admin
+    const currentUser = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (currentUser.role !== "admin") {
+      return res.status(403).json({ error: "Apenas administradores podem visualizar presenças" });
+    }
+
+    // 🚨 3. Busca apenas os usuários convidados PELO ADMIN DESTA SÉRIE
+    // Isso remove o "Sebastião" (que foi convidado por outro admin)
     const acceptedUsers = await prisma.invite.findMany({
       where: {
+        inviterId: series.userId, // 🚨 FILTRO CRUCIAL: Apenas membros do grupo deste admin
         status: "accepted",
         active: true,
       },
@@ -231,68 +336,60 @@ router.get("/series/:id/presenca", authenticateToken, async (req, res) => {
       },
     });
 
-    // ✅ 2️⃣ Busca todas as presenças registradas para esta série
+    // 4. Busca as presenças já registradas para esta série
     const presencas = await prisma.presenca.findMany({
       where: { serieId: Number(id) },
-      include: { user: { select: { id: true, name: true, email: true } } },
     });
 
-    // ✅ 3️⃣ Monta a lista final combinando os dois (presenças + usuários sem resposta)
-    const listaFinal = acceptedUsers.map((invite) => {
-      const userPresenca = presencas.find(
-        (p) => p.userId === invite.invitee?.id
-      );
+    // 5. Monta a lista final cruzando os dados
+    const listaFinal = acceptedUsers
+      .filter(invite => invite.invitee !== null) // Garante que o usuário ainda existe
+      .map((invite) => {
+        const userPresenca = presencas.find(
+          (p) => p.userId === invite.invitee.id
+        );
 
-      return {
-        id: invite.invitee?.id,
-        nome: invite.invitee?.name,
-        email: invite.invitee?.email,
-        status: userPresenca ? userPresenca.status : "Aguardando Resposta",
-        confirmacaoAdmin: userPresenca?.confirmacaoAdmin || null,
-      };
-    });
+        return {
+          id: invite.invitee.id,
+          nome: invite.invitee.name,
+          email: invite.invitee.email,
+          status: userPresenca ? userPresenca.status : "Aguardando Resposta",
+          confirmacaoAdmin: userPresenca?.confirmacaoAdmin || null,
+        };
+      });
 
-    // ===============================
-    // 🔁 Sincronizar Attendance_report (create / update)
-    // ===============================
+    // Sincronização com Attendance_report 
     try {
       await Promise.all(
         listaFinal.map(async (row) => {
-          const whereKey = {
-            serieId_userId: {
+          await prisma.attendance_report.upsert({
+            where: {
+              serieId_userId: {
+                serieId: Number(id),
+                userId: Number(row.id),
+              },
+            },
+            update: {
+              userName: row.nome,
+              userEmail: row.email,
+              status: row.status,
+              confirmacaoAdmin: row.confirmacaoAdmin,
+            },
+            create: {
               serieId: Number(id),
               userId: Number(row.id),
+              userName: row.nome,
+              userEmail: row.email,
+              status: row.status,
+              confirmacaoAdmin: row.confirmacaoAdmin,
             },
-          };
-
-          const dataPayload = {
-            serieId: Number(id),
-            userId: Number(row.id),
-            userName: row.nome ?? null,
-            userEmail: row.email ?? null,
-            status: row.status ?? "Aguardando Resposta",
-            confirmacaoAdmin: row.confirmacaoAdmin ?? null,
-          };
-
-          await prisma.attendance_report.upsert({
-            where: whereKey,
-            update: {
-              userName: dataPayload.userName,
-              userEmail: dataPayload.userEmail,
-              status: dataPayload.status,
-              confirmacaoAdmin: dataPayload.confirmacaoAdmin,
-            },
-            create: dataPayload,
           });
         })
       );
     } catch (syncErr) {
       console.error("Erro ao sincronizar Attendance_report:", syncErr);
-      // não interrompe o fluxo de resposta ao client
     }
-    // ===============================
 
-    // ✅ 4️⃣ Retorna a lista unificada
     res.json(listaFinal);
   } catch (err) {
     console.error("Erro ao listar presenças:", err);

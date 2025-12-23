@@ -89,55 +89,67 @@ export default function LandingPage() {
   // 2. Estado para controlar qual funcionalidade está ativa (Inicia com a primeira: Dashboard)
   const [activeFeature, setActiveFeature] = useState(featuresList[0]);
 
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(true); // Começa true para a primeira imagem
 
-  // Atualize a função de clique para resetar o carregamento
-  const handleFeatureChange = (feat) => {
-    if (feat.title !== activeFeature.title) {
-      setIsImageLoaded(false); // Reseta para a próxima imagem começar invisível
-      setActiveFeature(feat);
-    }
-  };
+    const handleFeatureChange = (feat) => {
+      if (feat.title !== activeFeature.title) {
+        // 1. Inicia o Fade Out (a imagem começa a sumir)
+        setIsImageLoaded(false); 
 
-  // 🆕 Lista de Telas para o Carrossel (MÁXIMO 10)
+        // 2. Aguarda o tempo da transição (ex: 300ms) para trocar a imagem no "escuro"
+        setTimeout(() => {
+          setActiveFeature(feat);
+        }, 300); 
+      }
+    };
+
+  // 🆕 Lista de Telas para o Carrossel
   const screens = [
 
     // Dashboard
+    { src: "./telas/dashboard/dashboard.svg", alt: "Tela do Dashboard" },
     { src: "./telas/dashboard/tela 1.svg", alt: "Tela do Dashboard" },
     { src: "./telas/dashboard/tela 2.svg", alt: "Tela do Dashboard" },
     { src: "./telas/dashboard/tela 3.svg", alt: "Tela do Dashboard" },
     { src: "./telas/dashboard/tela 4.svg", alt: "Tela do Dashboard" },
 
     // Calendario
+    { src: "./telas/calendario/calendario.svg", alt: "Tela de Calendário" },
     { src: "./telas/calendario/tela 1.svg", alt: "Tela de Calendário" },
     { src: "./telas/calendario/tela 2.svg", alt: "Tela de Calendário" },
     { src: "./telas/calendario/tela 3.svg", alt: "Tela de Calendário" },
 
     // Biblioteca
+    { src: "./telas/biblioteca/biblioteca.svg", alt: "Tela da Biblioteca Musical" },
     { src: "./telas/biblioteca/tela 1.svg", alt: "Tela da Biblioteca Musical" },
     { src: "./telas/biblioteca/tela 2.svg", alt: "Tela da Biblioteca Musical" },
     { src: "./telas/biblioteca/tela 3.svg", alt: "Tela da Biblioteca Musical" },
 
     // Partitura
+    { src: "./telas/partituras/partituras.svg", alt: "Tela de Partituras" },
     { src: "./telas/partituras/tela 1.svg", alt: "Tela de Partituras" },
     { src: "./telas/partituras/tela 2.svg", alt: "Tela de Partituras" },
 
     // Série de Ensaio
-    { src: "./telas/series/tela 1.svg", alt: "Tela do Dashboard" },
-    { src: "./telas/series/tela 2.svg", alt: "Tela do Dashboard" },
-    { src: "./telas/series/tela 3.svg", alt: "Tela do Dashboard" },
-    { src: "./telas/series/tela 4.svg", alt: "Tela do Dashboard" },
-    { src: "./telas/series/tela 5.svg", alt: "Tela do Dashboard" },
+    { src: "./telas/series/series.svg", alt: "Tela de Séries de Ensaio" },
+    { src: "./telas/series/tela 1.svg", alt: "Tela de Séries de Ensaio" },
+    { src: "./telas/series/tela 2.svg", alt: "Tela de Séries de Ensaio" },
+    { src: "./telas/series/tela 3.svg", alt: "Tela de Séries de Ensaio" },
+    { src: "./telas/series/tela 4.svg", alt: "Tela de Séries de Ensaio" },
+    { src: "./telas/series/tela 5.svg", alt: "Tela de Séries de Ensaio" },
 
     // Escalas
+    { src: "./telas/escalas/escalas.svg", alt: "Tela de Gestão de Escalas" },
     { src: "./telas/escalas/tela 1.svg", alt: "Tela de Gestão de Escalas" },
     { src: "./telas/escalas/tela 2.svg", alt: "Tela de Gestão de Escalas" },
 
     // Membros
+    { src: "./telas/membros/membros.svg", alt: "Tela de Membros" },
     { src: "./telas/membros/tela 1.svg", alt: "Tela de Membros" },
     { src: "./telas/membros/tela 2.svg", alt: "Tela de Membros" },
     
     // Notificações
+    { src: "./telas/notificacoes/notificacoes.svg", alt: "Tela de Notificações" },
     { src: "./telas/notificacoes/tela 1.svg", alt: "Tela de Notificações" },
   ];
   
@@ -362,31 +374,37 @@ export default function LandingPage() {
 
             {/* Imagem Central Dinâmica - 60% */}
             <div className="w-full md:w-[55%] flex justify-center order-1 md:order-2 mb-12 md:mb-0">
+              
+              {/* CONTAINER PAI (Referência para o posicionamento do Badge) */}
               <div className="relative w-full max-w-2xl lg:max-w-5xl px-4 transition-all duration-500">
+                
+                {/* Efeito de brilho de fundo (Glow) */}
                 <div className="absolute -inset-10 bg-teal-500/10 blur-3xl rounded-full"></div>
                 
-                <div className="relative bg-gray-900/40 p-2 lg:p-3 rounded-[2rem] border-2 border-teal-600/20 shadow-2xl backdrop-blur-sm">
-                  {/* Loader simples opcional enquanto a imagem não carrega */}
-                  {!isImageLoaded && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
-
+                {/* MOLDURA DA IMAGEM - Aqui mantemos o overflow-hidden para a imagem não vazar nos cantos */}
+                <div className="relative bg-gray-900/40 p-2 lg:p-3 rounded-[2rem] border-2 border-teal-600/20 shadow-2xl backdrop-blur-sm overflow-hidden min-h-[400px] flex items-center justify-center">
+                  
                   <img
                     key={activeFeature.image}
                     src={activeFeature.image}
                     alt={activeFeature.title}
-                    onLoad={() => setIsImageLoaded(true)} // Só ativa quando o arquivo carregar
-                    className={`w-full h-auto rounded-[1.8rem] shadow-2xl transition-all duration-700 ease-in-out ${
-                      isImageLoaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-95 blur-md'
+                    onLoad={() => setIsImageLoaded(true)} 
+                    className={`w-full h-auto rounded-[1.8rem] shadow-2xl transition-all duration-500 ease-in-out ${
+                      isImageLoaded 
+                        ? 'opacity-100 scale-100 translate-y-0 blur-0' 
+                        : 'opacity-0 scale-95 translate-y-4 blur-md'
                     }`}
                   />
-                  
-                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-teal-600 text-white px-8 py-2.5 rounded-full text-sm font-black shadow-2xl tracking-widest uppercase">
-                    Módulo: {activeFeature.title}
-                  </div>
                 </div>
+
+                {/* BADGE - MOVIDO PARA FORA DO OVERFLOW-HIDDEN */}
+                {/* Agora ele fica relativo ao "Container Pai" e pode flutuar livremente sobre a borda */}
+                <div className={`absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-teal-600 text-white px-8 py-2.5 rounded-full text-sm font-black shadow-2xl tracking-widest uppercase whitespace-nowrap z-20 transition-all duration-500 ${
+                  isImageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                }`}>
+                  Módulo: {activeFeature.title}
+                </div>
+
               </div>
             </div>
 
