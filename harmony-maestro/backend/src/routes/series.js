@@ -322,7 +322,6 @@ router.get("/series/:id/presenca", authenticateToken, async (req, res) => {
     }
 
     // 🚨 3. Busca apenas os usuários convidados PELO ADMIN DESTA SÉRIE
-    // Isso remove o "Sebastião" (que foi convidado por outro admin)
     const acceptedUsers = await prisma.invite.findMany({
       where: {
         inviterId: series.userId, // 🚨 FILTRO CRUCIAL: Apenas membros do grupo deste admin

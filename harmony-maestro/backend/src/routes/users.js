@@ -111,14 +111,14 @@ router.delete("/users/:id", authenticateToken, verifyAdmin, async (req, res) => 
   }
 });
 
-// ✉️ Configuração do envio de e-mail
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "sejoaovb@gmail.com",
-    pass: process.env.EMAIL_PASS, // use uma senha de app do Gmail
-  },
-});
+// // ✉️ Configuração do envio de e-mail
+// const transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     user: "sejoaovb@gmail.com",
+//     pass: process.env.EMAIL_PASS, // use uma senha de app do Gmail
+//   },
+// });
 
 // 📋 Buscar dados de um usuário
 router.get("/userss/:id", authenticateToken, async (req, res) => {
@@ -283,6 +283,76 @@ router.get("/users/profile", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Erro ao carregar perfil:", error);
     res.status(500).json({ error: "Erro ao carregar perfil." });
+  }
+});
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // true para porta 465
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// 📬 Rota Pública: Receber formulário de contato da Landing Page
+router.post("/users/contact", async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+
+    // 1. Validação básica
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+    }
+
+    // 2. Salvar no Banco de Dados
+    const newMessage = await prisma.contactMessage.create({
+      data: { name, email, message },
+    });
+
+    // 3. Enviar E-mail de Notificação para o Admin (Opcional, mas recomendado)
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER, // Você recebe o e-mail
+      subject: `🎵 Novo Contato: ${name}`,
+      text: `Você recebeu uma nova mensagem de ${name} (${email}):\n\n${message}`,
+      html: `
+        <div style="font-family: sans-serif; color: #333;">
+          <h2>Novo contato via Landing Page</h2>
+          <p><strong>Nome:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Mensagem:</strong></p>
+          <p style="background: #f4f4f4; pading: 15px; border-radius: 5px;">${message}</p>
+          <hr />
+          <small>Enviado em: ${new Date().toLocaleString()}</small>
+        </div>
+      `,
+    };
+
+    // Enviando o e-mail (não bloqueia a resposta pro usuário)
+    transporter.sendMail(mailOptions).catch(err => console.error("Erro email:", err));
+
+    res.status(201).json({ 
+      message: "Mensagem enviada com sucesso! Entraremos em contato em breve.",
+      id: newMessage.id 
+    });
+
+  } catch (err) {
+    console.error("Erro na rota de contato:", err);
+    res.status(500).json({ error: "Erro interno ao processar sua mensagem." });
+  }
+});
+
+// 📋 Rota Privada: Listar mensagens de contato (Apenas Admin)
+router.get("/users/contact/messages", authenticateToken, verifyAdmin, async (req, res) => {
+  try {
+    const messages = await prisma.contactMessage.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar mensagens." });
   }
 });
 

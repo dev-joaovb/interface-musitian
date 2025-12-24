@@ -12,22 +12,11 @@ import {
   ArrowRight,
   Send,
   HelpCircle,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 
-// =========================================================================
-// Componente de Fundo Parallax (Requer CSS Externo)
-// =========================================================================
-
-/**
- * Componente Div que simula o fundo Parallax.
- * 🚨 REQUER QUE A CLASSE CSS EXTERNA (ex: .bg-hero-parallax) TENHA:
- * {
- * background-image: url('caminho-da-sua-imagem');
- * background-attachment: fixed;
- * background-size: cover;
- * background-position: center;
- * }
- */
 const ParallaxBackground = ({ children, className }) => (
   <div className={`relative min-h-[50vh] flex items-center justify-center bg-cover bg-fixed bg-center ${className}`}>
     {/* Overlay para contraste */}
@@ -41,6 +30,39 @@ const ParallaxBackground = ({ children, className }) => (
 // =========================================================================
 
 export default function LandingPage() {
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [isSending, setIsSending] = useState(false);
+  const [status, setStatus] = useState({ type: '', message: '' }); // type: 'success' | 'error'
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSending(true);
+    setStatus({ type: '', message: '' });
+
+    try {
+      const response = await fetch('http://localhost:4000/api/users/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || 'Erro ao enviar');
+
+      // Sucesso
+      setStatus({ type: 'success', message: 'Mensagem enviada com sucesso!' });
+      setFormData({ name: '', email: '', message: '' }); // Limpa o formulário
+    } catch (err) {
+      setStatus({ type: 'error', message: err.message });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   // 🆕 Estado para monitorar se a rolagem ultrapassou o topo
   const [isScrolled, setIsScrolled] = useState(false);
@@ -478,7 +500,7 @@ export default function LandingPage() {
             {/* Carrossel de Telas (Estrutura Atualizada) */}
             <div className="relative">
               {/* Área das Imagens */}
-              <div className="overflow-hidden rounded-xl shadow-2xl border-4 border-teal-600 h-96 md:h-[600px] flex items-center justify-center bg-gray-900/90">
+              <div className="overflow-hidden rounded-xl shadow-2xl border-4 border-teal-600 h-96 md:h-[550px] flex items-center justify-center bg-gray-900/90">
                 <img
                   // 🚨 Renderiza a tela atual com base no estado
                   src={screens[currentScreenIndex].src}
@@ -522,39 +544,78 @@ export default function LandingPage() {
       </section>
 
       {/* ===================================================================
-        # SEÇÃO SEIS - CONTATO
-        =================================================================== */}
+          # SEÇÃO SEIS - CONTATO (FUNCIONAL)
+      =================================================================== */}
       <section id="contato" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-extrabold text-black mb-4">
-              Entre em Contato
-            </h2>
-            <p className="text-xl text-gray-600">
-              Tem alguma dúvida ou gostaria de fazer uma parceria? Mande sua mensagem!
-            </p>
+            <h2 className="text-4xl font-extrabold text-black mb-4">Entre em Contato</h2>
+            <p className="text-xl text-gray-600">Dúvidas ou parcerias? Mande sua mensagem!</p>
           </div>
 
-          <div className="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-xl">
-            <form action="#" method="POST" className="space-y-6">
+          <div className="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-xl border border-gray-100">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Alertas de Status */}
+              {status.message && (
+                <div className={`p-4 rounded-md flex items-center space-x-2 ${
+                  status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                }`}>
+                  {status.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                  <span className="text-sm font-medium">{status.message}</span>
+                </div>
+              )}
+
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nome</label>
-                <input type="text" id="name" name="name" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2" />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  disabled={isSending}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2.5 bg-gray-50 disabled:opacity-50"
+                />
               </div>
+
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="email" name="email" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  disabled={isSending}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2.5 bg-gray-50 disabled:opacity-50"
+                />
               </div>
+
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700">Mensagem</label>
-                <textarea id="message" name="message" rows="4" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2"></textarea>
+                <textarea
+                  name="message"
+                  rows="4"
+                  value={formData.message}
+                  onChange={handleChange}
+                  required
+                  disabled={isSending}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2.5 bg-gray-50 disabled:opacity-50"
+                ></textarea>
               </div>
+
               <button
                 type="submit"
-                className="w-full inline-flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-teal-600 hover:bg-teal-700 transition duration-150"
+                disabled={isSending}
+                className={`w-full inline-flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-bold text-white transition-all duration-150 ${
+                  isSending ? 'bg-gray-400 cursor-not-allowed' : 'bg-teal-600 hover:bg-teal-700 active:scale-95'
+                }`}
               >
-                <Send className="w-5 h-5 mr-2" />
-                Enviar Mensagem
+                {isSending ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Enviando...</>
+                ) : (
+                  <><Send className="w-5 h-5 mr-2" /> Enviar Mensagem</>
+                )}
               </button>
             </form>
           </div>

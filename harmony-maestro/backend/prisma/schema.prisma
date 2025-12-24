@@ -258,3 +258,13 @@ model WeeklySchedule {
   @@unique([ownerId, weekNumber]) // Garante apenas 1 escala por semana por admin
 }
 
+
+// Contato da landing page
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  message   String
+  status    String   @default("unread") // "unread" | "read" | "replied"
+  createdAt DateTime @default(now())
+}
