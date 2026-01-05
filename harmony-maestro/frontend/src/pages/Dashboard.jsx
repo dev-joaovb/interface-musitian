@@ -417,7 +417,7 @@ const navigateWithReload = (path) => {
             onChange={(e) => setAnoSelecionado(Number(e.target.value))}
             className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md p-2 text-sm"
           >
-            {[2023, 2024, 2025].map((ano) => (
+            {[2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030].map((ano) => (
               <option key={ano} value={ano}>
                 {ano}
               </option>

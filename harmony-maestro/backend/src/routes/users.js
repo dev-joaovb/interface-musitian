@@ -299,42 +299,57 @@ const transporter = nodemailer.createTransport({
 // 📬 Rota Pública: Receber formulário de contato da Landing Page
 router.post("/users/contact", async (req, res) => {
   try {
-    const { name, email, message } = req.body;
+    const { name, email, message, overwrite } = req.body;
 
-    // 1. Validação básica
     if (!name || !email || !message) {
       return res.status(400).json({ error: "Todos os campos são obrigatórios." });
     }
 
-    // 2. Salvar no Banco de Dados
+    // 1. Verifica se já existe uma mensagem com este e-mail
+    const existingMessage = await prisma.contactMessage.findFirst({
+      where: { email: email }
+    });
+
+    // 2. Se existe e o usuário ainda não confirmou a substituição
+    if (existingMessage && !overwrite) {
+      return res.status(409).json({ 
+        error: "DUPLICATE_EMAIL", 
+        message: "Você já enviou uma mensagem com esse email, deseja apagar a mensagem anterior para enviar esta?" 
+      });
+    }
+
+    // 3. Se existe e o usuário confirmou (overwrite === true), apaga a antiga
+    if (existingMessage && overwrite) {
+      await prisma.contactMessage.delete({
+        where: { id: existingMessage.id }
+      });
+    }
+
+    // 4. Salvar a nova mensagem no Banco de Dados
     const newMessage = await prisma.contactMessage.create({
       data: { name, email, message },
     });
 
-    // 3. Enviar E-mail de Notificação para o Admin (Opcional, mas recomendado)
+    // 5. Envio de e-mail (Mantido sua lógica original)
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER, // Você recebe o e-mail
-      subject: `🎵 Novo Contato: ${name}`,
-      text: `Você recebeu uma nova mensagem de ${name} (${email}):\n\n${message}`,
+      to: process.env.EMAIL_USER,
+      subject: `🎵 ${overwrite ? '[ATUALIZADO] ' : ''}Novo Contato: ${name}`,
       html: `
         <div style="font-family: sans-serif; color: #333;">
-          <h2>Novo contato via Landing Page</h2>
+          <h2>${overwrite ? 'Mensagem Atualizada' : 'Novo contato via Landing Page'}</h2>
           <p><strong>Nome:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Mensagem:</strong></p>
-          <p style="background: #f4f4f4; pading: 15px; border-radius: 5px;">${message}</p>
-          <hr />
-          <small>Enviado em: ${new Date().toLocaleString()}</small>
+          <p style="background: #f4f4f4; padding: 15px; border-radius: 5px;">${message}</p>
         </div>
       `,
     };
 
-    // Enviando o e-mail (não bloqueia a resposta pro usuário)
     transporter.sendMail(mailOptions).catch(err => console.error("Erro email:", err));
 
     res.status(201).json({ 
-      message: "Mensagem enviada com sucesso! Entraremos em contato em breve.",
+      message: "Mensagem enviada com sucesso!",
       id: newMessage.id 
     });
 

@@ -15,6 +15,9 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  Smartphone,
+  Layers,
+  RefreshCcw,
 } from 'lucide-react';
 
 const ParallaxBackground = ({ children, className }) => (
@@ -38,25 +41,46 @@ export default function LandingPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Estado para controlar a exibição do Modal de confirmação
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [autoHideStatus, setAutoHideStatus] = useState(null);
+
+  // Efeito para limpar mensagens de sucesso automaticamente
+  useEffect(() => {
+    if (status.type === 'success') {
+      const timer = setTimeout(() => setStatus({ type: '', message: '' }), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
+
+  const handleSubmit = async (e, overwrite = false) => {
+    if (e) e.preventDefault();
+    
     setIsSending(true);
     setStatus({ type: '', message: '' });
+    if (overwrite) setShowConfirmModal(false); // Fecha o modal ao reconfirmar
 
     try {
       const response = await fetch('http://localhost:4000/api/users/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, overwrite }),
       });
 
       const data = await response.json();
 
+      // Se o e-mail já existir, abre o Modal customizado
+      if (response.status === 409 && data.error === "DUPLICATE_EMAIL") {
+        setShowConfirmModal(true);
+        setIsSending(false);
+        return;
+      }
+
       if (!response.ok) throw new Error(data.error || 'Erro ao enviar');
 
-      // Sucesso
       setStatus({ type: 'success', message: 'Mensagem enviada com sucesso!' });
-      setFormData({ name: '', email: '', message: '' }); // Limpa o formulário
+      setFormData({ name: '', email: '', message: '' }); 
+      
     } catch (err) {
       setStatus({ type: 'error', message: err.message });
     } finally {
@@ -307,7 +331,7 @@ export default function LandingPage() {
 
       {/* ===================================================================
         # SEGUNDA SEÇÃO - SOBRE
-        =================================================================== */}
+      =================================================================== */}
       <section id="sobre" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -315,43 +339,51 @@ export default function LandingPage() {
               Organize o seu grupo com maestria
             </h2>
             <p className="text-xl text-gray-600 max-w-4xl mx-auto">
-              Chega de planilhas desorganizadas e comunicação perdida no WhatsApp. O Harmony Maestro centraliza a logística e a comunicação, permitindo que você gaste mais tempo tocando e menos tempo gerenciando.
+              Chega de planilhas confusas e mensagens perdidas em grupos de WhatsApp. O <span className="text-teal-600 font-semibold">Harmony Maestro</span> centraliza toda a logística e comunicação, permitindo que você foque no que realmente importa: a música.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
+            
             {/* Bloco 1: Centralização */}
-            <div className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-              <div className="flex justify-center mb-4">
-                <img src="/placeholder-centralizacao.svg" alt="Centralização" className="h-20 w-auto" />
+            <div className="p-8 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+              <div className="flex justify-center mb-6">
+                <div className="p-4 bg-teal-50 rounded-full group-hover:bg-teal-100 transition-colors">
+                  <Layers className="w-12 h-12 text-teal-600" />
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-teal-600 mb-2">Comunicação Centralizada</h3>
-              <p className="text-gray-600">
-                Todo o histórico de ensaios, presenças e repertório em um só lugar, tornando a transição de líderes ou a integração de novos membros rápida e transparente.
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Gestão Centralizada</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Histórico de ensaios, controle de presenças e repertório organizado em um único lugar. A integração de novos membros torna-se rápida, transparente e profissional.
               </p>
             </div>
 
             {/* Bloco 2: Escalas Inteligentes */}
-            <div className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-              <div className="flex justify-center mb-4">
-                <img src="/placeholder-escalas.svg" alt="Escalas" className="h-20 w-auto" />
+            <div className="p-8 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+              <div className="flex justify-center mb-6">
+                <div className="p-4 bg-teal-50 rounded-full group-hover:bg-teal-100 transition-colors">
+                  <RefreshCcw className="w-12 h-12 text-teal-600" />
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-teal-600 mb-2">Escalas com Rodízio Automático</h3>
-              <p className="text-gray-600">
-                Gere escalas semanais de forma automática, garantindo um rodízio justo entre todos os músicos e reduzindo drasticamente o trabalho manual do administrador.
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Rodízio Inteligente</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Gere escalas automáticas garantindo um rodízio justo entre os músicos. Reduza o trabalho manual e evite sobrecarga, mantendo o grupo motivado e engajado.
               </p>
             </div>
 
             {/* Bloco 3: Responsividade (Em Destaque) */}
-            <div className="p-6 bg-teal-600 text-white rounded-xl shadow-2xl transform scale-105">
-              <div className="flex justify-center mb-4">
-                <img src="/placeholder-responsivo.svg" alt="Responsividade" className="h-20 w-auto" />
+            <div className="p-8 bg-teal-600 text-white rounded-2xl shadow-2xl transform md:scale-105 transition-transform duration-300">
+              <div className="flex justify-center mb-6">
+                <div className="p-4 bg-white/10 rounded-full">
+                  <Smartphone className="w-12 h-12 text-white" />
+                </div>
               </div>
-              <h3 className="text-2xl font-bold mb-2">Tudo na Palma da Mão</h3>
-              <p className="text-teal-100">
-                **Nosso sistema é totalmente Web Responsivo.** Acesse o calendário, confirme presença e confira as partituras em qualquer dispositivo—seja desktop, tablet ou celular—sem a necessidade de instalar um aplicativo.
+              <h3 className="text-2xl font-bold mb-3">Acesso sem Barreiras</h3>
+              <p className="text-teal-50 leading-relaxed">
+                <span className="font-bold">Totalmente Web Responsivo.</span> Acesse calendários, confirme presença e visualize partituras em qualquer dispositivo desktop, tablet ou celular sem precisar baixar nada.
               </p>
             </div>
+
           </div>
         </div>
       </section>
@@ -619,6 +651,15 @@ export default function LandingPage() {
               </button>
             </form>
           </div>
+
+          {status.message && (
+            <div className={`p-4 rounded-xl flex items-center space-x-3 animate-in slide-in-from-top-2 duration-300 ${
+              status.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
+            }`}>
+              {status.type === 'success' ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
+              <span className="text-sm font-semibold">{status.message}</span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -667,6 +708,41 @@ export default function LandingPage() {
 
         </ParallaxBackground>
       </section>
+
+      {/* MODAL DE CONFIRMAÇÃO CUSTOMIZADO */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-amber-100 rounded-full mb-4">
+              <HelpCircle className="w-6 h-6 text-amber-600" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+              Mensagem Duplicada
+            </h3>
+            
+            <p className="text-gray-600 text-center mb-6">
+              Você já enviou uma mensagem com o email <span className="font-semibold text-teal-600">{formData.email}</span>. 
+              Deseja apagar a anterior e enviar esta nova?
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleSubmit(null, true)}
+                className="flex-1 px-4 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 shadow-lg shadow-teal-500/30 transition-all active:scale-95"
+              >
+                Sim, substituir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
